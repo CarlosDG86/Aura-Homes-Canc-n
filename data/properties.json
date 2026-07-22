@@ -1,0 +1,59 @@
+[
+  {
+    "id": "AUR-001",
+    "slug": { "es": "casa-la-rioja-residencial-cancun", "en": "la-rioja-residencial-house-cancun" },
+    "status": "available",
+    "featured": true,
+    "priceMXN": 24500,
+    "zone": "Polígono Sur",
+    "beds": 3, "baths": 2.5, "area": 192,
+    "furnished": false, "parking": 2, "pets": true,
+    "title": { "es": "Casa en La Rioja Residencial", "en": "House in La Rioja Residencial" },
+    "avail": { "es": "Disponible ahora", "en": "Available now" },
+    "hero": "vistaFrente.jpg",
+    "gallery": [
+      "vistaFrente.jpg","Sala.jpg","vista_sala.jpg","SalaCosina.jpg","CosinaSalaVista2.jpg",
+      "cosina_frente.jpg","cosina.jpg","cosinaIsla.jpg","BanoVisitas.jpg","vistaPatio.jpg",
+      "vistaPatio2.jpg","escaleras.jpg","Corredor2doPiso.jpg","Revamara2.jpg","closet_Master.jpg",
+      "BanoPrincipal.jpg","closetCuarto1.jpg","closetCuarto2.jpg","Bano2doPiso.jpg"
+    ],
+    "desc": {
+      "es": "Casa de dos plantas en La Rioja Residencial, una privada con acceso controlado en el Polígono Sur de Cancún. Construida en 2024, se entrega sin amueblar y lista para que la hagas tuya: cocina integral con isla y campana, amplios espacios de sala y comedor, y recámaras con clósets de madera. Ventanas panorámicas, aire acondicionado y un patio privado completan el hogar.",
+      "en": "Two-story house in La Rioja Residencial, a gated community with controlled access in the Polígono Sur area of Cancún. Built in 2024, it is delivered unfurnished and ready to make your own: a full kitchen with island and range hood, generous living and dining areas, and bedrooms with wood closets. Panoramic windows, air conditioning and a private patio round out the home."
+    },
+    "amenities": {
+      "es": ["Cocina integral con isla","Clósets de madera","Aire acondicionado","Ventanas panorámicas","Patio privado","Privada con acceso controlado","Estacionamiento para 2 autos","Se permiten mascotas"],
+      "en": ["Full kitchen with island","Wood closets","Air conditioning","Panoramic windows","Private patio","Gated, controlled access","Parking for 2 cars","Pets allowed"]
+    },
+    "contract": {
+      "es": [["Plazo mínimo","12 meses"],["Depósito","1 mes de renta"],["Mantenimiento","Incluido"],["Servicios","A cargo del inquilino"],["Entrada","Inmediata"]],
+      "en": [["Minimum term","12 months"],["Deposit","1 month's rent"],["Maintenance","Included"],["Utilities","Tenant's responsibility"],["Move-in","Immediate"]]
+    },
+    "requirements": {
+      "es": ["Aval con propiedad","Comprobante de ingresos","Estudio socioeconómico","Póliza jurídica (por cuenta del inquilino)"],
+      "en": ["Guarantor with property","Proof of income","Background/credit check","Legal policy (paid by tenant)"]
+    },
+    "poi": {
+      "es": [["Escuelas y universidades","A pocos minutos"],["Plazas y supermercados","Zona en crecimiento"],["Acceso a vías principales","Conexión al resto de Cancún"]],
+      "en": [["Schools and universities","A few minutes away"],["Malls and supermarkets","Growing area"],["Main road access","Connected to the rest of Cancún"]]
+    }
+  },
+  {
+    "id": "AUR-DEMO-2", "slug": { "es": "casa-residencial-cumbres", "en": "residencial-cumbres-house" },
+    "status": "available", "featured": true, "priceMXN": 28000, "zone": "Residencial Cumbres",
+    "beds": 3, "baths": 2.5, "area": 180, "furnished": false, "parking": 2, "pets": true,
+    "title": { "es": "Casa en Residencial Cumbres", "en": "House in Residencial Cumbres" },
+    "avail": { "es": "Disponible ahora", "en": "Available now" },
+    "hero": "vista_sala.jpg", "gallery": ["vista_sala.jpg"],
+    "placeholder": true
+  },
+  {
+    "id": "AUR-DEMO-3", "slug": { "es": "departamento-centro-sm15", "en": "downtown-apartment-sm15" },
+    "status": "rented", "featured": true, "priceMXN": 12500, "zone": "Centro",
+    "beds": 1, "baths": 1, "area": 62, "furnished": false, "parking": 1, "pets": false,
+    "title": { "es": "Departamento SM 15", "en": "Apartment SM 15" },
+    "avail": { "es": "No disponible", "en": "Not available" },
+    "hero": "SalaCosina.jpg", "gallery": ["SalaCosina.jpg"],
+    "placeholder": true
+  }
+]
