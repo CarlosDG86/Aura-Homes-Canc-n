@@ -6,13 +6,16 @@
     "whatsappDisplay": "+52 998 123 4567",
     "email": "hola@aurahomescancun.com",
     "fxRate": 18.15,
-    "fxNote": "Tipo de cambio de referencia — Finanzas debe confirmar el valor real"
+    "fxNote": "Tipo de cambio de referencia — Finanzas debe confirmar el valor real",
+    "platformUrl": "http://localhost:8010/login",
+    "platformUrlNote": "Local-only placeholder — Infra must set the real Phase 2 platform URL once it's deployed."
   },
   "ui": {
     "es": {
       "lang": "es", "other": "en",
       "nav": { "props": "Propiedades", "zones": "Zonas", "how": "Cómo funciona", "contact": "Contacto" },
       "wa": "WhatsApp",
+      "admin_login": "Administración",
       "hero_eyebrow": "Renta a largo plazo · Cancún",
       "hero_title": "Tu hogar a largo plazo en Cancún",
       "hero_sub": "Casas y departamentos verificados, en renta de 6 a 12+ meses.",
@@ -43,16 +46,18 @@
       "index_title": "Propiedades en renta",
       "index_sub": "Casas y departamentos · renta a largo plazo",
       "filter_zone": "Zona · Todas", "filter_beds": "Recámaras · Todas", "filter_price": "Precio · Todos",
-      "results": "propiedades",
+      "price_low": "Hasta $15,000", "price_mid": "$15,000 – $25,000", "price_high": "Más de $25,000",
+      "results": "propiedades", "results_none": "No hay propiedades con esos filtros",
       "rented": "Rentada",
       "back": "Volver a propiedades",
+      "back_home": "Volver al inicio",
       "per": "/mes", "priceLabel": "Renta mensual",
       "avail_now": "Disponible ahora",
       "h_desc": "Descripción", "h_amen": "Amenidades", "h_contract": "Detalles del contrato",
       "h_req": "Requisitos de renta",
       "req_intro": "Para agilizar tu solicitud, ten a la mano lo siguiente. Así puedes autoevaluarte antes de escribirnos.",
       "req_note": "Los requisitos aplican por igual a todos los prospectos.",
-      "h_loc": "Ubicación", "map_label": "Zona aproximada · Polígono Sur, Cancún",
+      "h_loc": "Ubicación", "map_label_prefix": "Zona aproximada",
       "loc_note": "Mostramos la zona a nivel colonia. La dirección exacta se comparte al agendar una visita.",
       "sticky_write": "Escríbenos", "similar": "Propiedades similares",
       "specs_beds": "recámaras", "specs_baths": "baños", "specs_area": "m²",
@@ -62,6 +67,7 @@
       "lang": "en", "other": "es",
       "nav": { "props": "Properties", "zones": "Areas", "how": "How it works", "contact": "Contact" },
       "wa": "WhatsApp",
+      "admin_login": "Admin",
       "hero_eyebrow": "Long-term rentals · Cancún",
       "hero_title": "Your long-term home in Cancún",
       "hero_sub": "Verified houses and apartments, 6 to 12+ month leases.",
@@ -92,20 +98,52 @@
       "index_title": "Properties for rent",
       "index_sub": "Houses and apartments · long-term leases",
       "filter_zone": "Zone · All", "filter_beds": "Bedrooms · All", "filter_price": "Price · All",
-      "results": "properties",
+      "price_low": "Up to $15,000", "price_mid": "$15,000 – $25,000", "price_high": "More than $25,000",
+      "results": "properties", "results_none": "No properties match those filters",
       "rented": "Rented",
       "back": "Back to properties",
+      "back_home": "Back to home",
       "per": "/mo", "priceLabel": "Monthly rent",
       "avail_now": "Available now",
       "h_desc": "Description", "h_amen": "Amenities", "h_contract": "Lease details",
       "h_req": "Rental requirements",
       "req_intro": "To speed up your application, have these ready. It helps you self-check before reaching out.",
       "req_note": "Requirements apply equally to all applicants.",
-      "h_loc": "Location", "map_label": "Approximate area · Polígono Sur, Cancún",
+      "h_loc": "Location", "map_label_prefix": "Approximate area",
       "loc_note": "We show the area at neighborhood level. The exact address is shared when you book a viewing.",
       "sticky_write": "Contact us", "similar": "Similar properties",
       "specs_beds": "bedrooms", "specs_baths": "baths", "specs_area": "m²",
       "specs_furnished": "Unfurnished", "specs_parking": "Parking", "specs_pets": "Pets OK"
+    }
+  },
+  "legalPages": {
+    "privacy": {
+      "navKey": "privacy",
+      "slug": { "es": "aviso-de-privacidad", "en": "privacy-notice" },
+      "body": {
+        "es": [
+          "Este Aviso de Privacidad está en proceso final de redacción y se publicará muy pronto en este mismo espacio.",
+          "Mientras tanto, si tienes alguna duda sobre el manejo de tus datos personales, escríbenos por WhatsApp o correo electrónico — con gusto te ayudamos."
+        ],
+        "en": [
+          "This Privacy Notice is currently being finalized and will be published here very soon.",
+          "In the meantime, if you have any questions about how we handle your personal data, message us on WhatsApp or send us an email — we're happy to help."
+        ]
+      }
+    },
+    "terms": {
+      "navKey": "terms",
+      "slug": { "es": "terminos", "en": "terms" },
+      "body": {
+        "es": [
+          "Nuestros Términos y Condiciones están en preparación y se publicarán próximamente en esta página.",
+          "Si tienes preguntas sobre el proceso de renta mientras tanto, contáctanos por WhatsApp o correo electrónico."
+        ],
+        "en": [
+          "Our Terms and Conditions are being prepared and will be published on this page soon.",
+          "If you have questions about the rental process in the meantime, reach out via WhatsApp or email."
+        ]
+      }
     }
   }
 }

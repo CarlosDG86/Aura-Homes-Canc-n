@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Propiedades del sitio — Aura Homes Cancún{% endblock %}
+{% block content %}
+<h1 class="page-title">Propiedades del sitio</h1>
+<p class="muted">
+  Esto edita <code>data/properties.json</code> y las fotos que se publican en el sitio real
+  (aurahomescancun — <code>dist/</code>). Cada guardado vuelve a generar el sitio automáticamente.
+</p>
+
+{% if build_error %}
+<div class="alert alert-error">
+  <strong>{{ build_error.split("\n")[0] }}</strong>
+  <pre class="build-error-output">{{ build_error }}</pre>
+</div>
+{% endif %}
+
+<p><a class="btn btn-primary-inline" href="/admin/properties/new">+ Agregar propiedad</a></p>
+
+<div class="section">
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Título</th>
+        <th>Zona</th>
+        <th>Precio</th>
+        <th>Estatus</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for p in properties %}
+      <tr>
+        <td>{{ p.id }}</td>
+        <td>{{ p.title.es }}</td>
+        <td>{{ p.zone or "—" }}</td>
+        <td>{% if p.priceMXN %}${{ "{:,}".format(p.priceMXN) }} MXN{% else %}—{% endif %}</td>
+        <td><span class="status status-{{ p.status }}">{{ p.status }}</span></td>
+        <td class="actions-cell">
+          <a class="btn btn-ghost-inline" href="/admin/properties/{{ p.id }}/edit">Editar</a>
+          <form method="post" action="/admin/properties/{{ p.id }}/delete" class="inline-form"
+                onsubmit="return confirm('¿Eliminar {{ p.id }} del sitio? Se quitará de data/properties.json y del sitio publicado. Las fotos NO se borrarán del disco.');">
+            <button type="submit" class="btn btn-danger-inline">Eliminar</button>
+          </form>
+        </td>
+      </tr>
+      {% else %}
+      <tr class="empty-row"><td colspan="6">No hay propiedades en data/properties.json.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

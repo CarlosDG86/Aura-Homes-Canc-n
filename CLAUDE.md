@@ -4,7 +4,7 @@ This repository is the rentals website of Aura Enterprise Solutions. The person 
 
 ## Product (CEO-approved, do not change without CEO approval)
 - Showcase website for the CEO's OWN long-term rental properties. No marketplace, no user accounts, no payments.
-- Pilot scope: Mexico City (CDMX) properties only.
+- Pilot scope: Cancún (Quintana Roo) properties only.
 - Bilingual: Spanish (primary, default) and English, with routes `/es` and `/en`.
 - Contact: inquiry form (sends to CEO email) + prominent WhatsApp button (dominant rental contact channel in Mexico).
 - Mobile-first: most renters browse on phones.
@@ -23,7 +23,16 @@ This repository is the rentals website of Aura Enterprise Solutions. The person 
 
 ## Definition of done (MVP)
 1. Homepage, listings index, property detail pages, contact page — all in ES and EN.
-2. All CDMX properties rendered from content files with complete photos.
+2. All Cancún properties rendered from content files with complete photos.
 3. Inquiry form working; WhatsApp deep link working.
 4. Lighthouse mobile scores 90+ across the board.
 5. QA checklist passed; privacy notice and terms pages present (text supplied by Legal via the CEO).
+
+## Phase 2 (CEO-approved 2026-07-22 — see `docs/phase2/PLAN.md` and `docs/phase2/DB_SCHEMA.md`)
+- Approved: build a login-gated owner/tenant management platform layered on top of the public showcase site (the showcase site's MVP scope above is unchanged — it stays a static, no-login, no-database public site).
+- Approved sequencing: **2a → 2b → 2c**, in that order.
+  - **2a (build now):** Admin + Owner login; property management; owners directory. No tenant accounts, no payments, no tenant PII.
+  - **2b (build now, gated):** tenant portal + maintenance tickets. Scaffold the module and schema now, in parallel with Legal review, but **do not store real tenant PII or go live with real tenant accounts until Legal clears it.**
+  - **2c (build now, gated):** rent payments + payment documents. Scaffold the module and schema now, in parallel with Legal review, but **do not process or store real payment data until Legal clears it.** Highest-risk phase — no real money/PII flows through 2b/2c until Legal signs off.
+- Hosting/DB: stay on free-tier hosting; database is **locally-hosted/embedded (e.g. SQLite)** alongside the app rather than a paid managed database service.
+- Legal is being engaged in parallel with this build per the CEO — do not treat that as a green light to launch 2b/2c with real data; that requires a separate explicit CEO confirmation once Legal signs off.

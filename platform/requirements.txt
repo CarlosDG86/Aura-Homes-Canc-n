@@ -1,0 +1,13 @@
+# Aura Homes Cancún — Phase 2 platform backend
+# Pinned per docs/phase2/INFRA_STACK.md §1 (FastAPI + SQLAlchemy/SQLite,
+# passlib/bcrypt + Starlette SessionMiddleware/itsdangerous for auth).
+# bcrypt is pinned explicitly (not just left to passlib's [bcrypt] extra)
+# because passlib 1.7.4 mis-detects bcrypt>=4.1's version string.
+fastapi==0.115.0
+uvicorn[standard]==0.32.0
+sqlalchemy==2.0.35
+passlib[bcrypt]==1.7.4
+bcrypt==4.0.1
+python-multipart==0.0.12
+itsdangerous==2.2.0
+jinja2==3.1.4

@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% block title %}Panel de administración — Aura Homes Cancún{% endblock %}
+{% block content %}
+<h1 class="page-title">Panel de administración</h1>
+<p class="muted">Vista de solo lectura de todas las propiedades, propietarios y usuarios registrados en la plataforma.</p>
+
+<div class="section">
+  <h2>Propiedades del sitio</h2>
+  <p class="muted">
+    Para agregar, editar o eliminar las propiedades que se publican en el sitio real
+    (fotos y textos en <code>data/properties.json</code>), usa
+    <a href="/admin/properties">Propiedades del sitio →</a>.
+    La tabla de abajo es una vista distinta y de solo lectura (base de datos interna de la
+    plataforma, todavía sin usar en 2a).
+  </p>
+</div>
+
+<div class="section">
+  <h2>Propiedades (base de datos interna — {{ properties|length }})</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Título</th>
+        <th>Zona</th>
+        <th>Precio</th>
+        <th>Estatus</th>
+        <th>Propietario</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for p in properties %}
+      <tr>
+        <td>{{ p.id }}</td>
+        <td>{{ p.title }}</td>
+        <td>{{ p.zone or "—" }}</td>
+        <td>{% if p.price_amount %}{{ "%.2f"|format(p.price_amount) }} {{ p.price_currency }}{% else %}—{% endif %}</td>
+        <td><span class="status status-{{ p.status.value }}">{{ p.status.value }}</span></td>
+        <td>
+          {% set owner = owners_by_id.get(p.owner_id) %}
+          {{ owner.name if owner else "Owner #" ~ p.owner_id }}
+        </td>
+      </tr>
+      {% else %}
+      <tr class="empty-row"><td colspan="6">Aún no hay propiedades registradas.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div class="section">
+  <h2>Propietarios ({{ owners|length }})</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Nombre</th>
+        <th>Correo</th>
+        <th>Teléfono</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for o in owners %}
+      <tr>
+        <td>{{ o.id }}</td>
+        <td>{{ o.name }}</td>
+        <td>{{ o.email }}</td>
+        <td>{{ o.phone or "—" }}</td>
+      </tr>
+      {% else %}
+      <tr class="empty-row"><td colspan="4">Aún no hay propietarios registrados.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div class="section">
+  <h2>Usuarios ({{ users|length }})</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Nombre</th>
+        <th>Correo</th>
+        <th>Rol</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for u in users %}
+      <tr>
+        <td>{{ u.id }}</td>
+        <td>{{ u.name }}</td>
+        <td>{{ u.email }}</td>
+        <td><span class="badge badge-{{ u.role.value }}">{{ u.role.value }}</span></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

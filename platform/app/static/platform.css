@@ -1,0 +1,435 @@
+/* Aura Homes Cancun -- internal platform UI (login + dashboards).
+   Minimal, single stylesheet. Brand colors: teal #0E6E71, sand #F7F3EC,
+   coral #C0492B. Not meant to match the public site pixel-for-pixel. */
+
+:root {
+  --teal: #0E6E71;
+  --teal-dark: #0A5254;
+  --sand: #F7F3EC;
+  --coral: #C0492B;
+  --ink: #1F2724;
+  --muted: #6B7570;
+  --border: #E1DACB;
+  --white: #FFFFFF;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  background: var(--sand);
+  color: var(--ink);
+  min-height: 100vh;
+}
+
+a {
+  color: var(--teal);
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--teal);
+  color: var(--white);
+  padding: 0.9rem 1.5rem;
+}
+
+.topbar .brand {
+  font-weight: 700;
+  font-size: 1.05rem;
+  letter-spacing: 0.02em;
+}
+
+.topbar nav {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.user-chip {
+  font-size: 0.9rem;
+}
+
+.container {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 1.75rem 1.5rem 3rem;
+}
+
+.card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1.75rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+.login-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+}
+
+.login-card {
+  width: 100%;
+  max-width: 380px;
+}
+
+.login-card h1 {
+  margin: 0 0 0.25rem;
+  font-size: 1.4rem;
+}
+
+.muted {
+  color: var(--muted);
+  font-size: 0.9rem;
+  margin: 0 0 1.25rem;
+}
+
+form label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin: 0.9rem 0 0.3rem;
+}
+
+form input[type="email"],
+form input[type="password"],
+form input[type="text"],
+form input[type="number"],
+form select,
+form textarea {
+  width: 100%;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 0.95rem;
+  background: var(--white);
+}
+
+form input:focus,
+form select:focus,
+form textarea:focus {
+  outline: 2px solid var(--teal);
+  outline-offset: 1px;
+}
+
+.btn {
+  display: inline-block;
+  padding: 0.6rem 1.1rem;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-decoration: none;
+  border: 1px solid transparent;
+  cursor: pointer;
+}
+
+.btn-primary {
+  background: var(--teal);
+  color: var(--white);
+  width: 100%;
+  margin-top: 1.25rem;
+}
+
+.btn-primary:hover {
+  background: var(--teal-dark);
+}
+
+.btn-ghost {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  color: var(--white);
+  padding: 0.4rem 0.8rem;
+  font-size: 0.85rem;
+}
+
+.btn-ghost:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.alert {
+  padding: 0.65rem 0.85rem;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
+}
+
+.alert-error {
+  background: #FBEAE6;
+  color: var(--coral);
+  border: 1px solid #F0C7BC;
+}
+
+h1.page-title {
+  margin: 0 0 0.25rem;
+  font-size: 1.5rem;
+}
+
+.section {
+  margin-top: 1.75rem;
+}
+
+.section h2 {
+  font-size: 1.05rem;
+  margin: 0 0 0.75rem;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+th, td {
+  text-align: left;
+  padding: 0.6rem 0.75rem;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.9rem;
+}
+
+th {
+  background: var(--sand);
+  font-weight: 700;
+  color: var(--teal-dark);
+}
+
+tr:last-child td {
+  border-bottom: none;
+}
+
+.empty-row td {
+  color: var(--muted);
+  font-style: italic;
+}
+
+.badge {
+  display: inline-block;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.badge-admin {
+  background: #E7D7CF;
+  color: var(--coral);
+}
+
+.badge-owner {
+  background: #D9EAE7;
+  color: var(--teal-dark);
+}
+
+.badge-tenant {
+  background: #E7E4DC;
+  color: var(--muted);
+}
+
+.status {
+  display: inline-block;
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.status-available {
+  background: #D9EAE7;
+  color: var(--teal-dark);
+}
+
+.status-rented {
+  background: #F0E4C6;
+  color: #8A6A1B;
+}
+
+/* --- Site content (real properties.json) admin CRUD -------------------- */
+
+code {
+  background: #EFE9DB;
+  padding: 0.05rem 0.35rem;
+  border-radius: 4px;
+  font-size: 0.85em;
+}
+
+.btn-primary-inline,
+.btn-ghost-inline,
+.btn-danger-inline {
+  display: inline-block;
+  padding: 0.35rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-decoration: none;
+  border: 1px solid transparent;
+  cursor: pointer;
+}
+
+.btn-primary-inline {
+  background: var(--teal);
+  color: var(--white);
+}
+
+.btn-primary-inline:hover {
+  background: var(--teal-dark);
+}
+
+.btn-ghost-inline {
+  background: var(--white);
+  border: 1px solid var(--border);
+  color: var(--teal-dark);
+}
+
+.btn-danger-inline {
+  background: var(--white);
+  border: 1px solid #F0C7BC;
+  color: var(--coral);
+}
+
+.btn-danger-inline:hover {
+  background: #FBEAE6;
+}
+
+.inline-form {
+  display: inline;
+}
+
+.actions-cell {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.build-error-output {
+  white-space: pre-wrap;
+  word-break: break-word;
+  background: #2B211D;
+  color: #F7E9E2;
+  padding: 0.75rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  max-height: 320px;
+  overflow-y: auto;
+  margin-top: 0.5rem;
+}
+
+.card {
+  margin-bottom: 1.25rem;
+}
+
+.card h2 {
+  font-size: 1rem;
+  margin: 0 0 1rem;
+  color: var(--teal-dark);
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0 1.25rem;
+}
+
+.form-grid-4 {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.form-grid-2 {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+@media (max-width: 640px) {
+  .form-grid,
+  .form-grid-4,
+  .form-grid-2 {
+    grid-template-columns: 1fr;
+  }
+}
+
+.checkbox-field {
+  display: flex;
+  align-items: center;
+  margin: 0.9rem 0 0.3rem;
+}
+
+.checkbox-field label {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.checkbox-field input {
+  width: auto;
+}
+
+.help {
+  color: var(--muted);
+  font-size: 0.82rem;
+  margin: 0 0 0.75rem;
+}
+
+.form-actions {
+  display: flex;
+  gap: 0.75rem;
+  margin: 1.5rem 0 3rem;
+}
+
+.gallery-thumb-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.gallery-thumb {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.4rem;
+  background: var(--white);
+  text-align: center;
+}
+
+.gallery-thumb img {
+  width: 100%;
+  height: 90px;
+  object-fit: cover;
+  border-radius: 4px;
+  background: var(--sand);
+}
+
+.gallery-thumb-name {
+  font-size: 0.7rem;
+  color: var(--muted);
+  word-break: break-all;
+  margin: 0.3rem 0;
+}
+
+.gallery-remove {
+  font-size: 0.78rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+}
+
+.gallery-remove input {
+  width: auto;
+}
+
+.alert-error ul {
+  margin: 0.4rem 0 0;
+  padding-left: 1.2rem;
+}

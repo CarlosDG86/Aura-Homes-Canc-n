@@ -17,9 +17,12 @@ dist/                → the generated site (this is what you deploy)
 
 ## Run
 ```
-python3 build.py          # regenerates dist/ from data/
+python build.py           # regenerates dist/ from data/
+python build.py --serve   # regenerates dist/ AND opens a local preview at http://localhost:8000
 ```
 No framework required. It's plain static HTML/CSS/JS — deploy `dist/` to any static host (Netlify, Vercel, Cloudflare Pages — all free tier).
+
+> **Don't double-click the files in `dist/` to preview the site.** Links like `propiedades/` only turn into `propiedades/index.html` automatically when a real web server is involved — that's how every static host (and `--serve` above) works. Opening the `.html` files directly from File Explorer uses the `file://` protocol instead, which has no server to do that resolution, so clicking a link just shows you a raw folder listing and you have to pick `index.html` yourself. That's not a bug in the site — it only shows up when previewing the wrong way. Always use `python build.py --serve` to preview.
 
 > Note on stack: the handoff spec named Next.js; I built framework-free static HTML for speed and zero cost. It migrates cleanly to Next.js later if Dev prefers. This is a Dev/Infra call to ratify — the content model (JSON) and markup port directly.
 

@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Iniciar sesión — Aura Homes Cancún{% endblock %}
+{% block main_class %}login-page{% endblock %}
+{% block content %}
+<div class="card login-card">
+  <h1>Iniciar sesión</h1>
+  <p class="muted">Plataforma interna — Aura Homes Cancún</p>
+  {% if error %}
+  <div class="alert alert-error">{{ error }}</div>
+  {% endif %}
+  <form method="post" action="/login">
+    <label for="email">Correo electrónico</label>
+    <input type="email" id="email" name="email" required autofocus value="{{ email or '' }}">
+    <label for="password">Contraseña</label>
+    <input type="password" id="password" name="password" required>
+    <button type="submit" class="btn btn-primary">Entrar</button>
+  </form>
+</div>
+{% endblock %}

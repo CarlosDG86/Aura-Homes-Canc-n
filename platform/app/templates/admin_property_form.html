@@ -1,0 +1,174 @@
+{% extends "base.html" %}
+{% block title %}{% if mode == "new" %}Nueva propiedad{% else %}Editar propiedad{% endif %} — Aura Homes Cancún{% endblock %}
+{% block content %}
+<h1 class="page-title">{% if mode == "new" %}Nueva propiedad{% else %}Editar propiedad — {{ prop_id }}{% endif %}</h1>
+<p class="muted"><a href="/admin/properties">&larr; Volver a propiedades</a></p>
+
+{% if errors %}
+<div class="alert alert-error">
+  <strong>Corrige lo siguiente:</strong>
+  <ul>{% for e in errors %}<li>{{ e }}</li>{% endfor %}</ul>
+</div>
+{% endif %}
+
+{% if build_error %}
+<div class="alert alert-error">
+  <strong>Salida de la compilación (build.py):</strong>
+  <pre class="build-error-output">{{ build_error }}</pre>
+</div>
+{% endif %}
+
+<form method="post" enctype="multipart/form-data"
+      action="{% if mode == 'new' %}/admin/properties/new{% else %}/admin/properties/{{ prop_id }}/edit{% endif %}">
+
+  <div class="card">
+    <h2>Datos básicos</h2>
+    <div class="form-grid">
+      <div>
+        <label>ID {% if mode == "edit" %}(no editable){% endif %}</label>
+        {% if mode == "new" %}
+        <input type="text" name="id" value="{{ values.id }}" placeholder="AUR-005" required>
+        <p class="help">Solo letras, números y guiones. Se usa como carpeta de fotos, no se puede cambiar después.</p>
+        {% else %}
+        <input type="text" value="{{ prop_id }}" disabled>
+        {% endif %}
+      </div>
+      <div>
+        <label>Estatus</label>
+        <select name="status">
+          <option value="available" {% if values.status == "available" %}selected{% endif %}>available (disponible)</option>
+          <option value="rented" {% if values.status == "rented" %}selected{% endif %}>rented (rentada)</option>
+        </select>
+      </div>
+      <div>
+        <label>Zona</label>
+        <input type="text" name="zone" value="{{ values.zone }}" required>
+      </div>
+      <div>
+        <label>Precio mensual (MXN)</label>
+        <input type="number" step="1" name="priceMXN" value="{{ values.priceMXN }}" required>
+      </div>
+      <div class="checkbox-field">
+        <label><input type="checkbox" name="featured" value="1" {% if values.featured %}checked{% endif %}> Destacada (featured)</label>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Slug (URL)</h2>
+    <div class="form-grid">
+      <div>
+        <label>Slug ES</label>
+        <input type="text" name="slug_es" value="{{ values.slug_es }}" placeholder="casa-ejemplo-cancun" required>
+      </div>
+      <div>
+        <label>Slug EN</label>
+        <input type="text" name="slug_en" value="{{ values.slug_en }}" placeholder="example-house-cancun" required>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Especificaciones</h2>
+    <div class="form-grid form-grid-4">
+      <div><label>Recámaras (beds)</label><input type="number" step="1" name="beds" value="{{ values.beds }}" required></div>
+      <div><label>Baños (baths)</label><input type="number" step="0.5" name="baths" value="{{ values.baths }}" required></div>
+      <div><label>Área (m²)</label><input type="number" step="1" name="area" value="{{ values.area }}" required></div>
+      <div><label>Estacionamiento</label><input type="number" step="1" name="parking" value="{{ values.parking }}" required></div>
+    </div>
+    <div class="form-grid form-grid-2">
+      <div class="checkbox-field"><label><input type="checkbox" name="furnished" value="1" {% if values.furnished %}checked{% endif %}> Amueblada</label></div>
+      <div class="checkbox-field"><label><input type="checkbox" name="pets" value="1" {% if values.pets %}checked{% endif %}> Se permiten mascotas</label></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Ubicación (mapa aproximado)</h2>
+    <div class="form-grid">
+      <div><label>Latitud</label><input type="number" step="any" name="mapLat" value="{{ values.mapLat }}" required></div>
+      <div><label>Longitud</label><input type="number" step="any" name="mapLng" value="{{ values.mapLng }}" required></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Título y disponibilidad</h2>
+    <div class="form-grid">
+      <div><label>Título ES</label><input type="text" name="title_es" value="{{ values.title_es }}" required></div>
+      <div><label>Título EN</label><input type="text" name="title_en" value="{{ values.title_en }}" required></div>
+      <div><label>Disponibilidad ES</label><input type="text" name="avail_es" value="{{ values.avail_es }}" required></div>
+      <div><label>Disponibilidad EN</label><input type="text" name="avail_en" value="{{ values.avail_en }}" required></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Descripción</h2>
+    <div class="form-grid">
+      <div><label>Descripción ES</label><textarea name="desc_es" rows="5" required>{{ values.desc_es }}</textarea></div>
+      <div><label>Descripción EN</label><textarea name="desc_en" rows="5" required>{{ values.desc_en }}</textarea></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Amenidades</h2>
+    <p class="help">Una amenidad por línea.</p>
+    <div class="form-grid">
+      <div><label>Amenidades ES</label><textarea name="amenities_es" rows="6">{{ values.amenities_es }}</textarea></div>
+      <div><label>Amenidades EN</label><textarea name="amenities_en" rows="6">{{ values.amenities_en }}</textarea></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Detalles del contrato</h2>
+    <p class="help">Una línea por detalle, formato: <code>Etiqueta | Valor</code> (ej. <code>Depósito | 1 mes de renta</code>).</p>
+    <div class="form-grid">
+      <div><label>Contrato ES</label><textarea name="contract_es" rows="6">{{ values.contract_es }}</textarea></div>
+      <div><label>Contrato EN</label><textarea name="contract_en" rows="6">{{ values.contract_en }}</textarea></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Requisitos de renta</h2>
+    <p class="help">Un requisito por línea.</p>
+    <div class="form-grid">
+      <div><label>Requisitos ES</label><textarea name="requirements_es" rows="5">{{ values.requirements_es }}</textarea></div>
+      <div><label>Requisitos EN</label><textarea name="requirements_en" rows="5">{{ values.requirements_en }}</textarea></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Puntos de interés cercanos</h2>
+    <p class="help">Una línea por punto, formato: <code>Nombre | Descripción</code> (ej. <code>Escuelas | A pocos minutos</code>).</p>
+    <div class="form-grid">
+      <div><label>Puntos de interés ES</label><textarea name="poi_es" rows="5">{{ values.poi_es }}</textarea></div>
+      <div><label>Puntos de interés EN</label><textarea name="poi_en" rows="5">{{ values.poi_en }}</textarea></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Fotos</h2>
+    {% if mode == "edit" and existing_gallery %}
+    <p class="help">Fotos actuales. Marca "quitar" para eliminarlas de la galería (el archivo se conserva en disco).</p>
+    <div class="gallery-thumb-grid">
+      {% for img in existing_gallery %}
+      <div class="gallery-thumb">
+        <img src="/site-images/{{ prop_id|lower }}/{{ img }}" alt="{{ img }}" loading="lazy">
+        <div class="gallery-thumb-name">{{ img }}</div>
+        <label class="gallery-remove">
+          <input type="checkbox" name="remove_images" value="{{ img }}" {% if img in removed_set %}checked{% endif %}>
+          quitar
+        </label>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+    <label>{% if mode == "new" %}Fotos (al menos una){% else %}Agregar fotos nuevas{% endif %}</label>
+    <input type="file" name="images" accept=".jpg,.jpeg,.png,.webp,.svg" multiple>
+    <p class="help">La primera foto de la galería resultante se usa automáticamente como foto principal.</p>
+  </div>
+
+  <div class="form-actions">
+    <button type="submit" class="btn btn-primary">{% if mode == "new" %}Crear propiedad{% else %}Guardar cambios{% endif %}</button>
+    <a class="btn btn-ghost-inline" href="/admin/properties">Cancelar</a>
+  </div>
+</form>
+{% endblock %}

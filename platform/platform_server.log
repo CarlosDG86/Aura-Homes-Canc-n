@@ -1,0 +1,19 @@
+INFO:     Started server process [3512]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8010 (Press CTRL+C to quit)
+========================================================================
+SEEDED ADMIN USER (Phase 2a) — CHANGE THIS PASSWORD BEFORE ANY REAL DEPLOYMENT
+  email:    admin@aura-homes-cancun.local
+  password: ChangeMe123!
+========================================================================
+INFO:     127.0.0.1:55606 - "GET /login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55608 - "GET /login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57969 - "GET /login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57969 - "GET /static/platform.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57969 - "POST /login HTTP/1.1" 302 Found
+INFO:     127.0.0.1:57969 - "GET /admin HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57969 - "GET /logout HTTP/1.1" 302 Found
+INFO:     127.0.0.1:57969 - "GET /login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57969 - "GET /admin HTTP/1.1" 302 Found
+INFO:     127.0.0.1:57969 - "GET /login HTTP/1.1" 200 OK

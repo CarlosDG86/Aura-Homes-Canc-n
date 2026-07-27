@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Mis propiedades — Aura Homes Cancún{% endblock %}
+{% block content %}
+<h1 class="page-title">Mis propiedades</h1>
+<p class="muted">Solo se muestran las propiedades asociadas a tu cuenta.</p>
+
+<div class="section">
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Título</th>
+        <th>Zona</th>
+        <th>Precio</th>
+        <th>Estatus</th>
+        <th>Recámaras</th>
+        <th>Baños</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for p in properties %}
+      <tr>
+        <td>{{ p.id }}</td>
+        <td>{{ p.title }}</td>
+        <td>{{ p.zone or "—" }}</td>
+        <td>{% if p.price_amount %}{{ "%.2f"|format(p.price_amount) }} {{ p.price_currency }}{% else %}—{% endif %}</td>
+        <td><span class="status status-{{ p.status.value }}">{{ p.status.value }}</span></td>
+        <td>{{ p.bedrooms if p.bedrooms is not none else "—" }}</td>
+        <td>{{ p.bathrooms if p.bathrooms is not none else "—" }}</td>
+      </tr>
+      {% else %}
+      <tr class="empty-row"><td colspan="7">Todavía no tienes propiedades asignadas.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

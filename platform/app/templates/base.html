@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Aura Homes Cancún — Plataforma{% endblock %}</title>
+  <link rel="stylesheet" href="/static/platform.css">
+</head>
+<body>
+{% if user %}
+<header class="topbar">
+  <div class="brand">Aura Homes Cancún — Plataforma</div>
+  <nav>
+    <span class="user-chip">{{ user.name }}
+      <span class="badge badge-{{ user.role.value }}">{{ user.role.value }}</span>
+    </span>
+    <a href="/logout" class="btn btn-ghost">Cerrar sesión</a>
+  </nav>
+</header>
+{% endif %}
+<main class="{% block main_class %}container{% endblock %}">
+  {% block content %}{% endblock %}
+</main>
+</body>
+</html>
