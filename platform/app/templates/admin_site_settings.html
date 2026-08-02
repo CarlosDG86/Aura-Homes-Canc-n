@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}Configuración del sitio — Aura Homes Cancún{% endblock %}
+{% block content %}
+<h1 class="page-title">Configuración del sitio</h1>
+<p class="muted"><a href="/admin">&larr; Volver al panel de administración</a></p>
+<p class="muted">
+  Número de WhatsApp y correo de contacto que se publican en el sitio real
+  (<code>data/site.json</code>). Al guardar se vuelve a generar el sitio automáticamente.
+</p>
+
+{% if saved %}
+<div class="alert alert-success">Guardado. El sitio se regeneró con el nuevo número de WhatsApp.</div>
+{% endif %}
+
+{% if errors %}
+<div class="alert alert-error">
+  <strong>Corrige lo siguiente:</strong>
+  <ul>{% for e in errors %}<li>{{ e }}</li>{% endfor %}</ul>
+</div>
+{% endif %}
+
+{% if build_error %}
+<div class="alert alert-error">
+  <strong>La compilación falló — no se aplicaron los cambios (se restauró el valor anterior):</strong>
+  <pre class="build-error-output">{{ build_error }}</pre>
+</div>
+{% endif %}
+
+<div class="card">
+  <h3>Contacto de WhatsApp</h3>
+  <form method="post" action="/admin/site-settings">
+    <div class="form-grid">
+      <div>
+        <label for="whatsapp">Número de WhatsApp</label>
+        <input type="text" id="whatsapp" name="whatsapp" value="{{ values.whatsapp }}"
+               placeholder="+529981234567" required>
+        <p class="help">Formato internacional: 10 a 15 dígitos, con + al inicio. Es el número al que llegan los mensajes desde el sitio.</p>
+      </div>
+      <div>
+        <label for="whatsapp_display">Número para mostrar (opcional)</label>
+        <input type="text" id="whatsapp_display" name="whatsapp_display" value="{{ values.whatsapp_display }}"
+               placeholder="+52 998 123 4567">
+        <p class="help">Cómo se ve el número en pantalla. Si lo dejas vacío se formatea solo.</p>
+      </div>
+      <div>
+        <label for="email">Correo de contacto (opcional)</label>
+        <input type="email" id="email" name="email" value="{{ values.email }}"
+               placeholder="hola@aurahomescancun.com">
+      </div>
+    </div>
+    <div class="form-actions">
+      <button type="submit" class="btn-primary-inline">Guardar y regenerar sitio</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

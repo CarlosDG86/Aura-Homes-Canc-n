@@ -91,6 +91,11 @@ class Property(Base):
 
     id = Column(Integer, primary_key=True)
     owner_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    # Link to the public showcase property (data/properties.json "id", e.g.
+    # "AUR-001"). NULL for properties created only inside the platform. The
+    # site JSON stays the source of truth for public content; this row is a
+    # management-side mirror, refreshed by the "sync site properties" action.
+    site_ref = Column(String, nullable=True, unique=True, index=True)
     title = Column(String, nullable=False)
     zone = Column(String, nullable=True)
     city = Column(String, default="Cancún")

@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block title %}Administrar usuario — {{ target.name }} — Aura Homes Cancún{% endblock %}
+{% block content %}
+<h1 class="page-title">Administrar usuario — {{ target.name }}</h1>
+<p class="muted"><a href="/admin">&larr; Volver al panel de administración</a></p>
+
+{% if flash %}
+<div class="alert alert-{{ 'error' if flash.kind == 'error' else 'success' }}">{{ flash.message }}</div>
+{% endif %}
+
+<div class="card">
+  <h3>Datos del usuario</h3>
+  <form method="post" action="/admin/users/{{ target.id }}">
+    <div class="form-grid">
+      <div>
+        <label for="u-name">Nombre</label>
+        <input type="text" id="u-name" name="name" value="{{ target.name }}" required>
+      </div>
+      <div>
+        <label for="u-email">Correo</label>
+        <input type="email" id="u-email" name="email" value="{{ target.email }}" required>
+      </div>
+      <div>
+        <label for="u-phone">Teléfono</label>
+        <input type="text" id="u-phone" name="phone" value="{{ target.phone or '' }}">
+      </div>
+      <div>
+        <label for="u-role">Rol</label>
+        <select id="u-role" name="role">
+          <option value="admin" {% if target.role.value == 'admin' %}selected{% endif %}>admin</option>
+          <option value="owner" {% if target.role.value == 'owner' %}selected{% endif %}>owner</option>
+          <option value="tenant" {% if target.role.value == 'tenant' %}selected{% endif %}>tenant</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-actions"><button type="submit" class="btn-primary-inline">Guardar datos</button></div>
+  </form>
+</div>
+
+<div class="card">
+  <h3>Restablecer contraseña</h3>
+  <form method="post" action="/admin/users/{{ target.id }}/password">
+    <div class="form-grid">
+      <div>
+        <label for="u-pass">Nueva contraseña temporal</label>
+        <input type="text" id="u-pass" name="new_password" placeholder="Mínimo 8 caracteres" required>
+        <p class="help">Se muestra en claro a propósito para que puedas comunicarla. El usuario debe cambiarla al entrar.</p>
+      </div>
+    </div>
+    <div class="checkbox-field">
+      <label><input type="checkbox" name="send_email" value="1"> Enviar la nueva clave por correo a {{ target.email }}</label>
+    </div>
+    <div class="form-actions"><button type="submit" class="btn-primary-inline">Restablecer contraseña</button></div>
+  </form>
+</div>
+
+<div class="card">
+  <h3>Casas asignadas</h3>
+  {% if owned %}
+  <p class="help">Casas que pertenecen a este usuario:</p>
+  <ul class="assigned-list">
+    {% for p in owned %}
+    <li>{% if p.site_ref %}<code>{{ p.site_ref }}</code> — {% endif %}{{ p.title }}</li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p class="help">Este usuario no tiene casas asignadas todavía.</p>
+  {% endif %}
+
+  {% if others %}
+  <form method="post" action="/admin/users/{{ target.id }}/properties">
+    <p class="help">Reasignar a este usuario casas que hoy pertenecen a otros (una casa siempre tiene un dueño; marcarla aquí la mueve a este usuario):</p>
+    {% for p in others %}
+    <div class="checkbox-field">
+      <label>
+        <input type="checkbox" name="property_ids" value="{{ p.id }}">
+        {% if p.site_ref %}<code>{{ p.site_ref }}</code> — {% endif %}{{ p.title }}
+        <span class="muted">(hoy: {{ p.owner_name }})</span>
+      </label>
+    </div>
+    {% endfor %}
+    <div class="form-actions"><button type="submit" class="btn-primary-inline">Reasignar seleccionadas a este usuario</button></div>
+  </form>
+  {% else %}
+  <p class="help">No hay casas de otros usuarios para reasignar.</p>
+  {% endif %}
+</div>
+{% endblock %}

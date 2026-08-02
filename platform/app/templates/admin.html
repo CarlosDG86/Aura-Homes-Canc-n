@@ -2,25 +2,78 @@
 {% block title %}Panel de administración — Aura Homes Cancún{% endblock %}
 {% block content %}
 <h1 class="page-title">Panel de administración</h1>
-<p class="muted">Vista de solo lectura de todas las propiedades, propietarios y usuarios registrados en la plataforma.</p>
+<p class="muted">Gestión de propietarios y propiedades de la plataforma. La edición del contenido público del sitio se hace por separado en «Propiedades del sitio».</p>
+
+{% if flash %}
+<div class="alert alert-{{ 'error' if flash.kind == 'error' else 'success' }}">{{ flash.message }}</div>
+{% endif %}
 
 <div class="section">
-  <h2>Propiedades del sitio</h2>
+  <h2>Sitio público</h2>
   <p class="muted">
     Para agregar, editar o eliminar las propiedades que se publican en el sitio real
     (fotos y textos en <code>data/properties.json</code>), usa
     <a href="/admin/properties">Propiedades del sitio →</a>.
-    La tabla de abajo es una vista distinta y de solo lectura (base de datos interna de la
-    plataforma, todavía sin usar en 2a).
+    Para cambiar el número de WhatsApp y el correo de contacto, usa
+    <a href="/admin/site-settings">Configuración del sitio →</a>.
+    La tabla de abajo es una vista distinta (base de datos interna de la plataforma).
   </p>
 </div>
 
 <div class="section">
   <h2>Propiedades (base de datos interna — {{ properties|length }})</h2>
+  <p class="muted">
+    Espejo de gestión de las casas del sitio público. El sitio manda: el contenido vive en
+    <code>data/properties.json</code> y se edita en «Propiedades del sitio». Aquí solo se
+    reflejan (vinculadas por <code>site_ref</code>) para asignarles propietario. Vuelve a
+    sincronizar cuando cambies el sitio para refrescar este espejo.
+  </p>
+  {% if owners %}
+  <form method="post" action="/admin/sync-site-properties">
+    <table class="sync-table">
+      <thead>
+        <tr>
+          <th>Sinc.</th>
+          <th>ID</th>
+          <th>Título</th>
+          <th>Zona</th>
+          <th>Estatus (sitio)</th>
+          <th>En plataforma</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for s in site_rows %}
+        <tr>
+          <td><input type="checkbox" name="site_refs" value="{{ s.id }}"></td>
+          <td><code>{{ s.id }}</code></td>
+          <td>{{ s.title }}</td>
+          <td>{{ s.zone or "—" }}</td>
+          <td><span class="status status-{{ s.status }}">{{ s.status }}</span></td>
+          <td>{% if s.synced %}✔ {{ s.owner_name or "—" }}{% else %}<span class="muted">no vinculada</span>{% endif %}</td>
+        </tr>
+        {% else %}
+        <tr class="empty-row"><td colspan="6">No hay casas en data/properties.json.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <div class="sync-form">
+      <label for="sync-owner">Asignar las casas marcadas a:</label>
+      <select id="sync-owner" name="owner_id" required>
+        {% for o in owners %}
+        <option value="{{ o.id }}">{{ o.name }} ({{ o.email }})</option>
+        {% endfor %}
+      </select>
+      <button type="submit" class="btn-primary-inline">Sincronizar seleccionadas</button>
+    </div>
+  </form>
+  {% else %}
+  <p class="muted">Da de alta un propietario primero para poder sincronizar y asignar las casas.</p>
+  {% endif %}
   <table>
     <thead>
       <tr>
         <th>ID</th>
+        <th>Vínculo</th>
         <th>Título</th>
         <th>Zona</th>
         <th>Precio</th>
@@ -32,6 +85,7 @@
       {% for p in properties %}
       <tr>
         <td>{{ p.id }}</td>
+        <td>{% if p.site_ref %}<code>{{ p.site_ref }}</code>{% else %}—{% endif %}</td>
         <td>{{ p.title }}</td>
         <td>{{ p.zone or "—" }}</td>
         <td>{% if p.price_amount %}{{ "%.2f"|format(p.price_amount) }} {{ p.price_currency }}{% else %}—{% endif %}</td>
@@ -42,7 +96,7 @@
         </td>
       </tr>
       {% else %}
-      <tr class="empty-row"><td colspan="6">Aún no hay propiedades registradas.</td></tr>
+      <tr class="empty-row"><td colspan="7">Aún no hay propiedades registradas.</td></tr>
       {% endfor %}
     </tbody>
   </table>
@@ -50,6 +104,34 @@
 
 <div class="section">
   <h2>Propietarios ({{ owners|length }})</h2>
+
+  <div class="card owner-form-card">
+    <h3>Dar de alta un propietario</h3>
+    <form method="post" action="/admin/owners">
+      <div class="form-grid">
+        <div>
+          <label for="owner-name">Nombre</label>
+          <input type="text" id="owner-name" name="name" required>
+        </div>
+        <div>
+          <label for="owner-email">Correo</label>
+          <input type="email" id="owner-email" name="email" required>
+        </div>
+        <div>
+          <label for="owner-phone">Teléfono (opcional)</label>
+          <input type="text" id="owner-phone" name="phone">
+        </div>
+        <div>
+          <label for="owner-password">Contraseña inicial</label>
+          <input type="password" id="owner-password" name="password" required>
+        </div>
+      </div>
+      <div class="form-actions">
+        <button type="submit" class="btn-primary-inline">Crear propietario</button>
+      </div>
+    </form>
+  </div>
+
   <table>
     <thead>
       <tr>
@@ -76,6 +158,7 @@
 
 <div class="section">
   <h2>Usuarios ({{ users|length }})</h2>
+  <p class="muted">Administra cada usuario: actualizar datos, restablecer contraseña y reasignar casas.</p>
   <table>
     <thead>
       <tr>
@@ -83,6 +166,7 @@
         <th>Nombre</th>
         <th>Correo</th>
         <th>Rol</th>
+        <th>Acciones</th>
       </tr>
     </thead>
     <tbody>
@@ -92,6 +176,9 @@
         <td>{{ u.name }}</td>
         <td>{{ u.email }}</td>
         <td><span class="badge badge-{{ u.role.value }}">{{ u.role.value }}</span></td>
+        <td class="actions-cell">
+          <a class="btn btn-ghost-inline" href="/admin/users/{{ u.id }}">Administrar</a>
+        </td>
       </tr>
       {% endfor %}
     </tbody>

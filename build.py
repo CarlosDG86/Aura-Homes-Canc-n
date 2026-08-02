@@ -59,10 +59,12 @@ def topbar(lang, page, prop=None, legal=None):
     lang_tog = (f'<span class="lang"><a href="{es_url}" class="{"on" if lang=="es" else ""}">ES</a>'
                 f'<a href="{en_url}" class="{"on" if lang=="en" else ""}">EN</a></span>')
     admin_link = f'<a class="admin-link" href="{B["platformUrl"]}">{t["admin_login"]}</a>'
+    # WhatsApp button removed from the top bar per CEO request. The WhatsApp
+    # contact channel still lives in the footer and the contact section /
+    # sticky mobile bar — only the header button (next to the admin login) is
+    # gone.
     return (f'<header class="topbar"><div class="wrap"><a href="{home}">{mark()}</a>'
-            f'{links}<div class="topbar-right">{admin_link}{lang_tog}'
-            f'<a class="wa-icon" href="{wa_link()}" aria-label="WhatsApp">{WA}</a>'
-            f'<a class="wa-pill" href="{wa_link()}">{WA}{t["wa"]}</a></div></div></header>')
+            f'{links}<div class="topbar-right">{admin_link}{lang_tog}</div></div></header>')
 
 def footer(lang, page):
     t = site["ui"][lang]

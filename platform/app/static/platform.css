@@ -167,6 +167,59 @@ form textarea:focus {
   border: 1px solid #F0C7BC;
 }
 
+.alert-success {
+  background: #DEEDE9;
+  color: var(--teal-dark);
+  border: 1px solid #B9D8D1;
+}
+
+.sync-table {
+  margin-bottom: 1rem;
+}
+
+.sync-table td:first-child,
+.sync-table th:first-child {
+  width: 3rem;
+  text-align: center;
+}
+
+.assigned-list {
+  margin: 0.25rem 0 0.75rem;
+  padding-left: 1.2rem;
+  font-size: 0.9rem;
+}
+
+.assigned-list li {
+  margin-bottom: 0.2rem;
+}
+
+.sync-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+  margin: 0 0 1rem;
+}
+
+.sync-form label {
+  margin: 0;
+}
+
+.sync-form select {
+  width: auto;
+  min-width: 220px;
+}
+
+.owner-form-card h3 {
+  font-size: 0.98rem;
+  margin: 0 0 0.75rem;
+  color: var(--teal-dark);
+}
+
+.owner-form-card .form-actions {
+  margin: 1.25rem 0 0;
+}
+
 h1.page-title {
   margin: 0 0 0.25rem;
   font-size: 1.5rem;
