@@ -43,8 +43,12 @@ PLATFORM_DIR = os.path.dirname(APP_DIR)
 REPO_ROOT = os.path.dirname(PLATFORM_DIR)
 
 DATA_PATH = os.path.join(REPO_ROOT, "data", "properties.json")
+SITE_JSON = os.path.join(REPO_ROOT, "data", "site.json")
 DIST_IMG_DIR = os.path.join(REPO_ROOT, "dist", "assets", "img")
 BUILD_SCRIPT = os.path.join(REPO_ROOT, "build.py")
+
+# WhatsApp: 10–15 digits, optional single leading + (spaces are stripped first).
+WHATSAPP_RE = re.compile(r"^\+?\d{10,15}$")
 
 templates = Jinja2Templates(directory=os.path.join(APP_DIR, "templates"))
 
@@ -122,6 +126,55 @@ def _write_and_build(new_props: List[dict]) -> Tuple[bool, Optional[str]]:
             with os.fdopen(fd, "wb") as f:
                 f.write(original_bytes)
             os.replace(tmp_path, DATA_PATH)
+        output = (result.stdout or "") + "\n" + (result.stderr or "")
+        return False, output.strip()
+
+    return True, None
+
+
+# --- data/site.json read/write + build (brand contact settings) ----------
+
+
+def _load_site() -> dict:
+    with open(SITE_JSON, encoding="utf-8") as f:
+        return json.load(f)
+
+
+def _save_site_atomic(data: dict) -> None:
+    """Same atomic-replace strategy as properties.json — never leave site.json
+    half-written if the process dies mid-write."""
+    dir_ = os.path.dirname(SITE_JSON)
+    fd, tmp_path = tempfile.mkstemp(dir=dir_, prefix=".site-", suffix=".json.tmp")
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
+            f.write("\n")
+        os.replace(tmp_path, SITE_JSON)
+    except Exception:
+        if os.path.exists(tmp_path):
+            os.remove(tmp_path)
+        raise
+
+
+def _write_site_and_build(data: dict) -> Tuple[bool, Optional[str]]:
+    """Write site.json then rebuild. On build failure, restore the previous
+    site.json so the source of truth never breaks the generator, and return
+    the build output for display."""
+    original_bytes = None
+    if os.path.exists(SITE_JSON):
+        with open(SITE_JSON, "rb") as f:
+            original_bytes = f.read()
+
+    _save_site_atomic(data)
+    result = _run_build()
+
+    if result.returncode != 0:
+        if original_bytes is not None:
+            dir_ = os.path.dirname(SITE_JSON)
+            fd, tmp_path = tempfile.mkstemp(dir=dir_, prefix=".site-", suffix=".json.tmp")
+            with os.fdopen(fd, "wb") as f:
+                f.write(original_bytes)
+            os.replace(tmp_path, SITE_JSON)
         output = (result.stdout or "") + "\n" + (result.stderr or "")
         return False, output.strip()
 
@@ -291,6 +344,108 @@ def list_properties_page(request: Request, db: Session = Depends(get_db)):
         name="admin_properties_list.html",
         context={"user": user, "properties": properties, "build_error": None},
     )
+
+
+# --- routes: site settings (WhatsApp / contact) --------------------------
+
+
+def _site_settings_context(user, brand, **extra) -> dict:
+    ctx = {
+        "user": user,
+        "values": {
+            "whatsapp": brand.get("whatsapp", ""),
+            "whatsapp_display": brand.get("whatsappDisplay", ""),
+            "email": brand.get("email", ""),
+        },
+        "errors": [],
+        "build_error": None,
+        "saved": False,
+    }
+    ctx.update(extra)
+    return ctx
+
+
+@router.get("/admin/site-settings", response_class=HTMLResponse)
+def site_settings_page(request: Request, db: Session = Depends(get_db)):
+    user, redirect = _admin_or_redirect(request, db)
+    if redirect:
+        return redirect
+    brand = _load_site().get("brand", {})
+    return templates.TemplateResponse(
+        request=request,
+        name="admin_site_settings.html",
+        context=_site_settings_context(user, brand),
+    )
+
+
+@router.post("/admin/site-settings", response_class=HTMLResponse)
+def site_settings_submit(
+    request: Request,
+    db: Session = Depends(get_db),
+    whatsapp: str = Form(...),
+    whatsapp_display: str = Form(""),
+    email: str = Form(""),
+):
+    user, redirect = _admin_or_redirect(request, db)
+    if redirect:
+        return redirect
+
+    site = _load_site()
+    brand = site.setdefault("brand", {})
+
+    errors: List[str] = []
+    raw = whatsapp.strip()
+    digits = raw.replace(" ", "").replace("-", "")
+    if not WHATSAPP_RE.match(digits):
+        errors.append("El número de WhatsApp debe tener 10 a 15 dígitos, opcionalmente con + al inicio (ej. +529981234567).")
+    email_clean = email.strip()
+    if email_clean and "@" not in email_clean:
+        errors.append("El correo de contacto no parece válido.")
+
+    submitted = {
+        "whatsapp": raw,
+        "whatsapp_display": whatsapp_display.strip(),
+        "email": email_clean,
+    }
+
+    if errors:
+        return templates.TemplateResponse(
+            request=request,
+            name="admin_site_settings.html",
+            context=_site_settings_context(user, brand, errors=errors, values=submitted),
+        )
+
+    # Normalize to E.164 (single leading +). wa.me links strip the + anyway,
+    # but storing it canonically keeps site.json tidy.
+    normalized = "+" + digits.lstrip("+")
+    brand["whatsapp"] = normalized
+    brand["whatsappDisplay"] = whatsapp_display.strip() or _format_wa_display(normalized)
+    if email_clean:
+        brand["email"] = email_clean
+
+    ok, build_error = _write_site_and_build(site)
+    if not ok:
+        return templates.TemplateResponse(
+            request=request,
+            name="admin_site_settings.html",
+            context=_site_settings_context(user, brand, build_error=build_error, values=submitted),
+        )
+
+    return templates.TemplateResponse(
+        request=request,
+        name="admin_site_settings.html",
+        context=_site_settings_context(user, brand, saved=True),
+    )
+
+
+def _format_wa_display(e164: str) -> str:
+    """Best-effort pretty display for a +52 Mexican number; falls back to the
+    raw value for anything else."""
+    d = e164.lstrip("+")
+    if d.startswith("52") and len(d) == 12:  # 52 + 10-digit national number
+        n = d[2:]
+        return f"+52 {n[:3]} {n[3:6]} {n[6:]}"
+    return e164
 
 
 # --- routes: new -------------------------------------------------------

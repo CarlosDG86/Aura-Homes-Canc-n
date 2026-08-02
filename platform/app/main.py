@@ -8,6 +8,7 @@ import os
 from fastapi import FastAPI
 from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
+from sqlalchemy import text
 from starlette.middleware.sessions import SessionMiddleware
 
 from . import models
@@ -15,6 +16,37 @@ from .auth import hash_password
 from .auth import router as auth_router
 from .db import Base, SessionLocal, engine
 from .routers import admin, owner, pages, payments, site_content, tenant
+
+
+def _load_dotenv() -> None:
+    """Minimal .env loader (no python-dotenv dependency, per INFRA_STACK.md).
+
+    Reads platform/.env if present and sets any KEY=VALUE that is not already
+    defined in the real environment — so a shell-exported variable always
+    wins over the file. Lets SMTP_* and the other settings live in one
+    gitignored file instead of being exported by hand on every run.
+    """
+    env_path = os.path.join(
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__))), ".env"
+    )
+    if not os.path.exists(env_path):
+        return
+    try:
+        with open(env_path, encoding="utf-8") as fh:
+            for raw in fh:
+                line = raw.strip()
+                if not line or line.startswith("#") or "=" not in line:
+                    continue
+                key, _, val = line.partition("=")
+                key = key.strip()
+                val = val.strip().strip('"').strip("'")
+                if key and key not in os.environ:
+                    os.environ[key] = val
+    except OSError:
+        pass
+
+
+_load_dotenv()
 
 SECRET_KEY = os.environ.get("SECRET_KEY", "dev-insecure-secret-key-change-me")
 SEED_ADMIN_EMAIL = os.environ.get("SEED_ADMIN_EMAIL", "admin@aura-homes-cancun.local")
@@ -54,9 +86,28 @@ def root():
     return RedirectResponse(url="/login")
 
 
+def _ensure_property_site_ref() -> None:
+    """Tiny forward migration: add properties.site_ref to an existing DB.
+
+    There is no Alembic in this MVP and Base.metadata.create_all() does not
+    alter tables that already exist, so a DB created before this column was
+    added needs the column patched in by hand. Idempotent: checks PRAGMA
+    table_info first and only ALTERs when the column is missing.
+    """
+    if not engine.url.get_backend_name().startswith("sqlite"):
+        return
+    with engine.begin() as conn:
+        cols = {row[1] for row in conn.execute(text("PRAGMA table_info(properties)"))}
+        # cols is empty only if the table does not exist; create_all ran first,
+        # so a non-empty set that lacks site_ref means a pre-existing table.
+        if cols and "site_ref" not in cols:
+            conn.execute(text("ALTER TABLE properties ADD COLUMN site_ref VARCHAR"))
+
+
 @app.on_event("startup")
 def on_startup() -> None:
     Base.metadata.create_all(bind=engine)
+    _ensure_property_site_ref()
 
     db = SessionLocal()
     try:
