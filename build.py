@@ -63,7 +63,9 @@ def topbar(lang, page, prop=None, legal=None):
     # contact channel still lives in the footer and the contact section /
     # sticky mobile bar — only the header button (next to the admin login) is
     # gone.
-    return (f'<header class="topbar"><div class="wrap"><a href="{home}">{mark()}</a>'
+    apx = "../assets/" if page in ("home", "legal") else "../../assets/"
+    return (f'<header class="topbar"><div class="wrap">'
+            f'<a class="brand" href="{home}"><img class="brand-logo" src="{apx}img/logo.png" alt="{B["name"]} {B["city"].title()}"></a>'
             f'{links}<div class="topbar-right">{admin_link}{lang_tog}</div></div></header>')
 
 def footer(lang, page):
@@ -127,20 +129,19 @@ def page_shell(lang, title, body, page):
 def build_home(lang):
     t = site["ui"][lang]
     featured = [p for p in LIVE if p.get("featured")]
-    hero_img = "../assets/img/aur-001/vistaFrente.jpg"
+    hero_img = "../assets/img/banner.jpg"
     cards = "".join(card(p, lang, "home") for p in featured)
     trust = "".join(f'<div class="trust-item"><div class="ic">{HOUSE}</div><h3>{a}</h3><p>{b}</p></div>' for a,b in t["trust"])
     steps = "".join(f'<div class="step"><div class="n">{i+1}</div><div><h3>{a}</h3><p>{b}</p></div></div>' for i,(a,b) in enumerate(t["how"]))
     body = f'''{topbar(lang,"home")}
 <main class="page">
-  <section class="hero"><div class="wrap hero-inner">
-    <div><div class="eyebrow hero-eyebrow">{t["hero_eyebrow"]}</div>
+  <section class="hero hero-stacked">
+    <div class="hero-banner-img"><img src="{hero_img}" alt="{t["hero_title"]}"></div>
+    <div class="wrap hero-content">
+      <div class="eyebrow hero-eyebrow">{t["hero_eyebrow"]}</div>
       <h1>{t["hero_title"]}</h1><p class="sub">{t["hero_sub"]}</p>
-      <div class="hero-actions"><a class="btn btn-cta" href="{("propiedades/" if lang=="es" else "properties/")}">{t["hero_cta"]}</a>
-        <a class="btn btn-wa" href="{wa_link()}">{WA}{t["wa"]}</a></div>
-      <div class="hero-note"><span class="dot"></span>{t["reply_note"]}</div></div>
-    <div class="hero-media"><img src="{hero_img}" alt="{t["hero_title"]}"></div>
-  </div></section>
+    </div>
+  </section>
 
   <section class="section"><div class="wrap">
     <div class="section-head"><h2>{t["featured"]}</h2><a href="{("propiedades/" if lang=="es" else "properties/")}">{t["see_all"]} →</a></div>

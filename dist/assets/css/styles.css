@@ -39,12 +39,14 @@ h1,h2,h3{font-family:var(--f-head);font-weight:600;line-height:1.15;margin:0}
 /* top bar */
 .topbar{position:sticky;top:0;z-index:50;background:rgba(247,243,236,.96);
   backdrop-filter:blur(8px);border-bottom:1px solid var(--border)}
-.topbar .wrap{display:flex;align-items:center;justify-content:space-between;height:60px;gap:12px}
+.topbar .wrap{display:flex;align-items:center;justify-content:space-between;height:216px;gap:12px}
 .mark{display:flex;flex-direction:column;line-height:1;font-family:var(--f-head);font-weight:600}
 .mark .m1{font-size:18px;color:var(--teal);display:flex;align-items:center;gap:7px}
 .mark .m2{font-family:var(--f-body);font-size:9px;letter-spacing:.30em;color:var(--turq);
   font-weight:600;margin-top:3px;padding-left:26px}
 .mark svg{width:19px;height:19px}
+.brand{display:inline-flex;align-items:center}
+.brand-logo{height:200px;width:auto;display:block}
 .nav-links{display:none;gap:22px;font-size:14px;font-weight:500;color:var(--ink)}
 .nav-links a:hover{color:var(--teal)}
 .topbar-right{display:flex;align-items:center;gap:10px}
@@ -69,6 +71,11 @@ h1,h2,h3{font-family:var(--f-head);font-weight:600;line-height:1.15;margin:0}
 .hero-note .dot{width:7px;height:7px;border-radius:999px;background:var(--turq)}
 .hero-media{margin-top:26px}
 .hero-media img{width:100%;aspect-ratio:3/4;object-fit:cover;border-radius:var(--r-card);box-shadow:var(--shadow-raise)}
+.hero-banner-img img{display:block;width:100%;height:clamp(160px,28vw,360px);object-fit:cover}
+.hero-stacked .hero-content{text-align:center;padding:36px 16px 44px}
+.hero-stacked p.sub{max-width:46ch;margin-left:auto;margin-right:auto}
+.hero-stacked .hero-actions{justify-content:center}
+.hero-stacked .hero-note{justify-content:center}
 
 /* section shells */
 .section{padding:40px 0}
@@ -235,6 +242,7 @@ h1,h2,h3{font-family:var(--f-head);font-weight:600;line-height:1.15;margin:0}
   .hero p.sub{font-size:18px}
   .hero-media{margin-top:0}
   .hero-media img{max-height:560px}
+  .hero-stacked .hero-content{padding:48px 32px 56px}
   .section{padding:64px 0}
   .section-head h2{font-size:34px}
   .grid{grid-template-columns:repeat(3,1fr);gap:24px}
