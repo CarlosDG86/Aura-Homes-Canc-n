@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}Mi bandeja{% endblock %}
+{% block content %}
+<h1>Mi bandeja</h1>
+
+<section class="card">
+  <h2>Escribir a mi propietario</h2>
+  {% if owner %}
+  <form method="post" action="/inquilino/mensajes">
+    {{ csrf_input(request) }}
+    <label>Asunto <input name="subject" maxlength="200"></label>
+    <label>Mensaje <textarea name="body" rows="4" required maxlength="4000"></textarea></label>
+    <button class="btn btn-primary" type="submit">Enviar a {{ owner.name }}</button>
+  </form>
+  <p class="hint">Lo que escribes aquí queda registrado con fecha. Si más adelante hay
+     un desacuerdo sobre qué se pidió y cuándo, esta es la constancia.</p>
+  {% else %}
+  <p>Todavía no tienes un propietario asignado.</p>
+  {% endif %}
+</section>
+
+{% if announcements %}
+<section class="card">
+  <h2>Comunicados</h2>
+  <ul class="timeline">
+    {% for a in announcements %}
+      <li {% if a.rec.id in just_read_anns %}class="unread"{% endif %}>
+        <strong>{{ a.ann.title }}</strong>
+        {% if a.rec.id in just_read_anns %}<span class="badge-new">nuevo</span>{% endif %}
+        <div>{{ a.ann.body }}</div>
+        <span class="when">{{ a.ann.created_at.strftime('%d/%m/%Y %H:%M') if a.ann.created_at else '' }}</span>
+      </li>
+    {% endfor %}
+  </ul>
+</section>
+{% endif %}
+
+<section class="card">
+  <h2>Conversación</h2>
+  <ul class="timeline">
+    {% for m in messages %}
+      <li {% if m.id in just_read_msgs %}class="unread"{% endif %}>
+        <strong>
+          {% if m.sender_user_id == user.id %}Yo{% else %}{{ people[m.sender_user_id].name if m.sender_user_id in people else '—' }}{% endif %}:
+        </strong>
+        {% if m.id in just_read_msgs %}<span class="badge-new">nuevo</span>{% endif %}
+        {{ m.subject + ' — ' if m.subject else '' }}{{ m.body }}
+        <span class="when">{{ m.created_at.strftime('%d/%m/%Y %H:%M') if m.created_at else '' }}</span>
+      </li>
+    {% else %}
+      <li>Todavía no hay mensajes.</li>
+    {% endfor %}
+  </ul>
+</section>
+<p><a href="/inquilino">Volver</a></p>
+{% endblock %}

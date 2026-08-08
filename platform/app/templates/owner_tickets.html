@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Reportes de mantenimiento{% endblock %}
+{% block content %}
+<h1>Reportes de mantenimiento</h1>
+<p class="actions">
+  <a class="btn" href="/owner/tickets/reporte">Ver reporte por unidad</a>
+  <a class="btn" href="/owner/inquilinos">Mis inquilinos</a>
+  <a class="btn" href="/owner/comunicados">Comunicados</a>
+  <a class="btn" href="/owner/mensajes">Mensajes</a>
+</p>
+
+<form method="get" action="/owner/tickets" class="filters">
+  <select name="estado">
+    <option value="">Todos los estados</option>
+    {% for s in statuses %}<option value="{{ s.value }}" {% if estado==s.value %}selected{% endif %}>{{ s.value }}</option>{% endfor %}
+  </select>
+  <select name="propiedad">
+    <option value="">Todas mis propiedades</option>
+    {% for p in properties %}<option value="{{ p.id }}" {% if propiedad==p.id|string %}selected{% endif %}>{{ p.title }}</option>{% endfor %}
+  </select>
+  <button class="btn" type="submit">Filtrar</button>
+</form>
+
+<table>
+  <thead><tr><th>Ref.</th><th>Propiedad</th><th>Asunto</th><th>Categoría</th><th>Prioridad</th><th>Estado</th></tr></thead>
+  <tbody>
+  {% for t in tickets %}
+    <tr {% if t.priority and t.priority.value=='emergencia' %}class="row-urgent"{% endif %}>
+      <td><a href="/owner/tickets/{{ t.id }}">{{ t.public_ref or t.id }}</a></td>
+      <td>{{ prop_names.get(t.property_id, '—') }}</td>
+      <td>{{ t.title }}</td>
+      <td>{{ t.category.value if t.category else '—' }}</td>
+      <td><strong>{{ t.priority.value if t.priority else '—' }}</strong></td>
+      <td>{{ t.status.value if t.status else '—' }}</td>
+    </tr>
+  {% else %}
+    <tr class="empty-row"><td colspan="6">No hay reportes con estos filtros.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

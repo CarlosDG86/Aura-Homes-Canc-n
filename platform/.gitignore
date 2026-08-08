@@ -5,3 +5,6 @@ __pycache__/
 *.pyc
 .venv/
 venv/
+data/platform-mock.db
+data/platform-mock.db-*
+data/uploads/

@@ -4,6 +4,17 @@
 <h1 class="page-title">Mis propiedades</h1>
 <p class="muted">Solo se muestran las propiedades asociadas a tu cuenta.</p>
 
+<p class="actions">
+  <a class="btn btn-primary" href="/owner/tickets">Reportes de mantenimiento{% if open_tickets %} ({{ open_tickets }}){% endif %}</a>
+  <a class="btn" href="/owner/inquilinos">Mis inquilinos</a>
+  <a class="btn" href="/owner/comunicados">Comunicados</a>
+  <a class="btn" href="/owner/mensajes">Mensajes{% if unread_messages %} ({{ unread_messages }}){% endif %}</a>
+  <a class="btn" href="/owner/perfil">Mis datos</a>
+</p>
+{% if urgent_tickets %}
+<p class="flash flash-urgent">Tienes {{ urgent_tickets }} reporte(s) marcados como EMERGENCIA.</p>
+{% endif %}
+
 <div class="section">
   <table>
     <thead>

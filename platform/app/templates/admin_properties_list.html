@@ -41,6 +41,7 @@
           <a class="btn btn-ghost-inline" href="/admin/properties/{{ p.id }}/edit">Editar</a>
           <form method="post" action="/admin/properties/{{ p.id }}/delete" class="inline-form"
                 onsubmit="return confirm('¿Eliminar {{ p.id }} del sitio? Se quitará de data/properties.json y del sitio publicado. Las fotos NO se borrarán del disco.');">
+    {{ csrf_input(request) }}
             <button type="submit" class="btn btn-danger-inline">Eliminar</button>
           </form>
         </td>

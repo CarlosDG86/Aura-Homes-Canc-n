@@ -7,6 +7,9 @@
   <link rel="stylesheet" href="/static/platform.css">
 </head>
 <body>
+{% if mock_mode %}
+<div class="mock-banner" role="status">{{ mock_banner }}</div>
+{% endif %}
 {% if user %}
 <header class="topbar">
   <div class="brand">Aura Homes Cancún — Plataforma</div>

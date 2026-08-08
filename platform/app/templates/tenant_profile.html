@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Mis datos{% endblock %}
+{% block content %}
+<h1>Mis datos</h1>
+{% if saved %}<p class="flash flash-ok">Datos guardados.</p>{% endif %}
+<form method="post" action="/inquilino/perfil" class="card">
+  {{ csrf_input(request) }}
+  <label>Nombre
+    <input name="name" value="{{ user.name }}" required maxlength="120">
+  </label>
+  <label>Teléfono
+    <input name="phone" value="{{ user.phone or '' }}" maxlength="40"
+           {% if mock_mode %}placeholder="+52 555 0100 0000"{% endif %}>
+  </label>
+  {% if mock_mode %}<p class="hint">Modo pruebas: solo se aceptan teléfonos del rango +52 555 01XX XXXX.</p>{% endif %}
+  <label>Correo de acceso
+    <input value="{{ user.email }}" disabled>
+  </label>
+  <p class="hint">El correo de acceso no se cambia desde aquí por seguridad. Pídelo a tu propietario.</p>
+  <button class="btn btn-primary" type="submit">Guardar</button>
+</form>
+<p><a href="/sesiones">Ver mis sesiones activas</a></p>
+<p><a href="/inquilino">Volver</a></p>
+{% endblock %}

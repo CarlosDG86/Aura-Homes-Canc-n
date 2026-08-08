@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}Mis inquilinos{% endblock %}
+{% block content %}
+<h1>Mis inquilinos</h1>
+{% if flash %}<p class="flash flash-{{ flash.kind }}">{{ flash.message }}</p>{% endif %}
+
+<section class="card">
+  <h2>Dar de alta un inquilino</h2>
+  {% if mock_mode %}
+  <p class="hint">Modo pruebas: solo correos de dominios de prueba (ej. <code>nombre@example.com</code>)
+     y teléfonos <code>+52 555 01XX XXXX</code>. No se envían correos.</p>
+  {% endif %}
+  <form method="post" action="/owner/inquilinos">
+    {{ csrf_input(request) }}
+    <label>Nombre <input name="name" required maxlength="120"></label>
+    <label>Correo <input type="email" name="email" required maxlength="200"></label>
+    <label>Teléfono <input name="phone" maxlength="40"></label>
+    <label>Vivienda
+      <select name="property_id" required>
+        {% for p in properties %}<option value="{{ p.id }}">{{ p.title }}</option>{% endfor %}
+      </select>
+    </label>
+    <button class="btn btn-primary" type="submit">Dar de alta y vincular</button>
+  </form>
+</section>
+
+<section class="card">
+  <h2>Arrendamientos</h2>
+  <table>
+    <thead><tr><th>Inquilino</th><th>Correo</th><th>Vivienda</th><th>Estado</th><th></th></tr></thead>
+    <tbody>
+    {% for l in leases %}
+      <tr>
+        <td>{{ tenants[l.tenant_id].name if l.tenant_id in tenants else '—' }}</td>
+        <td>{{ tenants[l.tenant_id].email if l.tenant_id in tenants else '—' }}</td>
+        <td>{{ props[l.property_id].title if l.property_id in props else '—' }}</td>
+        <td>{{ l.status.value if l.status else '—' }}</td>
+        <td>
+          {% if l.status and l.status.value == 'active' %}
+          <form method="post" action="/owner/inquilinos/{{ l.id }}/terminar" class="inline-form"
+                onsubmit="return confirm('¿Terminar este arrendamiento? El inquilino perderá el acceso.')">
+            {{ csrf_input(request) }}
+            <button class="btn btn-danger" type="submit">Terminar</button>
+          </form>
+          {% endif %}
+        </td>
+      </tr>
+    {% else %}
+      <tr class="empty-row"><td colspan="5">Todavía no tienes inquilinos.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</section>
+<p><a href="/owner">Volver</a></p>
+{% endblock %}

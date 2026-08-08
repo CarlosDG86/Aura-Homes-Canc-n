@@ -9,6 +9,7 @@
   <div class="alert alert-error">{{ error }}</div>
   {% endif %}
   <form method="post" action="/login">
+    {{ csrf_input(request) }}
     <label for="email">Correo electrónico</label>
     <input type="email" id="email" name="email" required autofocus value="{{ email or '' }}">
     <label for="password">Contraseña</label>

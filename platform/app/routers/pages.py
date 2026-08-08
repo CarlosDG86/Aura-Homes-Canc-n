@@ -24,6 +24,21 @@ from ..auth import hash_password, verify_password
 from ..db import get_db
 from ..email_utils import send_temp_password_email
 from ..models import Property, PropertyStatusEnum, RoleEnum, User
+from ..security import (
+    account_locked_until,
+    audit,
+    client_ip,
+    ip_is_rate_limited,
+    create_server_session,
+    mark_session_start,
+    register_failed_login,
+    register_successful_login,
+    register_template_globals,
+    resolve_server_session,
+    revoke_all_sessions,
+    revoke_session,
+    rotate_csrf_token,
+)
 
 router = APIRouter(tags=["pages"], include_in_schema=False)
 
@@ -31,6 +46,7 @@ APP_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # .../app
 REPO_ROOT = os.path.dirname(os.path.dirname(APP_DIR))  # .../platform/app -> platform -> repo root
 SITE_PROPERTIES_JSON = os.path.join(REPO_ROOT, "data", "properties.json")
 templates = Jinja2Templates(directory=os.path.join(APP_DIR, "templates"))
+register_template_globals(templates)  # expone csrf_input(request) a las plantillas
 
 
 def _flash(request: Request, kind: str, message: str) -> None:
@@ -44,12 +60,28 @@ def _pop_flash(request: Request) -> Optional[dict]:
 
 def _current_user_or_none(request: Request, db: Session) -> Optional[User]:
     """Same resolution as auth.get_current_user, but returns None instead
-    of raising, since these are page routes that redirect instead of 401."""
+    of raising, since these are page routes that redirect instead of 401.
+
+    E1: además aplica la caducidad de sesión (inactividad y límite absoluto)
+    y expulsa a las cuentas desactivadas, para que dar de baja a alguien surta
+    efecto de inmediato en vez de esperar a que cierre sesión.
+    """
     user_id = request.session.get("user_id")
     if not user_id:
         return None
     user = db.get(User, user_id)
     if not user:
+        request.session.clear()
+        return None
+    if not getattr(user, "is_active", True):
+        request.session.clear()
+        return None
+
+    # La cookie dice quién dice ser; la tabla `sessions` decide si sigue
+    # teniendo derecho a entrar. Esto es lo que permite revocar de verdad:
+    # sin fila viva, la cookie no vale aunque esté firmada y sin caducar.
+    is_admin = user.role == RoleEnum.admin
+    if resolve_server_session(db, request, is_admin=is_admin) is None:
         request.session.clear()
         return None
     return user
@@ -82,28 +114,77 @@ def login_page(request: Request, db: Session = Depends(get_db)):
     )
 
 
+#: Un único mensaje para credenciales malas, cuenta inexistente, cuenta
+#: desactivada y cuenta bloqueada. Distinguirlos le confirmaría a un atacante
+#: qué correos existen (enumeración de usuarios, SECURITY.md §1.2).
+_LOGIN_GENERIC_ERROR = "Correo o contraseña incorrectos."
+
+
 @router.post("/login", response_class=HTMLResponse)
 def login_submit(
     request: Request,
     db: Session = Depends(get_db),
     email: str = Form(...),
     password: str = Form(...),
+    csrf_token: str = Form(""),  # lo valida CSRFMiddleware; se declara para que FastAPI no lo rechace
 ):
-    user = db.query(User).filter(User.email == email.lower().strip()).first()
-    if not user or not verify_password(password, user.password_hash):
+    ip = client_ip(request)
+
+    def _fail(message: str = _LOGIN_GENERIC_ERROR, status_code: int = 401):
         return templates.TemplateResponse(
             request=request,
             name="login.html",
-            context={"error": "Correo o contraseña incorrectos.", "email": email},
-            status_code=401,
+            context={"error": message, "email": email},
+            status_code=status_code,
         )
+
+    # Freno por IP antes de tocar la base: corta el barrido de correos.
+    if ip_is_rate_limited(db, ip):
+        audit(db, request, "login.rate_limited", meta=f"ip={ip}")
+        return _fail(
+            "Demasiados intentos desde esta conexión. Espera un minuto e inténtalo de nuevo.",
+            status_code=429,
+        )
+
+    user = db.query(User).filter(User.email == email.lower().strip()).first()
+
+    # Cuenta bloqueada: no se comprueba la contraseña siquiera.
+    if user is not None and account_locked_until(user):
+        register_failed_login(db, None, email, ip)
+        audit(db, request, "login.locked", actor=user, object_type="user", object_id=user.id)
+        return _fail()
+
+    if user is None or not verify_password(password, user.password_hash):
+        register_failed_login(db, user, email, ip)
+        audit(db, request, "login.failed", meta=f"email={email[:120]}")
+        return _fail()
+
+    # Cuenta desactivada (baja lógica): mismo mensaje genérico.
+    if not getattr(user, "is_active", True):
+        register_failed_login(db, None, email, ip)
+        audit(db, request, "login.inactive", actor=user, object_type="user", object_id=user.id)
+        return _fail()
+
+    # Éxito. clear() descarta el identificador de sesión anterior — es lo que
+    # evita la fijación de sesión (SECURITY.md §3): un atacante que plantó una
+    # cookie antes del acceso no obtiene una sesión autenticada con ella.
     request.session.clear()
     request.session["user_id"] = user.id
+    rotate_csrf_token(request)
+    mark_session_start(request)
+    create_server_session(db, request, user)
+    register_successful_login(db, user, email, ip)
+    audit(db, request, "login.success", actor=user, object_type="user", object_id=user.id)
     return RedirectResponse(url=_home_for(user), status_code=302)
 
 
 @router.get("/logout")
-def logout(request: Request):
+def logout(request: Request, db: Session = Depends(get_db)):
+    # Limpiar la cookie no basta: si alguien tiene una copia, seguiría valiendo.
+    # Revocar la fila la invalida para todo el mundo, de inmediato.
+    sid = request.session.get("sid")
+    if sid:
+        revoke_session(db, sid, "logout")
     request.session.clear()
     return RedirectResponse(url="/login", status_code=302)
 
@@ -312,20 +393,39 @@ def owner_dashboard(request: Request, db: Session = Depends(get_db)):
     if user.role not in (RoleEnum.owner, RoleEnum.admin):
         return RedirectResponse(url="/login", status_code=302)
 
-    # Same scoping rule as routers/owner.py: always filter by the logged-in
-    # user's own id, admin included — this is what prevents cross-owner
-    # data leakage, not the role check above.
-    properties = (
-        db.query(Property)
-        .filter(Property.owner_id == user.id)
-        .order_by(Property.id)
-        .all()
+    # El filtrado por pertenencia vive en scoping.py: `owned_properties` acota
+    # por `owner_id == user.id` incluso para un admin, igual que routers/owner.py.
+    from ..mockmode import template_context
+    from ..models import MaintenanceTicket, Message, TicketStatusEnum
+    from ..scoping import owned_properties, scoped_tickets
+
+    properties = owned_properties(db, user).order_by(Property.id).all()
+
+    tickets = scoped_tickets(db, user).all()
+    open_tickets = sum(1 for t in tickets if t.status != TicketStatusEnum.resolved)
+    urgent_tickets = sum(
+        1 for t in tickets
+        if t.priority and getattr(t.priority, "value", None) == "emergencia"
+        and t.status != TicketStatusEnum.resolved
+    )
+
+    unread_messages = (
+        db.query(Message)
+        .filter(Message.recipient_user_id == user.id, Message.read_at.is_(None))
+        .count()
     )
 
     return templates.TemplateResponse(
         request=request,
         name="owner.html",
-        context={"user": user, "properties": properties},
+        context={
+            "user": user,
+            "properties": properties,
+            "open_tickets": open_tickets,
+            "urgent_tickets": urgent_tickets,
+            "unread_messages": unread_messages,
+            **template_context(),
+        },
     )
 
 
@@ -442,6 +542,13 @@ def user_password_submit(
     target.password_hash = hash_password(new_password)
     db.commit()
 
+    # Una contraseña restablecida no puede seguir dando acceso donde ya había
+    # sesión abierta: si se restablece porque la anterior se comprometió,
+    # dejar vivas las sesiones existentes anula el propósito del cambio.
+    closed = revoke_all_sessions(db, target.id, "password_reset")
+    audit(db, request, "user.password_reset", actor=_current_user_or_none(request, db),
+          object_type="user", object_id=target.id, meta=f"sesiones_cerradas={closed}")
+
     if send_email:
         mail = send_temp_password_email(target.email, target.name, new_password)
         if mail.sent:
@@ -479,3 +586,47 @@ def user_assign_properties(
     db.commit()
     _flash(request, "success", f"{moved} casa(s) reasignada(s) a «{target.name}».")
     return RedirectResponse(url=f"/admin/users/{user_id}", status_code=302)
+
+
+# --- Sesiones activas (SECURITY.md §3) --------------------------------------
+
+
+@router.get("/sesiones", response_class=HTMLResponse)
+def sessions_page(request: Request, db: Session = Depends(get_db)):
+    """Dispositivos donde la cuenta tiene sesión abierta."""
+    user = _current_user_or_none(request, db)
+    if not user:
+        return RedirectResponse(url="/login", status_code=302)
+    from ..mockmode import template_context
+    from ..security import active_sessions
+
+    return templates.TemplateResponse(
+        request=request,
+        name="sessions.html",
+        context={
+            "user": user,
+            "sessions": active_sessions(db, user.id),
+            "current_sid": request.session.get("sid"),
+            "closed": request.session.pop("sessions_closed", None),
+            **template_context(),
+        },
+    )
+
+
+@router.post("/sesiones/cerrar-otras")
+def close_other_sessions(request: Request, db: Session = Depends(get_db),
+                         csrf_token: str = Form("")):
+    """Cierra las demás sesiones y conserva la actual.
+
+    Es la acción que sirve cuando sospechas que alguien más entró: cierras
+    todo lo demás sin quedarte fuera tú.
+    """
+    user = _current_user_or_none(request, db)
+    if not user:
+        return RedirectResponse(url="/login", status_code=302)
+    sid = request.session.get("sid")
+    closed = revoke_all_sessions(db, user.id, "user_closed_others", except_sid=sid)
+    audit(db, request, "session.closed_others", actor=user, object_type="user",
+          object_id=user.id, meta=f"cerradas={closed}")
+    request.session["sessions_closed"] = closed
+    return RedirectResponse(url="/sesiones", status_code=302)

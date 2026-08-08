@@ -15,7 +15,15 @@ from . import models
 from .auth import hash_password
 from .auth import router as auth_router
 from .db import Base, SessionLocal, engine
-from .routers import admin, owner, pages, payments, site_content, tenant
+from .routers import admin, owner, owner_portal, pages, payments, site_content, tenant
+from .mockmode import is_mock, require_legal_clearance_for_live
+from .security import (
+    ABSOLUTE_TIMEOUT_HOURS,
+    CSRFMiddleware,
+    SecurityHeadersMiddleware,
+    is_production,
+    require_secure_secret_key,
+)
 
 
 def _load_dotenv() -> None:
@@ -52,13 +60,24 @@ SECRET_KEY = os.environ.get("SECRET_KEY", "dev-insecure-secret-key-change-me")
 SEED_ADMIN_EMAIL = os.environ.get("SEED_ADMIN_EMAIL", "admin@aura-homes-cancun.local")
 SEED_ADMIN_PASSWORD = os.environ.get("SEED_ADMIN_PASSWORD", "ChangeMe123!")
 
+# E1: aborta el arranque en producción si SECRET_KEY sigue siendo la de ejemplo
+# (con ella se pueden falsificar sesiones de administrador). Ver security.py.
+require_secure_secret_key(SECRET_KEY)
+
 app = FastAPI(title="Aura Homes Cancún — Platform API", version="2a")
 
+# El orden importa: Starlette ejecuta los middlewares en orden inverso al de
+# registro, así que SessionMiddleware debe añadirse DESPUÉS de CSRFMiddleware
+# para quedar por fuera y tener la sesión ya cargada cuando CSRF la consulta.
+app.add_middleware(SecurityHeadersMiddleware)
+app.add_middleware(CSRFMiddleware)
 app.add_middleware(
     SessionMiddleware,
     secret_key=SECRET_KEY,
     session_cookie="aura_platform_session",
     same_site="lax",
+    https_only=is_production(),  # cookie solo por HTTPS fuera de desarrollo
+    max_age=ABSOLUTE_TIMEOUT_HOURS * 3600,
 )
 
 APP_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -79,6 +98,7 @@ app.include_router(tenant.router)
 app.include_router(payments.router)
 app.include_router(pages.router)
 app.include_router(site_content.router)
+app.include_router(owner_portal.router)
 
 
 @app.get("/")
@@ -104,10 +124,91 @@ def _ensure_property_site_ref() -> None:
             conn.execute(text("ALTER TABLE properties ADD COLUMN site_ref VARCHAR"))
 
 
+def _ensure_user_security_columns() -> None:
+    """Añade a `users` las columnas de seguridad de E1 en una base ya existente.
+
+    Mismo patrón idempotente que `_ensure_property_site_ref()`: no hay Alembic
+    en el MVP y `create_all()` no altera tablas que ya existen, así que las
+    bases creadas antes de E1 necesitan estas columnas añadidas a mano.
+    Comprueba PRAGMA table_info y solo hace ALTER de lo que falte, así que
+    ejecutarlo muchas veces es inofensivo.
+    """
+    if not engine.url.get_backend_name().startswith("sqlite"):
+        return
+    wanted = {
+        "is_active": "ALTER TABLE users ADD COLUMN is_active BOOLEAN NOT NULL DEFAULT 1",
+        "failed_login_count": "ALTER TABLE users ADD COLUMN failed_login_count INTEGER NOT NULL DEFAULT 0",
+        "locked_until": "ALTER TABLE users ADD COLUMN locked_until DATETIME",
+        "last_login_at": "ALTER TABLE users ADD COLUMN last_login_at DATETIME",
+        "contact_phone": "ALTER TABLE users ADD COLUMN contact_phone VARCHAR",
+        "must_change_password": "ALTER TABLE users ADD COLUMN must_change_password BOOLEAN NOT NULL DEFAULT 0",
+        "created_by_user_id": "ALTER TABLE users ADD COLUMN created_by_user_id INTEGER",
+    }
+    with engine.begin() as conn:
+        cols = {row[1] for row in conn.execute(text("PRAGMA table_info(users)"))}
+        if not cols:
+            return  # la tabla no existe todavía; create_all se encarga
+        for name, ddl in wanted.items():
+            if name not in cols:
+                conn.execute(text(ddl))
+
+
+def _ensure_ticket_columns() -> None:
+    """Columnas 2b de `maintenance_tickets` en una base ya existente.
+
+    Mismo patrón idempotente que las otras dos migraciones.
+    """
+    if not engine.url.get_backend_name().startswith("sqlite"):
+        return
+    wanted = {
+        "public_ref": "ALTER TABLE maintenance_tickets ADD COLUMN public_ref VARCHAR",
+        "lease_id": "ALTER TABLE maintenance_tickets ADD COLUMN lease_id INTEGER",
+        "category": "ALTER TABLE maintenance_tickets ADD COLUMN category VARCHAR",
+        "priority": "ALTER TABLE maintenance_tickets ADD COLUMN priority VARCHAR",
+        "location_in_unit": "ALTER TABLE maintenance_tickets ADD COLUMN location_in_unit VARCHAR",
+        "created_via": "ALTER TABLE maintenance_tickets ADD COLUMN created_via VARCHAR",
+        "assigned_to_user_id": "ALTER TABLE maintenance_tickets ADD COLUMN assigned_to_user_id INTEGER",
+        "resolved_at": "ALTER TABLE maintenance_tickets ADD COLUMN resolved_at DATETIME",
+        "resolution_notes": "ALTER TABLE maintenance_tickets ADD COLUMN resolution_notes TEXT",
+        "ai_summary": "ALTER TABLE maintenance_tickets ADD COLUMN ai_summary TEXT",
+        "ai_confidence": "ALTER TABLE maintenance_tickets ADD COLUMN ai_confidence NUMERIC",
+    }
+    with engine.begin() as conn:
+        cols = {row[1] for row in conn.execute(text("PRAGMA table_info(maintenance_tickets)"))}
+        if not cols:
+            return
+        for name, ddl in wanted.items():
+            if name not in cols:
+                conn.execute(text(ddl))
+        # `leases` gana una columna en E4: quién dio de alta el arrendamiento.
+        lease_cols = {
+            "created_by_user_id": "ALTER TABLE leases ADD COLUMN created_by_user_id INTEGER",
+        }
+        lcols = {row[1] for row in conn.execute(text("PRAGMA table_info(leases)"))}
+        if lcols:
+            for name, ddl in lease_cols.items():
+                if name not in lcols:
+                    conn.execute(text(ddl))
+
+
 @app.on_event("startup")
 def on_startup() -> None:
+    # Candado legal: en modo real exige la referencia del visto bueno de Legal.
+    # Mientras no exista, la app no puede guardar datos personales reales.
+    require_legal_clearance_for_live()
+
     Base.metadata.create_all(bind=engine)
     _ensure_property_site_ref()
+    _ensure_user_security_columns()
+    _ensure_ticket_columns()
+
+    if is_mock():
+        print("=" * 72)
+        print("MODO PRUEBAS (DATA_MODE=mock)")
+        print(f"  Base de datos: {engine.url}")
+        print("  Solo se aceptan correos de dominios de prueba y teléfonos +52 555 01XX XXXX.")
+        print("  No se envían correos. Los datos reales de platform.db NO se tocan.")
+        print("=" * 72)
 
     db = SessionLocal()
     try:

@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}{{ ticket.public_ref or ticket.id }}{% endblock %}
+{% block content %}
+<h1>{{ ticket.title }}</h1>
+<p class="meta">
+  Ref. <strong>{{ ticket.public_ref or ticket.id }}</strong> ·
+  {{ prop.title if prop else '—' }} ·
+  Reportó: {{ reporter.name if reporter else '—' }} ·
+  {{ ticket.category.value if ticket.category else '—' }} ·
+  Prioridad: <strong>{{ ticket.priority.value if ticket.priority else '—' }}</strong> ·
+  Estado: <strong>{{ ticket.status.value if ticket.status else '—' }}</strong>
+</p>
+{% if ticket.priority and ticket.priority.value=='emergencia' %}
+<p class="flash flash-urgent">EMERGENCIA — atiende esto primero.</p>
+{% endif %}
+{% if ticket.description %}<section class="card"><p>{{ ticket.description }}</p></section>{% endif %}
+{% if ticket.location_in_unit %}<p>Ubicación: {{ ticket.location_in_unit }}</p>{% endif %}
+
+{% if photos %}
+<section class="card"><h2>Fotos</h2>
+  <div class="photo-grid">
+    {% for ph in photos %}<img src="/media/tickets/{{ ticket.id }}/{{ ph.id }}" alt="Foto" loading="lazy">{% endfor %}
+  </div>
+</section>
+{% endif %}
+
+<section class="card">
+  <h2>Seguimiento</h2>
+  <ul class="timeline">
+    {% for e in events %}
+      <li><span class="ev">{{ e.event_type.value if e.event_type else '' }}</span>
+        {{ e.body or '' }}
+        <span class="when">{{ e.created_at.strftime('%d/%m/%Y %H:%M') if e.created_at else '' }}</span></li>
+    {% endfor %}
+  </ul>
+</section>
+
+<section class="card">
+  <h2>Actualizar</h2>
+  <form method="post" action="/owner/tickets/{{ ticket.id }}/actualizar">
+    {{ csrf_input(request) }}
+    <label>Nota / comentario
+      <textarea name="body" rows="3" maxlength="2000"
+        placeholder="Para resolver es obligatorio explicar qué se hizo."></textarea>
+    </label>
+    <div class="actions">
+      <button class="btn" name="accion" value="comentar" type="submit">Comentar</button>
+      <button class="btn" name="accion" value="en_proceso" type="submit">Marcar en proceso</button>
+      <button class="btn btn-primary" name="accion" value="resolver" type="submit">Resolver</button>
+      <button class="btn" name="accion" value="reabrir" type="submit">Reabrir</button>
+    </div>
+  </form>
+</section>
+<p><a href="/owner/tickets">Volver</a></p>
+{% endblock %}

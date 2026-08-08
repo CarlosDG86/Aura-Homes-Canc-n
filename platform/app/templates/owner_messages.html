@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Mensajes{% endblock %}
+{% block content %}
+<h1>Mensajes</h1>
+<section class="card">
+  <h2>Escribir a un inquilino</h2>
+  <form method="post" action="/owner/mensajes">
+    {{ csrf_input(request) }}
+    <label>Para
+      <select name="recipient_id" required>
+        {% for t in tenants %}<option value="{{ t.id }}">{{ t.name }} ({{ t.email }})</option>{% endfor %}
+      </select>
+    </label>
+    <label>Asunto <input name="subject" maxlength="200"></label>
+    <label>Mensaje <textarea name="body" rows="4" required></textarea></label>
+    <button class="btn btn-primary" type="submit">Enviar</button>
+  </form>
+  <p class="hint">La bandeja interna deja constancia de lo que se pidió y cuándo. WhatsApp no.</p>
+</section>
+<section class="card">
+  <h2>Conversación</h2>
+  <ul class="timeline">
+    {% for m in messages %}
+      <li {% if m.id in just_read %}class="unread"{% endif %}><strong>{{ people[m.sender_user_id].name if m.sender_user_id in people else 'Yo' }}
+          → {{ people[m.recipient_user_id].name if m.recipient_user_id in people else '—' }}:</strong>
+        {% if m.id in just_read %}<span class="badge-new">nuevo</span>{% endif %}
+        {{ m.subject + ' — ' if m.subject else '' }}{{ m.body }}
+        <span class="when">{{ m.created_at.strftime('%d/%m/%Y %H:%M') if m.created_at else '' }}</span></li>
+    {% else %}<li>Todavía no hay mensajes.</li>{% endfor %}
+  </ul>
+</section>
+<p><a href="/owner">Volver</a></p>
+{% endblock %}

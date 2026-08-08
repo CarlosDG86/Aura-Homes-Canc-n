@@ -30,6 +30,7 @@ from sqlalchemy.orm import Session
 
 from ..db import get_db
 from ..models import RoleEnum, User
+from ..security import register_template_globals
 from .pages import _current_user_or_none, _home_for
 
 router = APIRouter(tags=["site-content"], include_in_schema=False)
@@ -51,6 +52,7 @@ BUILD_SCRIPT = os.path.join(REPO_ROOT, "build.py")
 WHATSAPP_RE = re.compile(r"^\+?\d{10,15}$")
 
 templates = Jinja2Templates(directory=os.path.join(APP_DIR, "templates"))
+register_template_globals(templates)  # expone csrf_input(request) a las plantillas
 
 # --- Constants / validation ---------------------------------------------
 

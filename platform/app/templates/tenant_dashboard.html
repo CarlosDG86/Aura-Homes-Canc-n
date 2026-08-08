@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Mi vivienda — Aura Homes Cancún{% endblock %}
+{% block content %}
+<h1>Hola, {{ user.name }}</h1>
+
+{% if prop %}
+<section class="card">
+  <h2>Mi vivienda</h2>
+  <p><strong>{{ prop.title }}</strong>{% if prop.zone %} · {{ prop.zone }}{% endif %}</p>
+  {% if owner %}
+  <p>Propietario: {{ owner.name }}</p>
+  <p class="actions">
+    <a class="btn" href="mailto:{{ owner.email }}">Escribir por correo</a>
+    {% if owner_phone and whatsapp_enabled %}
+      <a class="btn" href="https://wa.me/{{ owner_phone | replace('+','') | replace(' ','') }}">WhatsApp</a>
+    {% elif owner_phone %}
+      <span class="btn btn-disabled" title="Desactivado en modo pruebas">WhatsApp (desactivado)</span>
+    {% endif %}
+  </p>
+  {% endif %}
+</section>
+{% endif %}
+
+<section class="card">
+  <div class="section-head">
+    <h2>Mis reportes ({{ open_count }} abiertos)</h2>
+    <a class="btn btn-primary" href="/inquilino/tickets/nuevo">Reportar un problema</a>
+  </div>
+  {% if tickets %}
+  <table>
+    <thead><tr><th>Ref.</th><th>Asunto</th><th>Categoría</th><th>Prioridad</th><th>Estado</th></tr></thead>
+    <tbody>
+    {% for t in tickets %}
+      <tr>
+        <td><a href="/inquilino/tickets/{{ t.id }}">{{ t.public_ref or t.id }}</a></td>
+        <td>{{ t.title }}</td>
+        <td>{{ t.category.value if t.category else '—' }}</td>
+        <td>{{ t.priority.value if t.priority else '—' }}</td>
+        <td>{{ t.status.value if t.status else '—' }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p>Todavía no has reportado nada. Si algo falla en tu vivienda, repórtalo y tu propietario lo verá.</p>
+  {% endif %}
+</section>
+
+<p class="actions">
+  <a class="btn" href="/inquilino/mensajes">Mi bandeja{% if unread_total %} ({{ unread_total }}){% endif %}</a>
+  <a class="btn" href="/inquilino/perfil">Mis datos</a>
+</p>
+{% endblock %}

@@ -48,7 +48,9 @@ h1,h2,h3{font-family:var(--f-head);font-weight:600;line-height:1.15;margin:0}
 .brand{display:inline-flex;align-items:center}
 .brand-logo{height:200px;width:auto;display:block}
 .nav-links{display:none;gap:22px;font-size:14px;font-weight:500;color:var(--ink)}
+.nav-links a{padding-bottom:2px;transition:color .15s}
 .nav-links a:hover{color:var(--teal)}
+.nav-links a.active{text-transform:uppercase;text-decoration:underline;text-underline-offset:5px;text-decoration-thickness:2px;color:var(--teal);font-weight:600}
 .topbar-right{display:flex;align-items:center;gap:10px}
 .admin-link{font-size:12px;font-weight:600;color:var(--muted);padding:6px 4px;white-space:nowrap}
 .admin-link:hover{color:var(--teal)}
