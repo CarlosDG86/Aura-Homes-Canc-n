@@ -102,6 +102,15 @@ cd C:\Aura\claude-code\platform
 fly launch --no-deploy --name aura-homes-plataforma --region qro
 fly volumes create aura_data --size 1 --region qro
 ```
+
+> ⚠️ **`fly launch` ofrecerá sobrescribir `fly.toml`. Responde que NO.** Ese
+> archivo ya trae el volumen, el chequeo de salud y `force_https`; el que genera
+> Fly por su cuenta no los incluye y el despliegue perdería la persistencia.
+
+**Sobre permisos del volumen:** Fly monta el volumen vacío y propiedad de root.
+Como la aplicación corre con una cuenta sin privilegios, `docker-entrypoint.sh`
+ajusta el propietario al arrancar y luego baja de root antes de lanzar el
+servidor. Sin ese paso el arranque falla con "permission denied".
 El volumen es lo que hace que la base y las fotos sobrevivan a cada
 actualización. Sin él se pierden.
 

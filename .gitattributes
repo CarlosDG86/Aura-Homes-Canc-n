@@ -1,0 +1,7 @@
+# Los scripts de shell y el Dockerfile DEBEN viajar con finales de línea LF.
+# Si git los convierte a CRLF (comportamiento habitual en Windows), Linux no
+# encuentra el intérprete y el contenedor falla con un "no such file or
+# directory" que apunta al archivo equivocado y cuesta mucho diagnosticar.
+*.sh            text eol=lf
+Dockerfile      text eol=lf
+docker-entrypoint.sh text eol=lf
