@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Requisitos para cobrar{% endblock %}
+{% block content %}
+<h1>Requisitos para activar los cobros</h1>
+
+{% if payments_on %}
+  <p class="flash flash-ok">El módulo de pagos está activo.</p>
+{% else %}
+  <p class="flash flash-info">
+    El cobro está <strong>desactivado</strong> ({{ pendientes }} requisito(s) pendiente(s)).
+    Las rutas de cobro devuelven 501 y no se guarda ningún dato financiero.
+  </p>
+{% endif %}
+
+<section class="card">
+  <ul class="timeline">
+    {% for r in requisitos %}
+      <li>
+        <strong>{{ '✔' if r.listo else '○' }} {{ r.titulo }}</strong>
+        <div class="hint">{{ r.detalle }}</div>
+      </li>
+    {% endfor %}
+  </ul>
+</section>
+
+<section class="card">
+  <h2>Decisión pendiente del CEO</h2>
+  <p>Antes de elegir proveedor hay que decidir entre dos caminos, que son muy
+     distintos en riesgo y obligaciones:</p>
+  <ul>
+    <li><strong>Registrar pagos</strong> hechos por fuera (transferencia, depósito).
+        La plataforma solo lleva el control. Riesgo bajo.</li>
+    <li><strong>Procesar cobros</strong> dentro de la plataforma. Implica pasarela,
+        comisiones, contracargos y obligaciones fiscales. Riesgo alto.</li>
+  </ul>
+  <p class="hint">Este diseño asume la primera opción hasta que el CEO indique lo contrario.
+     Nunca se guardarán datos de tarjeta: eso obligaría a cumplir PCI-DSS.</p>
+</section>
+{% endblock %}

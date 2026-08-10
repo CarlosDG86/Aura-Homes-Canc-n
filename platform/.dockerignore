@@ -1,0 +1,8 @@
+.venv/
+data/
+*.log
+__pycache__/
+*.pyc
+.env
+.env.example
+README.md

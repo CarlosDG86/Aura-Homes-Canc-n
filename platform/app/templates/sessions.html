@@ -25,7 +25,7 @@
 </table>
 
 <form method="post" action="/sesiones/cerrar-otras" class="card"
-      onsubmit="return confirm('¿Cerrar todas las demás sesiones? Tendrás que volver a entrar en esos dispositivos.')">
+      data-confirm="¿Cerrar todas las demás sesiones? Tendrás que volver a entrar en esos dispositivos.">
   {{ csrf_input(request) }}
   <button class="btn btn-danger" type="submit">Cerrar las demás sesiones</button>
   <p class="hint">Tu sesión actual se mantiene abierta.</p>

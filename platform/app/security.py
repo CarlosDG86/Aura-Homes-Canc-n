@@ -93,6 +93,34 @@ def require_secure_secret_key(secret_key: str) -> None:
         )
 
 
+INSECURE_DEFAULT_ADMIN_PASSWORD = "ChangeMe123!"
+
+
+def require_secure_seed_password(seed_password: str) -> None:
+    """Aborta el arranque si en producción se sembraría el admin con la clave de ejemplo.
+
+    Al desplegar, el contenedor arranca con una base vacía y crea el usuario
+    administrador a partir de `SEED_ADMIN_PASSWORD`. Si esa variable no se
+    define, se usa `ChangeMe123!`, que está escrita en `platform/README.md` y
+    por tanto es pública en el repositorio: cualquiera que encuentre el login
+    entraría como administrador.
+
+    Es el mismo criterio que con `SECRET_KEY`: fallar ruidosamente al arrancar
+    es preferible a quedar expuesto en silencio. En desarrollo no aplica.
+    """
+    if not is_production():
+        return
+    if seed_password == INSECURE_DEFAULT_ADMIN_PASSWORD or len(seed_password.strip()) < 12:
+        raise RuntimeError(
+            "SEED_ADMIN_PASSWORD no configurada (o demasiado corta).\n"
+            "Al desplegar se crea el administrador con esta contraseña. El valor por "
+            "defecto está publicado en el repositorio, así que la aplicación no arranca "
+            "con él en producción.\n"
+            "Define una contraseña larga y única (mínimo 12 caracteres):\n"
+            '  fly secrets set SEED_ADMIN_PASSWORD="<contraseña larga y única>"'
+        )
+
+
 # --- CSRF -------------------------------------------------------------------
 
 
@@ -182,10 +210,15 @@ class CSRFMiddleware(BaseHTTPMiddleware):
 class SecurityHeadersMiddleware(BaseHTTPMiddleware):
     """Cabeceras de SECURITY.md §8.
 
-    La CSP no lleva 'unsafe-inline' en script-src: el JS que hoy vive en línea
-    en las plantillas debe salir a archivos propios. Se permite en style-src
-    de momento porque varias plantillas traen atributos style=""; retirarlo es
-    trabajo pendiente y está anotado en el handoff de Dev.
+    La CSP ya no admite nada en línea, ni scripts ni estilos: todo el JS vive
+    en `static/platform.js` y todo el CSS en `static/platform.css`.
+
+    Esto importa más de lo que parece. Mientras `script-src 'self'` convivía
+    con manejadores `onsubmit="return confirm(...)"` en las plantillas, esos
+    manejadores **no se ejecutaban**: las acciones destructivas (eliminar una
+    propiedad, terminar un arrendamiento) se realizaban sin preguntar. Una CSP
+    estricta y HTML con código en línea no pueden coexistir; o se relaja la
+    política, o el código sale a archivos. Se eligió lo segundo.
     """
 
     async def dispatch(self, request: Request, call_next):
@@ -194,7 +227,7 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         h.setdefault(
             "Content-Security-Policy",
             "default-src 'self'; img-src 'self' data:; script-src 'self'; "
-            "style-src 'self' 'unsafe-inline'; frame-ancestors 'none'; "
+            "style-src 'self'; frame-ancestors 'none'; "
             "base-uri 'self'; form-action 'self'",
         )
         h.setdefault("X-Content-Type-Options", "nosniff")

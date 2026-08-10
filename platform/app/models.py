@@ -182,6 +182,23 @@ class LoginAttempt(Base):
     __table_args__ = (Index("ix_login_attempts_ip_created", "ip", "created_at"),)
 
 
+class PlatformSetting(Base):
+    """Ajustes internos de la plataforma, en la base de datos.
+
+    Deliberadamente **separado de `data/site.json`**, que es el contenido del
+    sitio público y se publica tal cual en el sitio estático. Un dato bancario
+    guardado ahí quedaría visible para cualquiera que abra la página. Aquí
+    viven los ajustes que solo debe ver el administrador: método de cobro,
+    referencias, instrucciones de pago.
+    """
+
+    __tablename__ = "platform_settings"
+
+    key = Column(String, primary_key=True)
+    value = Column(Text, nullable=True)
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
+
+
 class UserSession(Base):
     """Sesión activa, para poder revocarla desde el servidor (SECURITY.md §3).
 

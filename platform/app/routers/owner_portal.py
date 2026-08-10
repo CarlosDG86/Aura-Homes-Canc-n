@@ -84,6 +84,21 @@ def _ctx(user: User, **extra) -> dict:
     return ctx
 
 
+def _nav_badges(db: Session, user: User) -> dict:
+    """Contadores del menú lateral, disponibles en todas las páginas.
+
+    Se calculan en cada vista y no solo en el panel: si el contador de
+    reportes abiertos solo apareciera en la portada, el propietario tendría
+    que volver ahí para saber si llegó algo nuevo.
+    """
+    tickets = scoped_tickets(db, user).all()
+    return {
+        "open_tickets": sum(1 for t in tickets if t.status != TicketStatusEnum.resolved),
+        "unread_messages": db.query(Message).filter(
+            Message.recipient_user_id == user.id, Message.read_at.is_(None)).count(),
+    }
+
+
 def _my_tenants(db: Session, user: User) -> List[User]:
     """Inquilinos con arrendamiento en las viviendas de este propietario."""
     return [u for u in scoped_users(db, user).all() if u.role == RoleEnum.tenant]
@@ -116,7 +131,7 @@ def tickets_list(request: Request, db: Session = Depends(get_db),
     prop_names = {p.id: p.title for p in props}
     return templates.TemplateResponse(
         request=request, name="owner_tickets.html",
-        context=_ctx(user, tickets=tickets, properties=props, prop_names=prop_names,
+        context=_ctx(user, active='tickets', **_nav_badges(db, user), tickets=tickets, properties=props, prop_names=prop_names,
                      estado=estado, propiedad=propiedad,
                      statuses=list(TicketStatusEnum)),
     )
@@ -174,7 +189,7 @@ def tickets_report(request: Request, db: Session = Depends(get_db), formato: str
         )
 
     return templates.TemplateResponse(
-        request=request, name="owner_report.html", context=_ctx(user, rows=rows)
+        request=request, name="owner_report.html", context=_ctx(user, active='report', **_nav_badges(db, user), rows=rows)
     )
 
 
@@ -192,8 +207,12 @@ def ticket_detail(ticket_id: int, request: Request, db: Session = Depends(get_db
     prop = db.query(Property).filter(Property.id == ticket.property_id).first()
     return templates.TemplateResponse(
         request=request, name="owner_ticket_detail.html",
-        context=_ctx(user, ticket=ticket, events=events, photos=photos,
-                     reporter=reporter, prop=prop, statuses=list(TicketStatusEnum)),
+        context=_ctx(user, active='tickets', **_nav_badges(db, user), ticket=ticket, events=events, photos=photos,
+                     reporter=reporter, prop=prop, statuses=list(TicketStatusEnum),
+                     assignables=[u for u in scoped_users(db, user).all()],
+                     assigned=db.query(User).filter(
+                         User.id == ticket.assigned_to_user_id).first()
+                     if ticket.assigned_to_user_id else None),
     )
 
 
@@ -232,6 +251,23 @@ def ticket_update(ticket_id: int, request: Request, db: Session = Depends(get_db
         db.add(TicketEvent(ticket_id=ticket.id, actor_user_id=user.id,
                            event_type=TicketEventTypeEnum.resolved,
                            from_status=prev, to_status=ticket.status.value, body=text))
+    elif accion == "asignar":
+        # Asignar a alguien de su propio círculo (inquilinos o él mismo).
+        # `scoped_users` garantiza que no se puede asignar a una persona de
+        # otro propietario manipulando el formulario.
+        raw = (body or "").strip()
+        target_id = int(raw) if raw.isdigit() else None
+        if target_id is None:
+            ticket.assigned_to_user_id = None
+            nota = "Asignación retirada"
+        else:
+            target = scoped_users(db, user).filter(User.id == target_id).first()
+            if target is None:
+                raise HTTPException(status_code=404, detail="Persona no encontrada")
+            ticket.assigned_to_user_id = target.id
+            nota = f"Asignado a {target.name}"
+        db.add(TicketEvent(ticket_id=ticket.id, actor_user_id=user.id,
+                           event_type=TicketEventTypeEnum.assigned, body=nota))
     elif accion == "reabrir":
         ticket.status = TicketStatusEnum.open
         ticket.resolved_at = None
@@ -258,7 +294,7 @@ def tenants_page(request: Request, db: Session = Depends(get_db)):
     flash = request.session.pop("owner_flash", None)
     return templates.TemplateResponse(
         request=request, name="owner_tenants.html",
-        context=_ctx(user, leases=leases, tenants=tenants, props=props,
+        context=_ctx(user, active='tenants', **_nav_badges(db, user), leases=leases, tenants=tenants, props=props,
                      properties=list(props.values()), flash=flash),
     )
 
@@ -353,7 +389,7 @@ def announcements_page(request: Request, db: Session = Depends(get_db)):
             .order_by(Announcement.id.desc()).all())
     return templates.TemplateResponse(
         request=request, name="owner_announcements.html",
-        context=_ctx(user, announcements=sent,
+        context=_ctx(user, active='announcements', **_nav_badges(db, user), announcements=sent,
                      properties=owned_properties(db, user).all(),
                      flash=request.session.pop("owner_flash", None)),
     )
@@ -424,7 +460,7 @@ def messages_page(request: Request, db: Session = Depends(get_db)):
 
     return templates.TemplateResponse(
         request=request, name="owner_messages.html",
-        context=_ctx(user, messages=msgs, people=people, tenants=_my_tenants(db, user),
+        context=_ctx(user, active='messages', **_nav_badges(db, user), messages=msgs, people=people, tenants=_my_tenants(db, user),
                      just_read=set(unread_ids)),
     )
 
@@ -457,7 +493,7 @@ def owner_profile(request: Request, db: Session = Depends(get_db)):
     if resp:
         return resp
     return templates.TemplateResponse(
-        request=request, name="owner_profile.html", context=_ctx(user, saved=False)
+        request=request, name="owner_profile.html", context=_ctx(user, active='profile', **_nav_badges(db, user), saved=False)
     )
 
 
@@ -477,5 +513,5 @@ def owner_profile_save(request: Request, db: Session = Depends(get_db),
     db.commit()
     audit(db, request, "owner.profile_updated", actor=user, object_type="user", object_id=user.id)
     return templates.TemplateResponse(
-        request=request, name="owner_profile.html", context=_ctx(user, saved=True)
+        request=request, name="owner_profile.html", context=_ctx(user, active='profile', **_nav_badges(db, user), saved=True)
     )

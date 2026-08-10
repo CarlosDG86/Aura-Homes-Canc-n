@@ -504,3 +504,62 @@ code {
 .unread{background:#fffbe6;border-left:3px solid #f0a800;padding-left:10px}
 .badge-new{background:#f0a800;color:#fff;font-size:10px;padding:2px 6px;
   border-radius:10px;text-transform:uppercase;letter-spacing:.06em;margin-left:6px}
+
+/* ==========================================================================
+   Menú lateral (sustituye la fila de enlaces con descripciones)
+   ========================================================================== */
+.app-shell { display: flex; min-height: 100vh; align-items: stretch; }
+
+.sidebar {
+  width: 240px; flex: 0 0 240px; background: #14212b; color: #cfd8e0;
+  display: flex; flex-direction: column; padding: 0 0 24px;
+}
+.sidebar-brand { padding: 20px 20px 18px; border-bottom: 1px solid rgba(255,255,255,.08); }
+.sidebar-brand .brand-name { display: block; font-size: 16px; font-weight: 700; color: #fff; }
+.sidebar-brand .brand-sub {
+  display: block; font-size: 11px; letter-spacing: .08em; text-transform: uppercase;
+  color: #7f8fa0; margin-top: 3px;
+}
+
+.sidebar-nav { padding: 14px 0; }
+.nav-group { margin-bottom: 18px; }
+.nav-group-title {
+  padding: 0 20px 6px; font-size: 10px; letter-spacing: .12em;
+  text-transform: uppercase; color: #6d7d8d; font-weight: 700;
+}
+.nav-item {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  padding: 9px 20px; color: #cfd8e0; text-decoration: none; font-size: 14px;
+  border-left: 3px solid transparent;
+}
+.nav-item:hover { background: rgba(255,255,255,.06); color: #fff; }
+.nav-item.is-active {
+  background: rgba(255,255,255,.10); color: #fff; font-weight: 600;
+  border-left-color: #2cb1bc;
+}
+.nav-item-quiet { color: #8b9aa8; margin-top: 4px; }
+.nav-badge {
+  background: #2cb1bc; color: #fff; font-size: 11px; font-weight: 700;
+  min-width: 20px; text-align: center; padding: 1px 7px; border-radius: 10px;
+}
+
+.app-main { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; }
+.app-main .topbar { justify-content: flex-end; }
+.app-main .container { flex: 1 1 auto; }
+
+.sidebar-toggle {
+  display: none; background: none; border: 1px solid var(--border, #d8d2c8);
+  border-radius: 6px; padding: 6px 10px; font-size: 14px; cursor: pointer;
+}
+
+/* Móvil: el menú se oculta y se despliega desde el encabezado. */
+@media (max-width: 860px) {
+  .app-shell { display: block; }
+  .sidebar {
+    position: fixed; inset: 0 auto 0 0; z-index: 60; width: 250px;
+    transform: translateX(-100%); transition: transform .2s ease; overflow-y: auto;
+  }
+  .app-shell.sidebar-open .sidebar { transform: translateX(0); }
+  .app-main .topbar { justify-content: space-between; }
+  .sidebar-toggle { display: inline-block; }
+}

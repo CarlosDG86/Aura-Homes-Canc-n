@@ -23,6 +23,7 @@ from .security import (
     SecurityHeadersMiddleware,
     is_production,
     require_secure_secret_key,
+    require_secure_seed_password,
 )
 
 
@@ -63,6 +64,9 @@ SEED_ADMIN_PASSWORD = os.environ.get("SEED_ADMIN_PASSWORD", "ChangeMe123!")
 # E1: aborta el arranque en producción si SECRET_KEY sigue siendo la de ejemplo
 # (con ella se pueden falsificar sesiones de administrador). Ver security.py.
 require_secure_secret_key(SECRET_KEY)
+# Misma lógica para la contraseña con la que se siembra el administrador:
+# el valor por defecto es público en el repositorio.
+require_secure_seed_password(SEED_ADMIN_PASSWORD)
 
 app = FastAPI(title="Aura Homes Cancún — Platform API", version="2a")
 

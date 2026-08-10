@@ -23,6 +23,7 @@ from sqlalchemy.orm import Session
 from ..auth import hash_password, verify_password
 from ..db import get_db
 from ..email_utils import send_temp_password_email
+from ..mockmode import validate_mock_email, validate_mock_phone
 from ..models import Property, PropertyStatusEnum, RoleEnum, User
 from ..security import (
     account_locked_until,
@@ -88,7 +89,20 @@ def _current_user_or_none(request: Request, db: Session) -> Optional[User]:
 
 
 def _home_for(user: User) -> str:
-    return "/admin" if user.role == RoleEnum.admin else "/owner"
+    """Panel que le corresponde a cada rol.
+
+    Los tres roles deben estar contemplados. Cuando esta función devolvía
+    `/owner` para todo lo que no fuera admin, un inquilino recién creado
+    entraba en un bucle de redirecciones: iniciaba sesión, se le enviaba a
+    `/owner`, `/owner` lo rebotaba a `/login`, y `/login` —viendo que ya tenía
+    sesión— lo devolvía a `/owner`. El navegador cortaba con
+    ERR_TOO_MANY_REDIRECTS.
+    """
+    if user.role == RoleEnum.admin:
+        return "/admin"
+    if user.role == RoleEnum.tenant:
+        return "/inquilino"
+    return "/owner"
 
 
 def _load_site_properties() -> list:
@@ -111,6 +125,40 @@ def login_page(request: Request, db: Session = Depends(get_db)):
         return RedirectResponse(url=_home_for(user), status_code=302)
     return templates.TemplateResponse(
         request=request, name="login.html", context={"error": None, "email": ""}
+    )
+
+
+@router.get("/acceso/propietarios", response_class=HTMLResponse)
+def login_owners(request: Request, db: Session = Depends(get_db)):
+    """Acceso para propietarios, enlazado desde el sitio público.
+
+    Es la misma pantalla de acceso con un encabezado distinto: separar las dos
+    entradas ayuda a la persona a saber que está en el sitio correcto, pero el
+    rol real sale de la base, nunca de la URL. Entrar por aquí con una cuenta
+    de inquilino funciona y lleva a su propio panel — sería confuso rechazar a
+    alguien por usar la puerta de al lado.
+    """
+    return _login_page_for(request, db, audience="owner")
+
+
+@router.get("/acceso/inquilinos", response_class=HTMLResponse)
+def login_tenants(request: Request, db: Session = Depends(get_db)):
+    """Acceso para inquilinos, enlazado desde el sitio público."""
+    return _login_page_for(request, db, audience="tenant")
+
+
+def _login_page_for(request: Request, db: Session, audience: str):
+    user = _current_user_or_none(request, db)
+    if user:
+        return RedirectResponse(url=_home_for(user), status_code=302)
+    titles = {
+        "owner": ("Acceso para propietarios", "Administra tus propiedades, inquilinos y reportes."),
+        "tenant": ("Acceso para inquilinos", "Reporta problemas y comunícate con tu propietario."),
+    }
+    title, subtitle = titles.get(audience, ("Iniciar sesión", ""))
+    return templates.TemplateResponse(
+        request=request, name="login.html",
+        context={"error": None, "email": "", "page_title": title, "page_subtitle": subtitle},
     )
 
 
@@ -237,6 +285,7 @@ def admin_dashboard(request: Request, db: Session = Depends(get_db)):
         request=request,
         name="admin.html",
         context={
+            "active": "admin",
             "user": user,
             "properties": properties,
             "owners": owners,
@@ -275,6 +324,11 @@ def create_owner_submit(
 
     name = name.strip()
     email = email.lower().strip()
+    # En modo simulación esta alta también debe rechazar datos reales. Faltaba
+    # aquí: solo se validaba en el alta de inquilinos, así que por esta puerta
+    # entraban correos de personas reales a la base de pruebas.
+    validate_mock_email(email)
+    validate_mock_phone(phone)
     if not name or not email or not password:
         _flash(request, "error", "Nombre, correo y contraseña son obligatorios.")
         return RedirectResponse(url="/admin", status_code=302)
@@ -391,7 +445,11 @@ def owner_dashboard(request: Request, db: Session = Depends(get_db)):
     if not user:
         return RedirectResponse(url="/login", status_code=302)
     if user.role not in (RoleEnum.owner, RoleEnum.admin):
-        return RedirectResponse(url="/login", status_code=302)
+        # Tiene sesión válida, solo no le toca esta pantalla: se le manda a la
+        # suya, NO al formulario de acceso. Rebotar a `/login` a alguien que ya
+        # inició sesión es lo que cerraba el bucle de redirecciones, porque
+        # `/login` devuelve a los usuarios con sesión a su panel.
+        return RedirectResponse(url=_home_for(user), status_code=302)
 
     # El filtrado por pertenencia vive en scoping.py: `owned_properties` acota
     # por `owner_id == user.id` incluso para un admin, igual que routers/owner.py.
@@ -419,6 +477,7 @@ def owner_dashboard(request: Request, db: Session = Depends(get_db)):
         request=request,
         name="owner.html",
         context={
+            "active": "owner",
             "user": user,
             "properties": properties,
             "open_tickets": open_tickets,
@@ -604,6 +663,7 @@ def sessions_page(request: Request, db: Session = Depends(get_db)):
         request=request,
         name="sessions.html",
         context={
+            "active": "sessions",
             "user": user,
             "sessions": active_sessions(db, user.id),
             "current_sid": request.session.get("sid"),

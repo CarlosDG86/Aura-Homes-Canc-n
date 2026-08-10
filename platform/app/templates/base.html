@@ -10,19 +10,116 @@
 {% if mock_mode %}
 <div class="mock-banner" role="status">{{ mock_banner }}</div>
 {% endif %}
+
 {% if user %}
-<header class="topbar">
-  <div class="brand">Aura Homes Cancún — Plataforma</div>
-  <nav>
-    <span class="user-chip">{{ user.name }}
-      <span class="badge badge-{{ user.role.value }}">{{ user.role.value }}</span>
-    </span>
-    <a href="/logout" class="btn btn-ghost">Cerrar sesión</a>
-  </nav>
-</header>
-{% endif %}
-<main class="{% block main_class %}container{% endblock %}">
-  {% block content %}{% endblock %}
+{# Menú lateral: cada opción es su propio elemento, agrupadas por tema.
+   Antes era una fila de enlaces con descripciones; con varias secciones por rol
+   esa fila crecía sin orden y no se veía dónde estabas. #}
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <span class="brand-name">Aura Homes</span>
+      <span class="brand-sub">Cancún · Plataforma</span>
+    </div>
+
+    {% set role = user.role.value %}
+    <nav class="sidebar-nav" aria-label="Navegación principal">
+
+      {% if role == 'admin' %}
+        <div class="nav-group">
+          <div class="nav-group-title">General</div>
+          <a class="nav-item{% if active == 'admin' %} is-active{% endif %}" href="/admin">Panel</a>
+        </div>
+        <div class="nav-group">
+          <div class="nav-group-title">Contenido del sitio</div>
+          <a class="nav-item{% if active == 'site-props' %} is-active{% endif %}" href="/admin/properties">Propiedades</a>
+          <a class="nav-item{% if active == 'site-settings' %} is-active{% endif %}" href="/admin/site-settings">Configuración del sitio</a>
+        </div>
+        <div class="nav-group">
+          <div class="nav-group-title">Personas</div>
+          <a class="nav-item{% if active == 'owners' %} is-active{% endif %}" href="/admin#owners">Propietarios</a>
+          <a class="nav-item{% if active == 'users' %} is-active{% endif %}" href="/admin#users">Usuarios</a>
+        </div>
+        <div class="nav-group">
+          <div class="nav-group-title">Pagos</div>
+          <a class="nav-item{% if active == 'pay-methods' %} is-active{% endif %}" href="/admin/pagos/metodos">Métodos de pago</a>
+          <a class="nav-item{% if active == 'pay-reqs' %} is-active{% endif %}" href="/admin/pagos/requisitos">Requisitos</a>
+        </div>
+
+      {% elif role == 'owner' %}
+        <div class="nav-group">
+          <div class="nav-group-title">General</div>
+          <a class="nav-item{% if active == 'owner' %} is-active{% endif %}" href="/owner">Mis propiedades</a>
+        </div>
+        <div class="nav-group">
+          <div class="nav-group-title">Mantenimiento</div>
+          <a class="nav-item{% if active == 'tickets' %} is-active{% endif %}" href="/owner/tickets">
+            Reportes
+            {% if open_tickets %}<span class="nav-badge">{{ open_tickets }}</span>{% endif %}
+          </a>
+          <a class="nav-item{% if active == 'report' %} is-active{% endif %}" href="/owner/tickets/reporte">Reporte por unidad</a>
+        </div>
+        <div class="nav-group">
+          <div class="nav-group-title">Inquilinos</div>
+          <a class="nav-item{% if active == 'tenants' %} is-active{% endif %}" href="/owner/inquilinos">Mis inquilinos</a>
+          <a class="nav-item{% if active == 'announcements' %} is-active{% endif %}" href="/owner/comunicados">Comunicados</a>
+          <a class="nav-item{% if active == 'messages' %} is-active{% endif %}" href="/owner/mensajes">
+            Mensajes
+            {% if unread_messages %}<span class="nav-badge">{{ unread_messages }}</span>{% endif %}
+          </a>
+        </div>
+
+      {% elif role == 'tenant' %}
+        <div class="nav-group">
+          <div class="nav-group-title">General</div>
+          <a class="nav-item{% if active == 'tenant' %} is-active{% endif %}" href="/inquilino">Mi vivienda</a>
+        </div>
+        <div class="nav-group">
+          <div class="nav-group-title">Mantenimiento</div>
+          <a class="nav-item{% if active == 'new-ticket' %} is-active{% endif %}" href="/inquilino/tickets/nuevo">Reportar un problema</a>
+        </div>
+        <div class="nav-group">
+          <div class="nav-group-title">Comunicación</div>
+          <a class="nav-item{% if active == 'inbox' %} is-active{% endif %}" href="/inquilino/mensajes">
+            Mi bandeja
+            {% if unread_total %}<span class="nav-badge">{{ unread_total }}</span>{% endif %}
+          </a>
+        </div>
+      {% endif %}
+
+      <div class="nav-group">
+        <div class="nav-group-title">Mi cuenta</div>
+        {% if role == 'tenant' %}
+          <a class="nav-item{% if active == 'profile' %} is-active{% endif %}" href="/inquilino/perfil">Mis datos</a>
+        {% elif role == 'owner' %}
+          <a class="nav-item{% if active == 'profile' %} is-active{% endif %}" href="/owner/perfil">Mis datos</a>
+        {% endif %}
+        <a class="nav-item{% if active == 'sessions' %} is-active{% endif %}" href="/sesiones">Sesiones activas</a>
+        <a class="nav-item nav-item-quiet" href="/logout">Cerrar sesión</a>
+      </div>
+    </nav>
+  </aside>
+
+  <div class="app-main">
+    <header class="topbar">
+      <button class="sidebar-toggle" type="button" data-sidebar-toggle
+              aria-expanded="false" aria-label="Abrir menú">☰ Menú</button>
+      <span class="user-chip">{{ user.name }}
+        <span class="badge badge-{{ user.role.value }}">{{ user.role.value }}</span>
+      </span>
+    </header>
+    <main class="{% block main_class %}container{% endblock %}">
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+</div>
+{% else %}
+{# Sin sesión (pantalla de acceso): sin menú lateral. #}
+<main class="{{ self.main_class() }}">
+  {% block content_anon %}{{ self.content() }}{% endblock %}
 </main>
+{% endif %}
+
+<script src="/static/platform.js"></script>
 </body>
 </html>

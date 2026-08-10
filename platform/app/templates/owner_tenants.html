@@ -38,7 +38,7 @@
         <td>
           {% if l.status and l.status.value == 'active' %}
           <form method="post" action="/owner/inquilinos/{{ l.id }}/terminar" class="inline-form"
-                onsubmit="return confirm('¿Terminar este arrendamiento? El inquilino perderá el acceso.')">
+                data-confirm="¿Terminar este arrendamiento? El inquilino perderá el acceso.">
             {{ csrf_input(request) }}
             <button class="btn btn-danger" type="submit">Terminar</button>
           </form>
@@ -51,5 +51,4 @@
     </tbody>
   </table>
 </section>
-<p><a href="/owner">Volver</a></p>
 {% endblock %}

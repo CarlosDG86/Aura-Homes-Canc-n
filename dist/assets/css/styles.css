@@ -262,3 +262,18 @@ h1,h2,h3{font-family:var(--f-head);font-weight:600;line-height:1.15;margin:0}
   .pagehead h1{font-size:40px}
 }
 @media(min-width:900px){ .detail-contact{position:sticky;top:84px} }
+
+/* --- Desplegable "Ingresar" del encabezado --- */
+.login-menu{position:relative;font-size:12px;font-weight:600}
+.login-menu summary{list-style:none;cursor:pointer;color:var(--muted);
+  padding:6px 10px;border:1px solid var(--border);border-radius:999px;white-space:nowrap}
+.login-menu summary::-webkit-details-marker{display:none}
+.login-menu summary::after{content:" ▾"}
+.login-menu summary:hover{color:var(--teal);border-color:var(--teal)}
+.login-menu[open] summary{color:var(--teal);border-color:var(--teal)}
+.login-menu-items{position:absolute;right:0;top:calc(100% + 6px);z-index:60;
+  background:#fff;border:1px solid var(--border);border-radius:10px;
+  box-shadow:0 8px 24px rgba(0,0,0,.10);min-width:180px;overflow:hidden}
+.login-menu-items a{display:block;padding:11px 14px;color:var(--ink);
+  font-weight:500;white-space:nowrap}
+.login-menu-items a:hover{background:var(--sand-deep,#f4f1ea);color:var(--teal)}

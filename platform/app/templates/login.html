@@ -3,7 +3,8 @@
 {% block main_class %}login-page{% endblock %}
 {% block content %}
 <div class="card login-card">
-  <h1>Iniciar sesión</h1>
+  <h1>{{ page_title | default("Iniciar sesión") }}</h1>
+  {% if page_subtitle %}<p class="muted">{{ page_subtitle }}</p>{% endif %}
   <p class="muted">Plataforma interna — Aura Homes Cancún</p>
   {% if error %}
   <div class="alert alert-error">{{ error }}</div>

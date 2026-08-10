@@ -65,7 +65,20 @@ def topbar(lang, page, prop=None, legal=None):
              f'<a data-nav="contacto" href="{frag}#contacto">{nav["contact"]}</a></nav>')
     lang_tog = (f'<span class="lang"><a href="{es_url}" class="{"on" if lang=="es" else ""}">ES</a>'
                 f'<a href="{en_url}" class="{"on" if lang=="en" else ""}">EN</a></span>')
-    admin_link = f'<a class="admin-link" href="{B["platformUrl"]}">{t["admin_login"]}</a>'
+    # Desplegable "Ingresar": dos accesos separados, propietario e inquilino.
+    # Sustituye al enlace directo de "Administración", que ya no aparece en el
+    # sitio público — el acceso de admin vive en una URL no enlazada
+    # (DESIGN.md §3). Se usa <details>/<summary> para que funcione con teclado
+    # y sin JavaScript.
+    plat = B["platformUrl"].rstrip("/").removesuffix("/login")
+    login_menu = (
+        f'<details class="login-menu"><summary>{t["login_menu"]}</summary>'
+        f'<div class="login-menu-items">'
+        f'<a href="{plat}/acceso/propietarios">{t["login_owner"]}</a>'
+        f'<a href="{plat}/acceso/inquilinos">{t["login_tenant"]}</a>'
+        f'</div></details>'
+    )
+    admin_link = login_menu
     # WhatsApp button removed from the top bar per CEO request. The WhatsApp
     # contact channel still lives in the footer and the contact section /
     # sticky mobile bar — only the header button (next to the admin login) is

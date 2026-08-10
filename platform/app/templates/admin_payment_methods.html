@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Métodos de pago{% endblock %}
+{% block content %}
+<h1>Métodos de pago</h1>
+{% if saved %}<p class="flash flash-ok">Configuración guardada.</p>{% endif %}
+<p class="hint">Estos datos son los que verá un inquilino para poder pagar.
+   <strong>No se procesa ningún cobro desde la plataforma</strong> — esto es solo la
+   información del depósito. Se guarda en la base interna, nunca en el sitio público.</p>
+
+<form method="post" action="/admin/pagos/metodos" class="card">
+  {{ csrf_input(request) }}
+  {% for key, label, help in fields %}
+  <label>{{ label }}
+    {% if key == 'pago_instrucciones' %}
+      <textarea name="{{ key }}" rows="4" maxlength="500">{{ values[key] }}</textarea>
+    {% else %}
+      <input name="{{ key }}" value="{{ values[key] }}" maxlength="500">
+    {% endif %}
+  </label>
+  <p class="hint">{{ help }}</p>
+  {% endfor %}
+  <button class="btn btn-primary" type="submit">Guardar</button>
+</form>
+{% endblock %}
