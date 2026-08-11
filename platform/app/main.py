@@ -246,10 +246,19 @@ def on_startup() -> None:
         )
         db.add(admin_user)
         db.commit()
+        # La contraseña NUNCA se imprime en producción. Los registros de un
+        # servidor se conservan, se consultan desde el panel del proveedor y a
+        # menudo se reenvían a otros servicios: escribir ahí la clave del
+        # administrador equivale a guardarla en texto plano en un sitio que no
+        # controlamos. En desarrollo sí se muestra, porque ahí la comodidad de
+        # verla al arrancar pesa más y no hay registros persistentes.
         print("=" * 72)
-        print("SEEDED ADMIN USER (Phase 2a) — CHANGE THIS PASSWORD BEFORE ANY REAL DEPLOYMENT")
-        print(f"  email:    {SEED_ADMIN_EMAIL}")
-        print(f"  password: {SEED_ADMIN_PASSWORD}")
+        print("USUARIO ADMINISTRADOR CREADO")
+        print(f"  correo: {SEED_ADMIN_EMAIL}")
+        if is_production():
+            print("  contraseña: la definida en SEED_ADMIN_PASSWORD (no se muestra aquí)")
+        else:
+            print(f"  contraseña: {SEED_ADMIN_PASSWORD}")
         print("=" * 72)
     finally:
         db.close()
