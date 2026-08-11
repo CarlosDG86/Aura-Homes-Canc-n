@@ -30,6 +30,7 @@ from sqlalchemy.orm import Session
 
 from ..db import get_db
 from ..models import RoleEnum, User
+from ..security import register_template_globals
 from .pages import _current_user_or_none, _home_for
 
 router = APIRouter(tags=["site-content"], include_in_schema=False)
@@ -51,6 +52,7 @@ BUILD_SCRIPT = os.path.join(REPO_ROOT, "build.py")
 WHATSAPP_RE = re.compile(r"^\+?\d{10,15}$")
 
 templates = Jinja2Templates(directory=os.path.join(APP_DIR, "templates"))
+register_template_globals(templates)  # expone csrf_input(request) a las plantillas
 
 # --- Constants / validation ---------------------------------------------
 
@@ -60,6 +62,26 @@ ALLOWED_STATUSES = ("available", "rented")
 
 
 # --- Auth helper (mirrors pages.py's redirect-based gating) -------------
+
+
+def site_content_available() -> bool:
+    """¿Está el sitio público junto a la plataforma?
+
+    Estas rutas editan `data/properties.json` y ejecutan `build.py`, que viven
+    en el repositorio, no dentro de la plataforma. Cuando la plataforma se
+    despliega sola en un contenedor esos archivos no existen, y sin esta
+    comprobación las pantallas fallarían con un error 500 sin explicación.
+    """
+    return os.path.exists(DATA_PATH) and os.path.exists(BUILD_SCRIPT)
+
+
+def _site_unavailable_response(request: Request, user):
+    from ..mockmode import template_context
+    return templates.TemplateResponse(
+        request=request, name="site_unavailable.html",
+        context={"user": user, "active": "site-props", **template_context()},
+        status_code=503,
+    )
 
 
 def _admin_or_redirect(request: Request, db: Session) -> Tuple[Optional[User], Optional[RedirectResponse]]:
@@ -336,6 +358,8 @@ def _unique_name(name: str, taken: set) -> str:
 @router.get("/admin/properties", response_class=HTMLResponse)
 def list_properties_page(request: Request, db: Session = Depends(get_db)):
     user, redirect = _admin_or_redirect(request, db)
+    if redirect is None and not site_content_available():
+        return _site_unavailable_response(request, user)
     if redirect:
         return redirect
     properties = _load_properties()
@@ -368,6 +392,8 @@ def _site_settings_context(user, brand, **extra) -> dict:
 @router.get("/admin/site-settings", response_class=HTMLResponse)
 def site_settings_page(request: Request, db: Session = Depends(get_db)):
     user, redirect = _admin_or_redirect(request, db)
+    if redirect is None and not site_content_available():
+        return _site_unavailable_response(request, user)
     if redirect:
         return redirect
     brand = _load_site().get("brand", {})
@@ -387,6 +413,8 @@ def site_settings_submit(
     email: str = Form(""),
 ):
     user, redirect = _admin_or_redirect(request, db)
+    if redirect is None and not site_content_available():
+        return _site_unavailable_response(request, user)
     if redirect:
         return redirect
 
@@ -454,6 +482,8 @@ def _format_wa_display(e164: str) -> str:
 @router.get("/admin/properties/new", response_class=HTMLResponse)
 def new_property_page(request: Request, db: Session = Depends(get_db)):
     user, redirect = _admin_or_redirect(request, db)
+    if redirect is None and not site_content_available():
+        return _site_unavailable_response(request, user)
     if redirect:
         return redirect
     return templates.TemplateResponse(
@@ -502,6 +532,8 @@ async def create_property_submit(
     images: List[UploadFile] = File(default=[]),
 ):
     user, redirect = _admin_or_redirect(request, db)
+    if redirect is None and not site_content_available():
+        return _site_unavailable_response(request, user)
     if redirect:
         return redirect
 
@@ -650,6 +682,8 @@ async def create_property_submit(
 @router.get("/admin/properties/{id}/edit", response_class=HTMLResponse)
 def edit_property_page(id: str, request: Request, db: Session = Depends(get_db)):
     user, redirect = _admin_or_redirect(request, db)
+    if redirect is None and not site_content_available():
+        return _site_unavailable_response(request, user)
     if redirect:
         return redirect
     props = _load_properties()
@@ -706,6 +740,8 @@ async def edit_property_submit(
     images: List[UploadFile] = File(default=[]),
 ):
     user, redirect = _admin_or_redirect(request, db)
+    if redirect is None and not site_content_available():
+        return _site_unavailable_response(request, user)
     if redirect:
         return redirect
 
@@ -858,6 +894,8 @@ async def edit_property_submit(
 @router.post("/admin/properties/{id}/delete", response_class=HTMLResponse)
 def delete_property_submit(id: str, request: Request, db: Session = Depends(get_db)):
     user, redirect = _admin_or_redirect(request, db)
+    if redirect is None and not site_content_available():
+        return _site_unavailable_response(request, user)
     if redirect:
         return redirect
 

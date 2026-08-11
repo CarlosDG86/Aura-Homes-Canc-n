@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Verificación en dos pasos{% endblock %}
+{% block main_class %}login-page{% endblock %}
+{% block content %}
+<div class="card login-card">
+  <h1>Verificación en dos pasos</h1>
+  <p class="muted">Escribe el código de 6 dígitos de tu app de autenticación.</p>
+  {% if error %}<div class="alert alert-error">{{ error }}</div>{% endif %}
+  <form method="post" action="/2fa">
+    {{ csrf_input(request) }}
+    <label for="code">Código</label>
+    <input id="code" name="code" inputmode="numeric" autocomplete="one-time-code"
+           maxlength="6" required autofocus>
+    <button class="btn btn-primary btn-block" type="submit">Entrar</button>
+  </form>
+  <p class="hint">El código cambia cada 30 segundos. Si falla, espera al siguiente.</p>
+</div>
+{% endblock %}

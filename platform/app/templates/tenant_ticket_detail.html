@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}{{ ticket.public_ref or ticket.id }} — {{ ticket.title }}{% endblock %}
+{% block content %}
+<h1>{{ ticket.title }}</h1>
+<p class="meta">
+  Ref. <strong>{{ ticket.public_ref or ticket.id }}</strong> ·
+  {{ ticket.category.value if ticket.category else '—' }} ·
+  Prioridad: <strong>{{ ticket.priority.value if ticket.priority else '—' }}</strong> ·
+  Estado: <strong>{{ ticket.status.value if ticket.status else '—' }}</strong>
+</p>
+{% if ticket.priority and ticket.priority.value == 'emergencia' %}
+<p class="flash flash-urgent">Marcado como emergencia. Se notificó a tu propietario.</p>
+{% endif %}
+
+{% if ticket.description %}<section class="card"><p>{{ ticket.description }}</p></section>{% endif %}
+{% if ticket.location_in_unit %}<p>Ubicación: {{ ticket.location_in_unit }}</p>{% endif %}
+
+{% if photos %}
+<section class="card">
+  <h2>Fotos</h2>
+  <div class="photo-grid">
+    {% for ph in photos %}
+      <img src="/media/tickets/{{ ticket.id }}/{{ ph.id }}" alt="Foto del reporte" loading="lazy">
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+<section class="card">
+  <h2>Seguimiento</h2>
+  <ul class="timeline">
+    {% for e in events %}
+      <li><span class="ev">{{ e.event_type.value if e.event_type else '' }}</span>
+          {{ e.body or '' }}
+          <span class="when">{{ e.created_at.strftime('%d/%m/%Y %H:%M') if e.created_at else '' }}</span></li>
+    {% endfor %}
+  </ul>
+  {% if ticket.status and ticket.status.value != 'resolved' %}
+  <form method="post" action="/inquilino/tickets/{{ ticket.id }}/comentar">
+    {{ csrf_input(request) }}
+    <label>Añadir un comentario
+      <textarea name="body" rows="3" required maxlength="2000"></textarea>
+    </label>
+    <button class="btn" type="submit">Comentar</button>
+  </form>
+  {% endif %}
+</section>
+{% endblock %}

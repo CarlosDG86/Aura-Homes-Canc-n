@@ -110,4 +110,34 @@
       }
     });
   });
+
+  // Header nav: mark the current item so CSS can render it UPPERCASE + underlined.
+  // - On the property listing / detail pages, "Propiedades" is the active item.
+  // - On the home page, scroll-spy the sections that have a matching nav anchor
+  //   (#como, #contacto) and light up whichever one you're currently reading.
+  (function(){
+    var links = document.querySelectorAll('.nav-links a[data-nav]');
+    if(!links.length) return;
+    function setActive(key){
+      links.forEach(function(a){ a.classList.toggle('active', a.getAttribute('data-nav') === key); });
+    }
+    if(/\/(propiedades|properties)\//.test(location.pathname)){ setActive('props'); return; }
+
+    var sections = ['como','contacto']
+      .map(function(k){ var el = document.getElementById(k); return el ? {key:k, el:el} : null; })
+      .filter(Boolean);
+    if(!sections.length) return;
+
+    var topbar = document.querySelector('.topbar');
+    function top(el){ return el.getBoundingClientRect().top + window.scrollY; }
+    function onScroll(){
+      var line = window.scrollY + (topbar ? topbar.offsetHeight : 0) + 24;
+      var key = '';
+      sections.forEach(function(s){ if(top(s.el) <= line){ key = s.key; } });
+      setActive(key); // '' clears all when you're above the first tracked section
+    }
+    window.addEventListener('scroll', onScroll, {passive:true});
+    window.addEventListener('resize', onScroll);
+    onScroll();
+  })();
 })();

@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Contenido del sitio no disponible{% endblock %}
+{% block content %}
+<h1>Contenido del sitio no disponible</h1>
+<section class="card">
+  <p>Esta pantalla edita las propiedades y los textos del <strong>sitio público</strong>,
+     que es una aplicación distinta a esta plataforma.</p>
+  <p>Aquí, la plataforma corre sola en el servidor y no tiene al lado los archivos del
+     sitio (<code>data/properties.json</code> y <code>build.py</code>), así que no puede
+     modificarlos.</p>
+  <p class="hint">Es el comportamiento esperado, no una falla: mantener las dos aplicaciones
+     separadas evita que un problema en la plataforma tumbe el sitio público.</p>
+  <p><strong>Para editar el contenido del sitio</strong>, ejecuta la plataforma en tu equipo,
+     dentro de la carpeta del proyecto. El resto de las secciones —propietarios, inquilinos,
+     reportes y mensajes— funciona con normalidad aquí.</p>
+</section>
+{% endblock %}

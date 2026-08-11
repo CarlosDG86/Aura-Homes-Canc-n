@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Configurar segundo factor{% endblock %}
+{% block main_class %}login-page{% endblock %}
+{% block content %}
+<div class="card login-card">
+  <h1>Protege tu cuenta</h1>
+  <p class="muted">Tu cuenta de administrador necesita un segundo paso para entrar.
+     Solo se configura una vez.</p>
+  {% if error %}<div class="alert alert-error">{{ error }}</div>{% endif %}
+
+  <ol class="hint" style="text-align:left">
+    <li>Instala una app de códigos: <strong>Google Authenticator</strong>,
+        <strong>Microsoft Authenticator</strong> o similar.</li>
+    <li>Escanea este código con la app.</li>
+    <li>Escribe abajo el código de 6 dígitos que te muestre.</li>
+  </ol>
+
+  <img src="{{ qr }}" alt="Código QR para la app de autenticación"
+       style="margin:0 auto;display:block;max-width:220px">
+
+  <details>
+    <summary class="hint">¿No puedes escanear?</summary>
+    <p class="hint">Añade la cuenta a mano con esta clave:</p>
+    <p><code>{{ secret }}</code></p>
+    <p class="hint">Cuenta: {{ user_email }}</p>
+  </details>
+
+  <form method="post" action="/2fa">
+    {{ csrf_input(request) }}
+    <label for="code">Código de 6 dígitos</label>
+    <input id="code" name="code" inputmode="numeric" autocomplete="one-time-code"
+           maxlength="6" required autofocus>
+    <button class="btn btn-primary btn-block" type="submit">Activar y entrar</button>
+  </form>
+
+  <p class="hint"><strong>Guarda la clave de arriba en un lugar seguro.</strong>
+     Si pierdes el teléfono, es la única forma de volver a configurar el acceso
+     sin ayuda técnica.</p>
+</div>
+{% endblock %}

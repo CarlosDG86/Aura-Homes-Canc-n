@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Sesiones activas{% endblock %}
+{% block content %}
+<h1>Sesiones activas</h1>
+{% if closed is not none %}
+  <p class="flash flash-ok">Se cerraron {{ closed }} sesión(es).</p>
+{% endif %}
+<p class="hint">Estos son los dispositivos donde tu cuenta tiene la sesión abierta.
+   Si ves alguno que no reconoces, ciérralas todas y cambia tu contraseña.</p>
+
+<table>
+  <thead><tr><th>Dispositivo</th><th>Desde</th><th>Última actividad</th><th></th></tr></thead>
+  <tbody>
+  {% for s in sessions %}
+    <tr {% if s.sid == current_sid %}class="unread"{% endif %}>
+      <td>{{ (s.user_agent or 'Desconocido')[:60] }}</td>
+      <td>{{ s.created_at.strftime('%d/%m/%Y %H:%M') if s.created_at else '—' }}</td>
+      <td>{{ s.last_seen_at.strftime('%d/%m/%Y %H:%M') if s.last_seen_at else '—' }}</td>
+      <td>{% if s.sid == current_sid %}<span class="badge-new">esta sesión</span>{% endif %}</td>
+    </tr>
+  {% else %}
+    <tr class="empty-row"><td colspan="4">No hay sesiones activas.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+
+<form method="post" action="/sesiones/cerrar-otras" class="card"
+      data-confirm="¿Cerrar todas las demás sesiones? Tendrás que volver a entrar en esos dispositivos.">
+  {{ csrf_input(request) }}
+  <button class="btn btn-danger" type="submit">Cerrar las demás sesiones</button>
+  <p class="hint">Tu sesión actual se mantiene abierta.</p>
+</form>
+{% endblock %}

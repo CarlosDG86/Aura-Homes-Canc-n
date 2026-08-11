@@ -11,3 +11,17 @@ bcrypt==4.0.1
 python-multipart==0.0.12
 itsdangerous==2.2.0
 jinja2==3.1.4
+# E5 (2b): re-codificacion de fotos de tickets. Es requisito de SEGURIDAD, no cosmetico:
+# reescribir la imagen destruye poliglotas y borra el EXIF (incluido GPS).
+Pillow==11.0.0
+# Agente AI que redacta tickets (claude-haiku-4-5). La app funciona sin llave:
+# si falta, se ofrece el formulario manual.
+anthropic>=0.40
+# E2: segundo factor (TOTP) obligatorio para administradores.
+pyotp==2.9.0
+qrcode==8.0
+# E2: verificación de la firma del id_token de Google (OIDC).
+PyJWT[crypto]==2.10.1
+# Cliente HTTP para canjear el código de Google. Se importa al cargar
+# google_sso.py, así que su ausencia impide arrancar (no es opcional).
+httpx==0.28.1

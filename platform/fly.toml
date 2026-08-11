@@ -1,0 +1,47 @@
+# Plantilla de despliegue para Fly.io. NO se ha creado ninguna cuenta ni
+# desplegado nada: este archivo es la preparación que el CEO debe aprobar.
+#
+# Fly.io se eligió por una razón concreta (INFRA_STACK.md §5): es la única de
+# las opciones gratuitas evaluadas donde el disco persiste. En Render, la capa
+# gratuita borra el disco en cada despliegue, y con él la base de datos y las
+# fotos de los tickets.
+
+app = "aura-homes-plataforma"        # <-- el nombre debe ser único en Fly.io
+primary_region = "dfw"               # Dallas: región donde Fly creó la máquina y el volumen
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  APP_ENV = "production"
+  DATA_MODE = "mock"                 # <-- NO cambiar a "live" sin visto bueno de Legal
+  TENANT_MODULE_ENABLED = "true"
+  PAYMENTS_MODULE_ENABLED = "false"
+  OWNER_PROPERTY_MANAGE_ENABLED = "true"
+  DATABASE_URL = "sqlite:////data/platform.db"
+  UPLOAD_DIR = "/data/uploads"
+  TRUST_PROXY = "true"               # Fly termina el TLS; sin esto el límite por IP no ve la IP real
+
+# El volumen es lo que hace que la base y las fotos sobrevivan a un despliegue.
+# Sin esta sección, cada actualización empieza de cero.
+[[mounts]]
+  source = "data"                    # nombre real del volumen ya creado en Fly
+  destination = "/data"
+
+[http_service]
+  internal_port = 8080
+  force_https = true                 # la cookie de sesión es Secure: sin HTTPS no hay acceso
+  auto_stop_machines = "stop"        # se apaga sin tráfico: así entra en la asignación gratuita
+  auto_start_machines = true
+  min_machines_running = 0
+
+  [[http_service.checks]]
+    interval = "30s"
+    timeout = "5s"
+    grace_period = "10s"
+    method = "GET"
+    path = "/api/health"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "512mb"

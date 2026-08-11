@@ -29,6 +29,7 @@
 <div class="card">
   <h3>Contacto de WhatsApp</h3>
   <form method="post" action="/admin/site-settings">
+    {{ csrf_input(request) }}
     <div class="form-grid">
       <div>
         <label for="whatsapp">Número de WhatsApp</label>

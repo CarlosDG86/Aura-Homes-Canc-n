@@ -11,6 +11,7 @@
 <div class="card">
   <h3>Datos del usuario</h3>
   <form method="post" action="/admin/users/{{ target.id }}">
+    {{ csrf_input(request) }}
     <div class="form-grid">
       <div>
         <label for="u-name">Nombre</label>
@@ -40,6 +41,7 @@
 <div class="card">
   <h3>Restablecer contraseña</h3>
   <form method="post" action="/admin/users/{{ target.id }}/password">
+    {{ csrf_input(request) }}
     <div class="form-grid">
       <div>
         <label for="u-pass">Nueva contraseña temporal</label>
@@ -69,6 +71,7 @@
 
   {% if others %}
   <form method="post" action="/admin/users/{{ target.id }}/properties">
+    {{ csrf_input(request) }}
     <p class="help">Reasignar a este usuario casas que hoy pertenecen a otros (una casa siempre tiene un dueño; marcarla aquí la mueve a este usuario):</p>
     {% for p in others %}
     <div class="checkbox-field">

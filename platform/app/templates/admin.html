@@ -30,6 +30,7 @@
   </p>
   {% if owners %}
   <form method="post" action="/admin/sync-site-properties">
+    {{ csrf_input(request) }}
     <table class="sync-table">
       <thead>
         <tr>
@@ -108,6 +109,7 @@
   <div class="card owner-form-card">
     <h3>Dar de alta un propietario</h3>
     <form method="post" action="/admin/owners">
+    {{ csrf_input(request) }}
       <div class="form-grid">
         <div>
           <label for="owner-name">Nombre</label>

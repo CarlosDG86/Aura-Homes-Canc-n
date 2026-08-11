@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Comunicados{% endblock %}
+{% block content %}
+<h1>Comunicados</h1>
+{% if flash %}<p class="flash flash-{{ flash.kind }}">{{ flash.message }}</p>{% endif %}
+<section class="card">
+  <h2>Nuevo comunicado</h2>
+  <form method="post" action="/owner/comunicados">
+    {{ csrf_input(request) }}
+    <label>Título <input name="title" required maxlength="200"></label>
+    <label>Mensaje <textarea name="body" rows="5" required></textarea></label>
+    <label>Destinatarios
+      <select name="audience">
+        <option value="todos">Todos mis inquilinos</option>
+        <option value="propiedad">Solo una propiedad</option>
+      </select>
+    </label>
+    <label>Propiedad (si elegiste "solo una")
+      <select name="property_id">
+        <option value="">—</option>
+        {% for p in properties %}<option value="{{ p.id }}">{{ p.title }}</option>{% endfor %}
+      </select>
+    </label>
+    <label><input type="checkbox" name="send_email" value="1"> Enviar también por correo
+      {% if mock_mode %}<span class="hint">(desactivado en modo pruebas)</span>{% endif %}
+    </label>
+    <button class="btn btn-primary" type="submit">Enviar</button>
+  </form>
+</section>
+<section class="card">
+  <h2>Enviados</h2>
+  <ul class="timeline">
+    {% for a in announcements %}
+      <li><strong>{{ a.title }}</strong> — {{ a.recipients|length }} destinatario(s)
+        <span class="when">{{ a.created_at.strftime('%d/%m/%Y %H:%M') if a.created_at else '' }}</span></li>
+    {% else %}<li>Todavía no has enviado comunicados.</li>{% endfor %}
+  </ul>
+</section>
+{% endblock %}

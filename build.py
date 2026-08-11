@@ -7,6 +7,7 @@ DIST = os.path.join(ROOT, "dist")
 site = json.load(open(os.path.join(ROOT, "data/site.json"), encoding="utf-8"))
 props = json.load(open(os.path.join(ROOT, "data/properties.json"), encoding="utf-8"))
 B = site["brand"]
+ASSET_VER = "20260808"  # bump when dist/assets/css or js changes, to bust browser cache
 LIVE = [p for p in props if not p.get("placeholder")]  # only real inventory renders on the live site
 LEGAL = site["legalPages"]  # placeholder privacy/terms pages — real copy swaps in here once Legal delivers it
 
@@ -53,17 +54,38 @@ def topbar(lang, page, prop=None, legal=None):
         home = "../../es/" if lang == "es" else "../../en/"
     plist = ("../propiedades/" if lang=="es" else "../properties/") if page not in ("home","legal") else ("propiedades/" if lang=="es" else "properties/")
     nav = t["nav"]
-    links = (f'<nav class="nav-links"><a href="{plist}">{nav["props"]}</a>'
-             f'<a href="{home}#zonas">{nav["zones"]}</a><a href="{home}#como">{nav["how"]}</a>'
-             f'<a href="{home}#contacto">{nav["contact"]}</a></nav>')
+    # On the home page the section anchors are same-page fragments (#como) so
+    # they scroll in place; on every other page they carry the path back to the
+    # home page first ({home}#como). "Zonas" was removed per CEO (2026-08-07):
+    # there is no zones section, so it pointed at the "Por qué Aura" block.
+    frag = "" if page == "home" else home
+    links = (f'<nav class="nav-links">'
+             f'<a data-nav="props" href="{plist}">{nav["props"]}</a>'
+             f'<a data-nav="como" href="{frag}#como">{nav["how"]}</a>'
+             f'<a data-nav="contacto" href="{frag}#contacto">{nav["contact"]}</a></nav>')
     lang_tog = (f'<span class="lang"><a href="{es_url}" class="{"on" if lang=="es" else ""}">ES</a>'
                 f'<a href="{en_url}" class="{"on" if lang=="en" else ""}">EN</a></span>')
-    admin_link = f'<a class="admin-link" href="{B["platformUrl"]}">{t["admin_login"]}</a>'
+    # Desplegable "Ingresar": dos accesos separados, propietario e inquilino.
+    # Sustituye al enlace directo de "Administración", que ya no aparece en el
+    # sitio público — el acceso de admin vive en una URL no enlazada
+    # (DESIGN.md §3). Se usa <details>/<summary> para que funcione con teclado
+    # y sin JavaScript.
+    plat = B["platformUrl"].rstrip("/").removesuffix("/login")
+    login_menu = (
+        f'<details class="login-menu"><summary>{t["login_menu"]}</summary>'
+        f'<div class="login-menu-items">'
+        f'<a href="{plat}/acceso/propietarios">{t["login_owner"]}</a>'
+        f'<a href="{plat}/acceso/inquilinos">{t["login_tenant"]}</a>'
+        f'</div></details>'
+    )
+    admin_link = login_menu
     # WhatsApp button removed from the top bar per CEO request. The WhatsApp
     # contact channel still lives in the footer and the contact section /
     # sticky mobile bar — only the header button (next to the admin login) is
     # gone.
-    return (f'<header class="topbar"><div class="wrap"><a href="{home}">{mark()}</a>'
+    apx = "../assets/" if page in ("home", "legal") else "../../assets/"
+    return (f'<header class="topbar"><div class="wrap">'
+            f'<a class="brand" href="{home}"><img class="brand-logo" src="{apx}img/logo.png" alt="{B["name"]} {B["city"].title()}"></a>'
             f'{links}<div class="topbar-right">{admin_link}{lang_tog}</div></div></header>')
 
 def footer(lang, page):
@@ -114,6 +136,10 @@ def page_shell(lang, title, body, page):
     t = site["ui"][lang]
     css = "../assets/css/styles.css" if page in ("home","legal") else "../../assets/css/styles.css"
     js = css.replace("css/styles.css", "js/app.js")
+    # Cache-busting version so browsers fetch fresh CSS/JS after an edit instead
+    # of serving a stale copy. Bump ASSET_VER whenever styles.css / app.js change.
+    css += f"?v={ASSET_VER}"
+    js += f"?v={ASSET_VER}"
     return f'''<!doctype html><html lang="{lang}"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>{title}</title><meta name="description" content="{t["hero_sub"]}">
@@ -127,20 +153,19 @@ def page_shell(lang, title, body, page):
 def build_home(lang):
     t = site["ui"][lang]
     featured = [p for p in LIVE if p.get("featured")]
-    hero_img = "../assets/img/aur-001/vistaFrente.jpg"
+    hero_img = "../assets/img/banner.jpg"
     cards = "".join(card(p, lang, "home") for p in featured)
     trust = "".join(f'<div class="trust-item"><div class="ic">{HOUSE}</div><h3>{a}</h3><p>{b}</p></div>' for a,b in t["trust"])
     steps = "".join(f'<div class="step"><div class="n">{i+1}</div><div><h3>{a}</h3><p>{b}</p></div></div>' for i,(a,b) in enumerate(t["how"]))
     body = f'''{topbar(lang,"home")}
 <main class="page">
-  <section class="hero"><div class="wrap hero-inner">
-    <div><div class="eyebrow hero-eyebrow">{t["hero_eyebrow"]}</div>
+  <section class="hero hero-stacked">
+    <div class="hero-banner-img"><img src="{hero_img}" alt="{t["hero_title"]}"></div>
+    <div class="wrap hero-content">
+      <div class="eyebrow hero-eyebrow">{t["hero_eyebrow"]}</div>
       <h1>{t["hero_title"]}</h1><p class="sub">{t["hero_sub"]}</p>
-      <div class="hero-actions"><a class="btn btn-cta" href="{("propiedades/" if lang=="es" else "properties/")}">{t["hero_cta"]}</a>
-        <a class="btn btn-wa" href="{wa_link()}">{WA}{t["wa"]}</a></div>
-      <div class="hero-note"><span class="dot"></span>{t["reply_note"]}</div></div>
-    <div class="hero-media"><img src="{hero_img}" alt="{t["hero_title"]}"></div>
-  </div></section>
+    </div>
+  </section>
 
   <section class="section"><div class="wrap">
     <div class="section-head"><h2>{t["featured"]}</h2><a href="{("propiedades/" if lang=="es" else "properties/")}">{t["see_all"]} →</a></div>

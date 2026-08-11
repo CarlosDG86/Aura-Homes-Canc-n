@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Reporte de tickets por unidad{% endblock %}
+{% block content %}
+<h1>Reporte por unidad</h1>
+<p><a class="btn" href="/owner/tickets/reporte?formato=csv">Descargar CSV</a>
+   <a class="btn" href="/owner/tickets">Volver a reportes</a></p>
+<table>
+  <thead><tr><th>Propiedad</th><th>Total</th><th>Abiertos</th><th>En proceso</th>
+    <th>Resueltos</th><th>Emergencias</th><th>Horas prom. resolución</th><th>Categoría frecuente</th></tr></thead>
+  <tbody>
+  {% for r in rows %}
+    <tr>
+      <td>{{ r.property }}</td><td>{{ r.total }}</td><td>{{ r.abiertos }}</td>
+      <td>{{ r.en_proceso }}</td><td>{{ r.resueltos }}</td>
+      <td>{% if r.emergencias %}<strong>{{ r.emergencias }}</strong>{% else %}0{% endif %}</td>
+      <td>{{ r.horas_promedio if r.horas_promedio is not none else '—' }}</td>
+      <td>{{ r.top_categoria }}</td>
+    </tr>
+  {% else %}
+    <tr class="empty-row"><td colspan="8">Todavía no tienes propiedades.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+<p class="hint">Un promedio de horas alto indica reportes que se están quedando parados,
+   no necesariamente que haya muchos.</p>
+{% endblock %}

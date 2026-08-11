@@ -4,6 +4,10 @@
 <h1 class="page-title">Mis propiedades</h1>
 <p class="muted">Solo se muestran las propiedades asociadas a tu cuenta.</p>
 
+{% if urgent_tickets %}
+<p class="flash flash-urgent">Tienes {{ urgent_tickets }} reporte(s) marcados como EMERGENCIA.</p>
+{% endif %}
+
 <div class="section">
   <table>
     <thead>

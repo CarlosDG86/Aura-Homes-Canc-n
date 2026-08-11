@@ -7,7 +7,7 @@
     "email": "hola@aurahomescancun.com",
     "fxRate": 18.15,
     "fxNote": "Tipo de cambio de referencia — Finanzas debe confirmar el valor real",
-    "platformUrl": "http://localhost:8010/login",
+    "platformUrl": "https://aura-homes-plataforma.fly.dev",
     "platformUrlNote": "Local-only placeholder — Infra must set the real Phase 2 platform URL once it's deployed."
   },
   "ui": {
@@ -112,7 +112,10 @@
       "specs_area": "m²",
       "specs_furnished": "Sin amueblar",
       "specs_parking": "Estacionamiento",
-      "specs_pets": "Mascotas OK"
+      "specs_pets": "Mascotas OK",
+      "login_menu": "Ingresar",
+      "login_owner": "Soy Propietario",
+      "login_tenant": "Soy Inquilino"
     },
     "en": {
       "lang": "en",
@@ -215,7 +218,10 @@
       "specs_area": "m²",
       "specs_furnished": "Unfurnished",
       "specs_parking": "Parking",
-      "specs_pets": "Pets OK"
+      "specs_pets": "Pets OK",
+      "login_menu": "Log in",
+      "login_owner": "I'm an Owner",
+      "login_tenant": "I'm a Tenant"
     }
   },
   "legalPages": {

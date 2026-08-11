@@ -20,6 +20,7 @@
 
 <form method="post" enctype="multipart/form-data"
       action="{% if mode == 'new' %}/admin/properties/new{% else %}/admin/properties/{{ prop_id }}/edit{% endif %}">
+    {{ csrf_input(request) }}
 
   <div class="card">
     <h2>Datos básicos</h2>

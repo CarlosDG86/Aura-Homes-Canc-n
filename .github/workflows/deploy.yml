@@ -1,0 +1,89 @@
+# Publica el sitio público en GitHub Pages y, opcionalmente, la plataforma en Fly.
+#
+# Alternativa a Cloudflare Pages: GitHub Pages por sí solo no puede ejecutar
+# `build.py`, así que Actions lo compila y sube el resultado ya generado.
+name: Publicar
+
+on:
+  push:
+    branches: [main, docs/architecture-and-phase2]
+  workflow_dispatch:        # permite lanzarlo a mano desde la pestaña Actions
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: publicar
+  cancel-in-progress: true   # si llegan dos push seguidos, publica solo el último
+
+jobs:
+  sitio:
+    name: Sitio público
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.pages.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Compilar el sitio
+        run: python build.py
+
+      - name: Comprobar que compiló de verdad
+        # Sin esto, un build.py que falla a medias publicaría un sitio roto.
+        run: |
+          test -f dist/es/index.html || { echo "Falta dist/es/index.html"; exit 1; }
+          test -f dist/en/index.html || { echo "Falta dist/en/index.html"; exit 1; }
+          echo "Sitio generado correctamente"
+
+      - uses: actions/configure-pages@v5
+        id: pages
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+      - uses: actions/deploy-pages@v4
+
+  pruebas:
+    name: Pruebas de la plataforma
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Instalar dependencias
+        run: pip install -r platform/requirements.txt
+      - name: Verificar que la aplicación importa
+        # Comprobación mínima pero valiosa: detecta errores de arranque como el
+        # que tumbó el primer despliegue, antes de publicar nada.
+        working-directory: platform
+        env:
+          APP_ENV: dev
+          DATA_MODE: mock
+        run: python -c "import app.main; print('La aplicación importa correctamente')"
+
+  plataforma:
+    name: Plataforma (Fly.io)
+    needs: pruebas
+    runs-on: ubuntu-latest
+    # Solo se despliega si el repositorio tiene configurado FLY_API_TOKEN.
+    # Sin ese secreto el paso se omite en lugar de fallar.
+    if: ${{ github.ref == 'refs/heads/main' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: superfly/flyctl-actions/setup-flyctl@master
+      - name: Desplegar
+        working-directory: platform
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+        run: |
+          if [ -z "$FLY_API_TOKEN" ]; then
+            echo "FLY_API_TOKEN no configurado — se omite el despliegue de la plataforma."
+            exit 0
+          fi
+          flyctl deploy --remote-only

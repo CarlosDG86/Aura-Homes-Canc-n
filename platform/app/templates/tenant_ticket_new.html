@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Reportar un problema{% endblock %}
+{% block content %}
+<h1>Reportar un problema</h1>
+
+{% if not agent_ready and agent_reason %}
+  <p class="flash flash-info">{{ agent_reason }}</p>
+{% endif %}
+
+<form method="post" action="/inquilino/tickets/nuevo" enctype="multipart/form-data" class="card">
+  {{ csrf_input(request) }}
+  <label>¿Qué está pasando?
+    <input name="title" required maxlength="200" placeholder="Ej. Gotea el lavabo del baño">
+  </label>
+  <label>Cuéntanos más
+    <textarea name="description" rows="5"
+      placeholder="¿Desde cuándo? ¿Empeora? ¿Hay agua en el piso?"></textarea>
+  </label>
+  <label>¿En qué parte de la vivienda?
+    <input name="location_in_unit" maxlength="120" placeholder="Ej. Baño principal">
+  </label>
+  <label>Tipo de problema
+    <select name="category">
+      {% for c in categories %}<option value="{{ c.value }}">{{ c.value|replace('_',' ')|capitalize }}</option>{% endfor %}
+    </select>
+  </label>
+  <label>¿Qué tan urgente es?
+    <select name="priority">
+      {% for p in priorities %}<option value="{{ p.value }}" {% if p.value=='media' %}selected{% endif %}>{{ p.value|capitalize }}</option>{% endfor %}
+    </select>
+  </label>
+  <label>Fotos (hasta {{ max_photos }})
+    <input type="file" name="photos" accept="image/jpeg,image/png,image/webp" multiple>
+  </label>
+  <p class="hint">Una foto de cerca y otra de contexto ayudan mucho. Se admiten JPG, PNG o WEBP.</p>
+  <p class="hint"><strong>¿Es una emergencia?</strong> Si hay olor a gas, fuego, humo o una fuga
+     importante de agua, ponte a salvo primero y avisa por teléfono. Reporta aquí después.</p>
+  <button class="btn btn-primary" type="submit">Enviar reporte</button>
+</form>
+{% endblock %}

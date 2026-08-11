@@ -1,3 +1,7 @@
 # Salida generada por la herramienta local graphify (grafo de conocimiento).
 # No se versiona: se regenera con /graphify.
 graphify-out/
+
+# Imágenes fuente/originales (pesadas). Los originales viven en Drive; el repo
+# solo versiona los assets ya optimizados en dist/assets/img/.
+assets-src/
