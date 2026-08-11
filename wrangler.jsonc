@@ -1,0 +1,26 @@
+{
+  // Configuración para publicar el sitio público en Cloudflare.
+  //
+  // Cloudflare unificó Pages y Workers: el flujo de "Connect to Git" ahora crea
+  // un Worker y despliega con `npx wrangler deploy`, que necesita este archivo.
+  //
+  // Aquí NO hay código de servidor: solo se sirven los archivos ya generados
+  // por `build.py`. El sitio sigue siendo estático, como manda el alcance del
+  // MVP — esto solo le dice a Cloudflare qué carpeta publicar.
+  "name": "aura-homes-cancun",
+  "compatibility_date": "2026-08-11",
+
+  "assets": {
+    // Carpeta que genera `python build.py`.
+    "directory": "./dist",
+
+    // Sirve el index.html de cada carpeta (/es/ → /es/index.html) y conserva
+    // las URL limpias del sitio.
+    "html_handling": "auto-trailing-slash",
+
+    // Sin página de error propia todavía: una ruta inexistente devuelve un 404
+    // simple. Cuando Legal entregue los textos definitivos se puede añadir una
+    // página 404 bilingüe y cambiar esto a "404-page".
+    "not_found_handling": "none"
+  }
+}
