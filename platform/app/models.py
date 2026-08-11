@@ -98,6 +98,14 @@ class User(Base):
     # Quién dio de alta esta cuenta (un propietario que registra a su inquilino).
     created_by_user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
 
+    # --- Segundo factor (E2 · SECURITY.md §1.3) ---
+    # Obligatorio para administradores: en internet, una contraseña sola no
+    # basta para la cuenta que lo ve todo. El secreto se guarda cifrado por el
+    # propio TOTP estándar (base32) y solo sirve junto al dispositivo.
+    totp_secret = Column(String, nullable=True)
+    totp_enabled = Column(Boolean, nullable=False, default=False, server_default="0")
+    totp_confirmed_at = Column(DateTime, nullable=True)
+
     properties = relationship(
         "Property", back_populates="owner", cascade="all, delete-orphan"
     )

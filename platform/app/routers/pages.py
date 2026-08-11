@@ -20,6 +20,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 
+from .. import identity
 from ..auth import hash_password, verify_password
 from ..db import get_db
 from ..email_utils import send_temp_password_email
@@ -83,6 +84,11 @@ def _current_user_or_none(request: Request, db: Session) -> Optional[User]:
     # sin fila viva, la cookie no vale aunque esté firmada y sin caducar.
     is_admin = user.role == RoleEnum.admin
     if resolve_server_session(db, request, is_admin=is_admin) is None:
+        request.session.clear()
+        return None
+    # Última comprobación: una sesión de administrador sin segundo factor
+    # verificado no vale, aunque la cookie y la fila de sesión sean correctas.
+    if not identity.totp_satisfied(request, user):
         request.session.clear()
         return None
     return user
@@ -207,6 +213,16 @@ def login_submit(
         audit(db, request, "login.failed", meta=f"email={email[:120]}")
         return _fail()
 
+    # Un administrador solo puede entrar por su puerta. Mensaje genérico a
+    # propósito: si dijéramos "usa la otra URL" estaríamos revelando que ese
+    # correo es de administrador y que existe otra puerta.
+    if (identity.admin_gate_enabled()
+            and user.role == RoleEnum.admin
+            and not request.session.get(identity.ADMIN_GATE_KEY)):
+        register_failed_login(db, None, email, ip)
+        audit(db, request, "login.admin_wrong_door", meta=f"email={email[:120]}")
+        return _fail()
+
     # Cuenta desactivada (baja lógica): mismo mensaje genérico.
     if not getattr(user, "is_active", True):
         register_failed_login(db, None, email, ip)
@@ -216,9 +232,22 @@ def login_submit(
     # Éxito. clear() descarta el identificador de sesión anterior — es lo que
     # evita la fijación de sesión (SECURITY.md §3): un atacante que plantó una
     # cookie antes del acceso no obtiene una sesión autenticada con ella.
+    # Contraseña correcta. Si la cuenta exige segundo factor, la sesión NO se
+    # autentica todavía: solo se recuerda quién está a medio entrar. Sin el
+    # código, esta sesión no abre ninguna pantalla.
+    gate = request.session.get(identity.ADMIN_GATE_KEY)
     request.session.clear()
-    request.session["user_id"] = user.id
+    if gate:
+        request.session[identity.ADMIN_GATE_KEY] = True
     rotate_csrf_token(request)
+
+    if identity.totp_required_for(user):
+        identity.start_pending_login(request, user)
+        audit(db, request, "login.password_ok_awaiting_totp", actor=user,
+              object_type="user", object_id=user.id)
+        return RedirectResponse(url="/2fa", status_code=302)
+
+    request.session["user_id"] = user.id
     mark_session_start(request)
     create_server_session(db, request, user)
     register_successful_login(db, user, email, ip)
@@ -236,6 +265,114 @@ def logout(request: Request, db: Session = Depends(get_db)):
     request.session.clear()
     return RedirectResponse(url="/login", status_code=302)
 
+
+
+
+# --- Segundo factor y puerta de administración (E2) -------------------------
+
+
+@router.get(identity.admin_login_path(), response_class=HTMLResponse,
+            include_in_schema=False)
+def admin_login_page(request: Request, db: Session = Depends(get_db)):
+    """Acceso de administrador por una URL no enlazada.
+
+    Marca la sesión como "entró por la puerta correcta". Sin esa marca, una
+    cuenta de administrador no puede iniciar sesión por `/login`: así el
+    formulario público no sirve para atacar la cuenta que lo ve todo.
+    """
+    user = _current_user_or_none(request, db)
+    if user:
+        return RedirectResponse(url=_home_for(user), status_code=302)
+    request.session[identity.ADMIN_GATE_KEY] = True
+    resp = templates.TemplateResponse(
+        request=request, name="login.html",
+        context={"error": None, "email": "",
+                 "page_title": "Acceso interno",
+                 "page_subtitle": "Uso exclusivo del administrador."},
+    )
+    # Fuera de los buscadores: la ofuscación no sirve de nada si Google la indexa.
+    resp.headers["X-Robots-Tag"] = "noindex, nofollow, noarchive"
+    return resp
+
+
+@router.get("/2fa", response_class=HTMLResponse)
+def totp_page(request: Request, db: Session = Depends(get_db)):
+    """Pide el código, o guía la configuración inicial si aún no lo tiene."""
+    uid = identity.pending_user_id(request)
+    if not uid:
+        return RedirectResponse(url="/login", status_code=302)
+    user = db.get(User, uid)
+    if not user:
+        request.session.clear()
+        return RedirectResponse(url="/login", status_code=302)
+
+    if not user.totp_enabled:
+        # Alta del segundo factor. El secreto vive en la sesión hasta que la
+        # persona demuestra que su app lo guardó bien: si se escribiera antes
+        # en la base y cerrara la ventana, quedaría bloqueada fuera.
+        secret = request.session.get("_totp_setup_secret")
+        if not secret:
+            secret = identity.new_secret()
+            request.session["_totp_setup_secret"] = secret
+        uri = identity.provisioning_uri(user, secret)
+        return templates.TemplateResponse(
+            request=request, name="totp_setup.html",
+            context={"error": None, "secret": secret,
+                     "qr": identity.qr_data_uri(uri), "user_email": user.email},
+        )
+
+    return templates.TemplateResponse(
+        request=request, name="totp_verify.html", context={"error": None}
+    )
+
+
+@router.post("/2fa", response_class=HTMLResponse)
+def totp_submit(request: Request, db: Session = Depends(get_db),
+                code: str = Form(...), csrf_token: str = Form("")):
+    uid = identity.pending_user_id(request)
+    if not uid:
+        return RedirectResponse(url="/login", status_code=302)
+    user = db.get(User, uid)
+    if not user:
+        request.session.clear()
+        return RedirectResponse(url="/login", status_code=302)
+
+    ip = client_ip(request)
+    setup_secret = request.session.get("_totp_setup_secret")
+    secret = user.totp_secret if user.totp_enabled else setup_secret
+
+    if not identity.verify_code(secret, code):
+        # Un código equivocado cuenta como intento fallido: sin esto, el
+        # segundo factor sería adivinable a fuerza bruta (solo un millón de
+        # combinaciones) sin ninguna traba.
+        register_failed_login(db, user, user.email, ip)
+        audit(db, request, "login.totp_failed", actor=user,
+              object_type="user", object_id=user.id)
+        name = "totp_setup.html" if not user.totp_enabled else "totp_verify.html"
+        ctx = {"error": "Código incorrecto. Revisa que sea el actual de tu app."}
+        if not user.totp_enabled:
+            uri = identity.provisioning_uri(user, setup_secret)
+            ctx.update({"secret": setup_secret, "qr": identity.qr_data_uri(uri),
+                        "user_email": user.email})
+        return templates.TemplateResponse(request=request, name=name,
+                                          context=ctx, status_code=401)
+
+    if not user.totp_enabled:
+        identity.enable_totp(db, user, setup_secret)
+        audit(db, request, "user.totp_enabled", actor=user,
+              object_type="user", object_id=user.id)
+    request.session.pop("_totp_setup_secret", None)
+
+    # Segundo factor superado: recién aquí la sesión queda autenticada.
+    identity.clear_pending_login(request)
+    identity.mark_totp_verified(request)
+    request.session["user_id"] = user.id
+    rotate_csrf_token(request)
+    mark_session_start(request)
+    create_server_session(db, request, user)
+    register_successful_login(db, user, user.email, ip)
+    audit(db, request, "login.success", actor=user, object_type="user", object_id=user.id)
+    return RedirectResponse(url=_home_for(user), status_code=302)
 
 # --- Dashboards ---------------------------------------------------------
 

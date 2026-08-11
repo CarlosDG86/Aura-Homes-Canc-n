@@ -17,3 +17,6 @@ Pillow==11.0.0
 # Agente AI que redacta tickets (claude-haiku-4-5). La app funciona sin llave:
 # si falta, se ofrece el formulario manual.
 anthropic>=0.40
+# E2: segundo factor (TOTP) obligatorio para administradores.
+pyotp==2.9.0
+qrcode==8.0

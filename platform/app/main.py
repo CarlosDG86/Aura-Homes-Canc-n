@@ -166,6 +166,9 @@ def _ensure_user_security_columns() -> None:
         "contact_phone": "ALTER TABLE users ADD COLUMN contact_phone VARCHAR",
         "must_change_password": "ALTER TABLE users ADD COLUMN must_change_password BOOLEAN NOT NULL DEFAULT 0",
         "created_by_user_id": "ALTER TABLE users ADD COLUMN created_by_user_id INTEGER",
+        "totp_secret": "ALTER TABLE users ADD COLUMN totp_secret VARCHAR",
+        "totp_enabled": "ALTER TABLE users ADD COLUMN totp_enabled BOOLEAN NOT NULL DEFAULT 0",
+        "totp_confirmed_at": "ALTER TABLE users ADD COLUMN totp_confirmed_at DATETIME",
     }
     with engine.begin() as conn:
         cols = {row[1] for row in conn.execute(text("PRAGMA table_info(users)"))}
