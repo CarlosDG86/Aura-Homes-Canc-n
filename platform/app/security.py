@@ -157,6 +157,16 @@ def register_template_globals(templates) -> None:
     templates.env.globals["csrf_input"] = csrf_input
     templates.env.globals["csrf_token"] = get_csrf_token
 
+    # El botón de Google solo aparece si hay credenciales: mostrarlo sin
+    # configurar llevaría a un error en vez de a un acceso.
+    def _google_enabled():
+        try:
+            from .google_sso import is_configured
+            return is_configured()
+        except Exception:
+            return False
+    templates.env.globals["google_enabled"] = _google_enabled()
+
 
 class CSRFMiddleware(BaseHTTPMiddleware):
     """Valida el token CSRF en todo método que cambia estado.

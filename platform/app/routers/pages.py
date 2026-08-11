@@ -20,7 +20,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 
-from .. import identity
+from .. import google_sso, identity
 from ..auth import hash_password, verify_password
 from ..db import get_db
 from ..email_utils import send_temp_password_email
@@ -372,6 +372,76 @@ def totp_submit(request: Request, db: Session = Depends(get_db),
     create_server_session(db, request, user)
     register_successful_login(db, user, user.email, ip)
     audit(db, request, "login.success", actor=user, object_type="user", object_id=user.id)
+    return RedirectResponse(url=_home_for(user), status_code=302)
+
+
+
+# --- Acceso con Google (E2) --------------------------------------------------
+
+
+@router.get("/auth/google/start")
+def google_start(request: Request):
+    """Manda al usuario a Google, guardando state/nonce/PKCE en su sesión."""
+    try:
+        return RedirectResponse(url=google_sso.build_authorize_url(request), status_code=302)
+    except google_sso.SSOError as exc:
+        request.session["flash"] = {"kind": "error", "message": str(exc)}
+        return RedirectResponse(url="/login", status_code=302)
+
+
+@router.get("/auth/google/callback")
+def google_callback(request: Request, db: Session = Depends(get_db),
+                    code: str = "", state: str = "", error: str = ""):
+    """Retorno de Google: verifica la identidad y entra si la cuenta existe."""
+    ip = client_ip(request)
+
+    def _rechazar(mensaje: str, accion: str):
+        audit(db, request, accion, meta=mensaje[:200])
+        return templates.TemplateResponse(
+            request=request, name="login.html",
+            context={"error": mensaje, "email": "", "page_title": "No se pudo entrar"},
+            status_code=401,
+        )
+
+    if error or not code:
+        return _rechazar("No se completó el acceso con Google.", "sso.cancelled")
+
+    try:
+        info = google_sso.exchange_and_verify(request, code, state)
+    except google_sso.SSOError as exc:
+        return _rechazar(str(exc), "sso.failed")
+
+    user = google_sso.find_user(db, info)
+    if user is None:
+        # Mensaje explícito a propósito: aquí NO hay riesgo de enumeración
+        # (quien llega ya demostró ser dueño de ese correo ante Google), y
+        # decir "tu cuenta no existe" evita que alguien crea que la plataforma
+        # está rota cuando en realidad nadie le ha dado de alta.
+        return _rechazar(
+            "Tu cuenta de Google no está registrada en la plataforma. "
+            "Pídele a tu propietario o al administrador que te dé de alta.",
+            "sso.unknown_account",
+        )
+    if not getattr(user, "is_active", True):
+        return _rechazar("Tu cuenta está desactivada.", "sso.inactive_account")
+
+    request.session.clear()
+    rotate_csrf_token(request)
+
+    # Un administrador que entra con Google sigue necesitando su segundo
+    # factor: Google demuestra quién es, no que tenga su dispositivo.
+    if identity.totp_required_for(user):
+        identity.start_pending_login(request, user)
+        audit(db, request, "sso.ok_awaiting_totp", actor=user,
+              object_type="user", object_id=user.id)
+        return RedirectResponse(url="/2fa", status_code=302)
+
+    request.session["user_id"] = user.id
+    mark_session_start(request)
+    create_server_session(db, request, user)
+    register_successful_login(db, user, user.email, ip)
+    audit(db, request, "login.success_google", actor=user,
+          object_type="user", object_id=user.id)
     return RedirectResponse(url=_home_for(user), status_code=302)
 
 # --- Dashboards ---------------------------------------------------------

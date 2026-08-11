@@ -563,3 +563,8 @@ code {
   .app-main .topbar { justify-content: space-between; }
   .sidebar-toggle { display: inline-block; }
 }
+.btn-google{background:#fff;color:#3c4043;border:1px solid #dadce0;font-weight:600}
+.btn-google:hover{background:#f8f9fa}
+.or{display:flex;align-items:center;gap:12px;color:#8a939b;font-size:12px;
+  margin:14px 0;text-transform:uppercase;letter-spacing:.1em}
+.or::before,.or::after{content:"";flex:1;height:1px;background:#e4ddcf}

@@ -33,19 +33,16 @@ junto a la puerta.
 **Cómo se corrige:** iniciar sesión, ir a Admin → Usuarios → esa cuenta →
 restablecer contraseña. Toma un minuto y es obligatorio.
 
-### 1.2 🔴 La etapa E2 (identidad) no está construida
-El diseño aprobado (`DESIGN.md §3.2`, `SECURITY.md §1.3`) pide tres cosas para
-el acceso de administrador que **hoy no existen en el código**:
+### 1.2 ✅ Etapa E2 (identidad) — construida (2026-08-11)
 
 | Control aprobado | Estado |
 |---|---|
-| URL de admin no enlazada (`ADMIN_LOGIN_PATH`) | ❌ No implementado — el admin entra por `/login`, igual que todos |
-| Segundo factor (código de 6 dígitos) obligatorio | ❌ No implementado |
-| Acceso con Google (SSO) | ❌ No implementado |
+| URL de admin no enlazada (`ADMIN_LOGIN_PATH`) | ✅ Opcional; con `noindex` |
+| Segundo factor obligatorio para admin | ✅ TOTP, 25 pruebas |
+| Acceso con Google (SSO) | ✅ Listo; requiere credenciales de Google Cloud |
 
-Hoy la única defensa de la cuenta de administrador es una contraseña. En tu
-equipo eso basta; expuesto a internet, no. El límite de intentos y el bloqueo
-por IP ya funcionan y ayudan, pero no sustituyen al segundo factor.
+La contraseña por sí sola ya no autentica a un administrador. Para activar
+Google SSO hacen falta las credenciales (§3.6).
 
 ### 1.3 🟡 Hay datos personales reales en la base
 `platform.db` contiene a Mayra Pichardo con su correo real. No es un dato de
@@ -180,8 +177,32 @@ El único costo recurrente es el agente AI, y solo si se activa.
 ## 6. Lo que falta antes de considerar esto "listo para producción"
 
 1. Cambiar la contraseña del administrador (§1.1)
-2. Construir E2: URL oculta de admin, segundo factor, Google SSO (§1.2)
 3. Visto bueno de QA — no se ha ejecutado la lista de `handoffs/QA.md`
 4. Visto bueno de Legal antes de `DATA_MODE=live`
 5. Respaldo automático con restauración probada
 6. Decidir qué hacer con los datos reales que ya están en `platform.db` (§1.3)
+
+
+---
+
+## 7. Google SSO — credenciales (opcional)
+
+El código está construido y probado contra un proveedor simulado. Para
+activarlo con Google de verdad:
+
+1. `console.cloud.google.com` → crear proyecto.
+2. **APIs y servicios → Pantalla de consentimiento OAuth**: externa, en
+   producción. Ámbitos: solo `openid`, `email`, `profile`.
+3. **Credenciales → Crear credenciales → ID de cliente de OAuth** → Aplicación
+   web. URI de redirección autorizado:
+   `https://aura-homes-plataforma.fly.dev/auth/google/callback`
+4. Guardar el ID y el secreto:
+
+```powershell
+fly secrets set GOOGLE_CLIENT_ID="..." GOOGLE_CLIENT_SECRET="..." `
+                GOOGLE_REDIRECT_URI="https://aura-homes-plataforma.fly.dev/auth/google/callback"
+```
+
+Sin esas variables el botón simplemente no aparece y todo sigue funcionando con
+contraseña. **Entrar con Google no crea cuentas**: si el correo no corresponde a
+un usuario ya dado de alta, se rechaza el acceso.

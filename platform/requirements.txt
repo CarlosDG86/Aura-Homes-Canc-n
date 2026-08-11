@@ -20,3 +20,5 @@ anthropic>=0.40
 # E2: segundo factor (TOTP) obligatorio para administradores.
 pyotp==2.9.0
 qrcode==8.0
+# E2: verificación de la firma del id_token de Google (OIDC).
+PyJWT[crypto]==2.10.1

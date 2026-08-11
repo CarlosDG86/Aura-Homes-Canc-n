@@ -169,6 +169,7 @@ def _ensure_user_security_columns() -> None:
         "totp_secret": "ALTER TABLE users ADD COLUMN totp_secret VARCHAR",
         "totp_enabled": "ALTER TABLE users ADD COLUMN totp_enabled BOOLEAN NOT NULL DEFAULT 0",
         "totp_confirmed_at": "ALTER TABLE users ADD COLUMN totp_confirmed_at DATETIME",
+        "google_sub": "ALTER TABLE users ADD COLUMN google_sub VARCHAR",
     }
     with engine.begin() as conn:
         cols = {row[1] for row in conn.execute(text("PRAGMA table_info(users)"))}

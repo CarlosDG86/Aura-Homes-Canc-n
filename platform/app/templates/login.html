@@ -9,6 +9,10 @@
   {% if error %}
   <div class="alert alert-error">{{ error }}</div>
   {% endif %}
+  {% if google_enabled %}
+  <a class="btn btn-google btn-block" href="/auth/google/start">Continuar con Google</a>
+  <div class="or">o</div>
+  {% endif %}
   <form method="post" action="/login">
     {{ csrf_input(request) }}
     <label for="email">Correo electrónico</label>

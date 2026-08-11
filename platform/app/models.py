@@ -106,6 +106,11 @@ class User(Base):
     totp_enabled = Column(Boolean, nullable=False, default=False, server_default="0")
     totp_confirmed_at = Column(DateTime, nullable=True)
 
+    # --- Acceso con Google (E2 · SECURITY.md §1.1) ---
+    # `sub` es el identificador PERMANENTE de la cuenta de Google. Se vincula
+    # por aquí y no por correo, porque un correo puede cambiar de dueño.
+    google_sub = Column(String, nullable=True, unique=True, index=True)
+
     properties = relationship(
         "Property", back_populates="owner", cascade="all, delete-orphan"
     )
