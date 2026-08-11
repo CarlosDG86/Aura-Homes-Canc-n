@@ -89,11 +89,30 @@ REPO_ROOT = os.path.dirname(os.path.dirname(APP_DIR))  # .../platform/app -> pla
 
 app.mount("/static", StaticFiles(directory=os.path.join(APP_DIR, "static")), name="static")
 
-# Read-only preview of the live site's property photos, for the admin
-# properties CRUD (thumbnails only — this does not expose write access).
-_site_img_dir = os.path.join(REPO_ROOT, "dist", "assets", "img")
-os.makedirs(_site_img_dir, exist_ok=True)
-app.mount("/site-images", StaticFiles(directory=_site_img_dir), name="site-images")
+# Vista previa (solo lectura) de las fotos del sitio público, para el CRUD de
+# propiedades del admin.
+#
+# Este montaje solo tiene sentido cuando la plataforma corre DENTRO del
+# repositorio, con el sitio estático al lado. En el contenedor la plataforma
+# viaja sola: `REPO_ROOT` se calcula subiendo dos niveles desde `app/`, que ahí
+# llega a la raíz del sistema, y el intento de crear `/dist` mataba el arranque
+# con PermissionError — la máquina reiniciaba en bucle y Fly devolvía 502.
+#
+# Ahora, si la ruta no está disponible, se omite el montaje y la aplicación
+# arranca igual: las miniaturas son una comodidad del panel, no algo por lo que
+# valga la pena dejar el servicio caído.
+_site_img_dir = os.environ.get("SITE_IMAGES_DIR") or os.path.join(
+    REPO_ROOT, "dist", "assets", "img"
+)
+try:
+    os.makedirs(_site_img_dir, exist_ok=True)
+    app.mount("/site-images", StaticFiles(directory=_site_img_dir), name="site-images")
+except OSError as exc:
+    print(
+        f"[aviso] No se monta /site-images ({_site_img_dir}): {exc}\n"
+        "        Las miniaturas del sitio público no estarán disponibles. "
+        "Es lo esperado cuando la plataforma corre sola en un contenedor."
+    )
 
 app.include_router(auth_router, prefix="/api/auth")
 app.include_router(admin.router)

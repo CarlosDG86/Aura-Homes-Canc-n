@@ -7,7 +7,7 @@
 # fotos de los tickets.
 
 app = "aura-homes-plataforma"        # <-- el nombre debe ser único en Fly.io
-primary_region = "qro"               # Querétaro: la región más cercana a Cancún
+primary_region = "dfw"               # Dallas: región donde Fly creó la máquina y el volumen
 
 [build]
   dockerfile = "Dockerfile"
@@ -25,7 +25,7 @@ primary_region = "qro"               # Querétaro: la región más cercana a Can
 # El volumen es lo que hace que la base y las fotos sobrevivan a un despliegue.
 # Sin esta sección, cada actualización empieza de cero.
 [[mounts]]
-  source = "aura_data"
+  source = "data"                    # nombre real del volumen ya creado en Fly
   destination = "/data"
 
 [http_service]
