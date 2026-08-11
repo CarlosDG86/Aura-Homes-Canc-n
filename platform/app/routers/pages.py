@@ -271,9 +271,7 @@ def logout(request: Request, db: Session = Depends(get_db)):
 # --- Segundo factor y puerta de administración (E2) -------------------------
 
 
-@router.get(identity.admin_login_path(), response_class=HTMLResponse,
-            include_in_schema=False)
-def admin_login_page(request: Request, db: Session = Depends(get_db)):
+def _admin_login_page(request: Request, db: Session = Depends(get_db)):
     """Acceso de administrador por una URL no enlazada.
 
     Marca la sesión como "entró por la puerta correcta". Sin esa marca, una
@@ -293,6 +291,17 @@ def admin_login_page(request: Request, db: Session = Depends(get_db)):
     # Fuera de los buscadores: la ofuscación no sirve de nada si Google la indexa.
     resp.headers["X-Robots-Tag"] = "noindex, nofollow, noarchive"
     return resp
+
+
+# La puerta de administración solo se registra cuando hay una ruta secreta
+# configurada. Sin ella, `admin_login_path()` devuelve "/login" y se registraría
+# un segundo manejador para esa misma ruta: nunca llegaría a ejecutarse (gana el
+# primero) y dejaría una ruta duplicada confusa en la aplicación.
+if identity.admin_gate_enabled():
+    router.add_api_route(
+        identity.admin_login_path(), _admin_login_page,
+        methods=["GET"], response_class=HTMLResponse, include_in_schema=False,
+    )
 
 
 @router.get("/2fa", response_class=HTMLResponse)
