@@ -37,16 +37,22 @@ h1,h2,h3{font-family:var(--f-head);font-weight:600;line-height:1.15;margin:0}
 .btn-block{width:100%}
 
 /* top bar */
-.topbar{position:sticky;top:0;z-index:50;background:rgba(247,243,236,.96);
+/* Arena muy clara: se distingue del fondo de la página (--sand) sin romper la
+   paleta. Va casi opaca para que el texto siga legible cuando el contenido pasa
+   por debajo al hacer scroll. */
+.topbar{position:sticky;top:0;z-index:50;background:rgba(253,251,246,.97);
   backdrop-filter:blur(8px);border-bottom:1px solid var(--border)}
-.topbar .wrap{display:flex;align-items:center;justify-content:space-between;height:216px;gap:12px}
+/* 60px en móvil en vez de 216px: la cabecera anterior se comía un tercio de la
+   pantalla de un teléfono antes de que se viera una sola propiedad. El sitio es
+   mobile-first, así que este es el valor base y se agranda en pantalla grande. */
+.topbar .wrap{display:flex;align-items:center;justify-content:space-between;height:60px;gap:12px}
 .mark{display:flex;flex-direction:column;line-height:1;font-family:var(--f-head);font-weight:600}
 .mark .m1{font-size:18px;color:var(--teal);display:flex;align-items:center;gap:7px}
 .mark .m2{font-family:var(--f-body);font-size:9px;letter-spacing:.30em;color:var(--turq);
   font-weight:600;margin-top:3px;padding-left:26px}
 .mark svg{width:19px;height:19px}
 .brand{display:inline-flex;align-items:center}
-.brand-logo{height:200px;width:auto;display:block}
+.brand-logo{height:46px;width:auto;display:block}
 .nav-links{display:none;gap:22px;font-size:14px;font-weight:500;color:var(--ink)}
 .nav-links a{padding-bottom:2px;transition:color .15s}
 .nav-links a:hover{color:var(--teal)}
@@ -235,6 +241,9 @@ h1,h2,h3{font-family:var(--f-head);font-weight:600;line-height:1.15;margin:0}
 @media(min-width:900px){
   .wrap{padding:0 32px}
   .nav-links{display:flex}
+  /* En pantalla grande sobra sitio: la cabecera respira un poco más. */
+  .topbar .wrap{height:76px}
+  .brand-logo{height:58px}
   .wa-icon{display:none}
   .wa-pill{display:inline-flex;align-items:center;gap:7px;background:var(--wa);color:#0b2a17;
     padding:9px 14px;border-radius:999px;font-weight:600;font-size:13px}
