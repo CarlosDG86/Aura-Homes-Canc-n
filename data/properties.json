@@ -39,7 +39,6 @@
       "cosinaIsla.jpg",
       "BanoVisitas.jpg",
       "vistaPatio.jpg",
-      "vistaPatio2.jpg",
       "escaleras.jpg",
       "Corredor2doPiso.jpg",
       "Revamara2.jpg",
@@ -463,5 +462,613 @@
         ]
       ]
     }
+  },
+  {
+    "id": "AUR-002",
+    "slug": {
+      "es": "residencia-contemporanea-lagos-del-sol",
+      "en": "contemporary-residence-lagos-del-sol"
+    },
+    "status": "available",
+    "featured": true,
+    "priceMXN": 42000,
+    "zone": "Lagos del Sol",
+    "beds": 3,
+    "baths": 3.5,
+    "area": 280,
+    "furnished": false,
+    "parking": 2,
+    "pets": true,
+    "mapCenter": {
+      "lat": 21.049,
+      "lng": -86.875
+    },
+    "title": {
+      "es": "Residencia contemporánea en Lagos del Sol",
+      "en": "Contemporary residence in Lagos del Sol"
+    },
+    "avail": {
+      "es": "Disponible ahora",
+      "en": "Available now"
+    },
+    "hero": "vistaFrente.jpg",
+    "gallery": [
+      "vistaFrente.jpg",
+      "cosinaIsla.jpg",
+      "Recamara.jpg"
+    ],
+    "desc": {
+      "es": "Residencia de arquitectura contemporánea en Lagos del Sol, con fachada de celosía de madera y concreto aparente. Los interiores son de planta abierta con pisos de mármol de gran formato: la cocina tiene isla central con cubierta de granito y barra para desayunar, y conecta directamente con sala y comedor. La recámara principal abre a un ventanal de piso a techo con vista a la vegetación del residencial. Se entrega sin amueblar.",
+      "en": "Contemporary residence in Lagos del Sol, with a wood-lattice and exposed-concrete facade. The interiors are open-plan with large-format marble floors: the kitchen has a central island with granite countertop and breakfast bar, connecting directly to the living and dining areas. The main bedroom opens onto a floor-to-ceiling window overlooking the community's greenery. Delivered unfurnished."
+    },
+    "amenities": {
+      "es": [
+        "Cocina con isla central",
+        "Pisos de mármol",
+        "Ventanales de piso a techo",
+        "Celosía de madera en fachada",
+        "Planta abierta",
+        "Privada con vigilancia",
+        "Estacionamiento para 2 autos",
+        "Se permiten mascotas"
+      ],
+      "en": [
+        "Kitchen with central island",
+        "Marble floors",
+        "Floor-to-ceiling windows",
+        "Wood-lattice facade",
+        "Open floor plan",
+        "Gated with security",
+        "Parking for 2 cars",
+        "Pets allowed"
+      ]
+    },
+    "contract": {
+      "es": [
+        [
+          "Plazo mínimo",
+          "12 meses"
+        ],
+        [
+          "Depósito",
+          "1 mes de renta"
+        ],
+        [
+          "Mantenimiento",
+          "Incluido"
+        ],
+        [
+          "Servicios",
+          "A cargo del inquilino"
+        ],
+        [
+          "Entrada",
+          "Inmediata"
+        ]
+      ],
+      "en": [
+        [
+          "Minimum term",
+          "12 months"
+        ],
+        [
+          "Deposit",
+          "1 month's rent"
+        ],
+        [
+          "Maintenance",
+          "Included"
+        ],
+        [
+          "Utilities",
+          "Tenant's responsibility"
+        ],
+        [
+          "Move-in",
+          "Immediate"
+        ]
+      ]
+    },
+    "requirements": {
+      "es": [
+        "Aval con propiedad",
+        "Comprobante de ingresos",
+        "Estudio socioeconómico",
+        "Póliza jurídica (por cuenta del inquilino)"
+      ],
+      "en": [
+        "Guarantor with property",
+        "Proof of income",
+        "Background/credit check",
+        "Legal policy (paid by tenant)"
+      ]
+    },
+    "poi": {
+      "es": [
+        [
+          "Escuelas y universidades",
+          "A 10 minutos"
+        ],
+        [
+          "Plazas y supermercados",
+          "Plaza Las Américas a 15 min"
+        ],
+        [
+          "Acceso a vías principales",
+          "Salida a Chetumal cerca"
+        ]
+      ],
+      "en": [
+        [
+          "Schools and universities",
+          "10 minutes away"
+        ],
+        [
+          "Malls and supermarkets",
+          "Plaza Las Américas 15 min"
+        ],
+        [
+          "Main road access",
+          "Near the Chetumal highway"
+        ]
+      ]
+    },
+    "mock": true
+  },
+  {
+    "id": "AUR-003",
+    "slug": {
+      "es": "casa-con-alberca-puerto-cancun",
+      "en": "house-with-pool-puerto-cancun"
+    },
+    "status": "available",
+    "featured": true,
+    "priceMXN": 68000,
+    "zone": "Puerto Cancún",
+    "beds": 4,
+    "baths": 4.5,
+    "area": 340,
+    "furnished": false,
+    "parking": 3,
+    "pets": true,
+    "mapCenter": {
+      "lat": 21.16,
+      "lng": -86.797
+    },
+    "title": {
+      "es": "Casa con alberca en Puerto Cancún",
+      "en": "House with pool in Puerto Cancún"
+    },
+    "avail": {
+      "es": "Disponible ahora",
+      "en": "Available now"
+    },
+    "hero": "vistaFrente.jpg",
+    "gallery": [
+      "vistaFrente.jpg",
+      "vistaPatio.jpg",
+      "escaleras.jpg"
+    ],
+    "desc": {
+      "es": "Casa de dos plantas en Puerto Cancún, con fachada revestida en madera y ventanales corridos en el nivel superior. El patio trasero tiene alberca privada con muro de piedra y deck, pensado para uso todo el año. En el interior destaca la escalera flotante con barandal de cristal templado y estructura de madera, que conecta las áreas sociales con las cuatro recámaras. Pisos de mármol en toda la planta baja.",
+      "en": "Two-story house in Puerto Cancún, with a wood-clad facade and continuous windows on the upper level. The back patio has a private pool with a stone wall and deck, designed for year-round use. Inside, a floating staircase with tempered-glass railing and wood structure connects the social areas to the four bedrooms. Marble floors throughout the ground level."
+    },
+    "amenities": {
+      "es": [
+        "Alberca privada",
+        "Escalera flotante con cristal templado",
+        "Fachada revestida en madera",
+        "Pisos de mármol",
+        "Deck exterior",
+        "Privada con acceso controlado",
+        "Estacionamiento para 3 autos",
+        "Se permiten mascotas"
+      ],
+      "en": [
+        "Private pool",
+        "Floating staircase with tempered glass",
+        "Wood-clad facade",
+        "Marble floors",
+        "Outdoor deck",
+        "Gated, controlled access",
+        "Parking for 3 cars",
+        "Pets allowed"
+      ]
+    },
+    "contract": {
+      "es": [
+        [
+          "Plazo mínimo",
+          "12 meses"
+        ],
+        [
+          "Depósito",
+          "1 mes de renta"
+        ],
+        [
+          "Mantenimiento",
+          "Incluido"
+        ],
+        [
+          "Servicios",
+          "A cargo del inquilino"
+        ],
+        [
+          "Entrada",
+          "Inmediata"
+        ]
+      ],
+      "en": [
+        [
+          "Minimum term",
+          "12 months"
+        ],
+        [
+          "Deposit",
+          "1 month's rent"
+        ],
+        [
+          "Maintenance",
+          "Included"
+        ],
+        [
+          "Utilities",
+          "Tenant's responsibility"
+        ],
+        [
+          "Move-in",
+          "Immediate"
+        ]
+      ]
+    },
+    "requirements": {
+      "es": [
+        "Aval con propiedad",
+        "Comprobante de ingresos",
+        "Estudio socioeconómico",
+        "Póliza jurídica (por cuenta del inquilino)"
+      ],
+      "en": [
+        "Guarantor with property",
+        "Proof of income",
+        "Background/credit check",
+        "Legal policy (paid by tenant)"
+      ]
+    },
+    "poi": {
+      "es": [
+        [
+          "Escuelas y universidades",
+          "Colegios privados cerca"
+        ],
+        [
+          "Plazas y supermercados",
+          "La Isla y Puerto Cancún a 5 min"
+        ],
+        [
+          "Acceso a vías principales",
+          "Bulevar Kukulcán a 10 min"
+        ]
+      ],
+      "en": [
+        [
+          "Schools and universities",
+          "Private schools nearby"
+        ],
+        [
+          "Malls and supermarkets",
+          "La Isla and Puerto Cancún 5 min"
+        ],
+        [
+          "Main road access",
+          "Kukulcán Boulevard 10 min"
+        ]
+      ]
+    },
+    "mock": true
+  },
+  {
+    "id": "AUR-004",
+    "slug": {
+      "es": "casa-nueva-residencial-cumbres",
+      "en": "new-house-residencial-cumbres"
+    },
+    "status": "available",
+    "featured": false,
+    "priceMXN": 38000,
+    "zone": "Residencial Cumbres",
+    "beds": 3,
+    "baths": 3.5,
+    "area": 245,
+    "furnished": false,
+    "parking": 2,
+    "pets": true,
+    "mapCenter": {
+      "lat": 21.115,
+      "lng": -86.86
+    },
+    "title": {
+      "es": "Casa nueva en Residencial Cumbres",
+      "en": "New house in Residencial Cumbres"
+    },
+    "avail": {
+      "es": "Disponible ahora",
+      "en": "Available now"
+    },
+    "hero": "vistaFrente.jpg",
+    "gallery": [
+      "vistaFrente.jpg",
+      "cosinaComedor.jpg",
+      "BanoPrincipal.jpg"
+    ],
+    "desc": {
+      "es": "Casa de estreno en Residencial Cumbres, con fachada de líneas rectas en concreto y celosía metálica que se ilumina al atardecer. La cocina y el comedor comparten un solo espacio de doble altura, con isla de trabajo, parrilla empotrada y horno doble. El baño principal está terminado en mármol de piso a techo, con doble lavabo en mueble suspendido y regadera con cancel de cristal. Nunca habitada.",
+      "en": "Brand-new house in Residencial Cumbres, with a straight-lined concrete facade and a metal lattice that lights up at dusk. The kitchen and dining room share a single double-height space, with a work island, built-in cooktop and double oven. The main bathroom is finished in floor-to-ceiling marble, with a double vanity on a floating cabinet and a glass-enclosed shower. Never lived in."
+    },
+    "amenities": {
+      "es": [
+        "Casa de estreno",
+        "Cocina con isla y horno doble",
+        "Baño principal en mármol",
+        "Doble altura en área social",
+        "Celosía metálica iluminada",
+        "Privada con vigilancia",
+        "Estacionamiento para 2 autos",
+        "Se permiten mascotas"
+      ],
+      "en": [
+        "Brand new",
+        "Kitchen with island and double oven",
+        "Marble main bathroom",
+        "Double-height social area",
+        "Illuminated metal lattice",
+        "Gated with security",
+        "Parking for 2 cars",
+        "Pets allowed"
+      ]
+    },
+    "contract": {
+      "es": [
+        [
+          "Plazo mínimo",
+          "12 meses"
+        ],
+        [
+          "Depósito",
+          "1 mes de renta"
+        ],
+        [
+          "Mantenimiento",
+          "Incluido"
+        ],
+        [
+          "Servicios",
+          "A cargo del inquilino"
+        ],
+        [
+          "Entrada",
+          "Inmediata"
+        ]
+      ],
+      "en": [
+        [
+          "Minimum term",
+          "12 months"
+        ],
+        [
+          "Deposit",
+          "1 month's rent"
+        ],
+        [
+          "Maintenance",
+          "Included"
+        ],
+        [
+          "Utilities",
+          "Tenant's responsibility"
+        ],
+        [
+          "Move-in",
+          "Immediate"
+        ]
+      ]
+    },
+    "requirements": {
+      "es": [
+        "Aval con propiedad",
+        "Comprobante de ingresos",
+        "Estudio socioeconómico",
+        "Póliza jurídica (por cuenta del inquilino)"
+      ],
+      "en": [
+        "Guarantor with property",
+        "Proof of income",
+        "Background/credit check",
+        "Legal policy (paid by tenant)"
+      ]
+    },
+    "poi": {
+      "es": [
+        [
+          "Escuelas y universidades",
+          "Varias escuelas en la zona"
+        ],
+        [
+          "Plazas y supermercados",
+          "Plazas y supermercados a 5 min"
+        ],
+        [
+          "Acceso a vías principales",
+          "Avenida Huayacán cerca"
+        ]
+      ],
+      "en": [
+        [
+          "Schools and universities",
+          "Several schools in the area"
+        ],
+        [
+          "Malls and supermarkets",
+          "Malls and supermarkets 5 min"
+        ],
+        [
+          "Main road access",
+          "Near Huayacán Avenue"
+        ]
+      ]
+    },
+    "mock": true
+  },
+  {
+    "id": "AUR-005",
+    "slug": {
+      "es": "casa-con-roof-garden-arbolada",
+      "en": "house-with-roof-garden-arbolada"
+    },
+    "status": "available",
+    "featured": false,
+    "priceMXN": 32000,
+    "zone": "Arbolada",
+    "beds": 3,
+    "baths": 2.5,
+    "area": 210,
+    "furnished": true,
+    "parking": 2,
+    "pets": true,
+    "mapCenter": {
+      "lat": 21.07,
+      "lng": -86.85
+    },
+    "title": {
+      "es": "Casa con roof garden en Arbolada",
+      "en": "House with roof garden in Arbolada"
+    },
+    "avail": {
+      "es": "Disponible ahora",
+      "en": "Available now"
+    },
+    "hero": "Entrada.jpg",
+    "gallery": [
+      "Entrada.jpg",
+      "Sala.jpg",
+      "Terraza.jpg"
+    ],
+    "desc": {
+      "es": "Casa amueblada en Arbolada, con cochera techada por una pérgola de vigas de madera que da sombra todo el día. La sala se entrega con salas modulares y mesa de centro, y abre a un ventanal corrido con vista al residencial. Arriba, el roof garden tiene área de asoleadero y vista despejada hacia la zona hotelera. Lista para entrar a vivir.",
+      "en": "Furnished house in Arbolada, with a carport shaded all day by a wood-beam pergola. The living room comes with modular sofas and a coffee table, and opens onto a continuous window overlooking the community. Upstairs, the roof garden has a sun-deck area and a clear view toward the hotel zone. Move-in ready."
+    },
+    "amenities": {
+      "es": [
+        "Roof garden con asoleadero",
+        "Amueblada",
+        "Cochera con pérgola de madera",
+        "Ventanal corrido en sala",
+        "Vista a la zona hotelera",
+        "Privada con acceso controlado",
+        "Estacionamiento para 2 autos",
+        "Se permiten mascotas"
+      ],
+      "en": [
+        "Roof garden with sun deck",
+        "Furnished",
+        "Carport with wood pergola",
+        "Continuous window in living room",
+        "View toward the hotel zone",
+        "Gated, controlled access",
+        "Parking for 2 cars",
+        "Pets allowed"
+      ]
+    },
+    "contract": {
+      "es": [
+        [
+          "Plazo mínimo",
+          "12 meses"
+        ],
+        [
+          "Depósito",
+          "1 mes de renta"
+        ],
+        [
+          "Mantenimiento",
+          "Incluido"
+        ],
+        [
+          "Servicios",
+          "A cargo del inquilino"
+        ],
+        [
+          "Entrada",
+          "Inmediata"
+        ]
+      ],
+      "en": [
+        [
+          "Minimum term",
+          "12 months"
+        ],
+        [
+          "Deposit",
+          "1 month's rent"
+        ],
+        [
+          "Maintenance",
+          "Included"
+        ],
+        [
+          "Utilities",
+          "Tenant's responsibility"
+        ],
+        [
+          "Move-in",
+          "Immediate"
+        ]
+      ]
+    },
+    "requirements": {
+      "es": [
+        "Aval con propiedad",
+        "Comprobante de ingresos",
+        "Estudio socioeconómico",
+        "Póliza jurídica (por cuenta del inquilino)"
+      ],
+      "en": [
+        "Guarantor with property",
+        "Proof of income",
+        "Background/credit check",
+        "Legal policy (paid by tenant)"
+      ]
+    },
+    "poi": {
+      "es": [
+        [
+          "Escuelas y universidades",
+          "Escuelas a pocos minutos"
+        ],
+        [
+          "Plazas y supermercados",
+          "Comercios dentro del residencial"
+        ],
+        [
+          "Acceso a vías principales",
+          "Avenida Huayacán a 5 min"
+        ]
+      ],
+      "en": [
+        [
+          "Schools and universities",
+          "Schools a few minutes away"
+        ],
+        [
+          "Malls and supermarkets",
+          "Shops inside the community"
+        ],
+        [
+          "Main road access",
+          "Huayacán Avenue 5 min"
+        ]
+      ]
+    },
+    "mock": true
   }
 ]

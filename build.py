@@ -7,7 +7,7 @@ DIST = os.path.join(ROOT, "dist")
 site = json.load(open(os.path.join(ROOT, "data/site.json"), encoding="utf-8"))
 props = json.load(open(os.path.join(ROOT, "data/properties.json"), encoding="utf-8"))
 B = site["brand"]
-ASSET_VER = "20260808"  # bump when dist/assets/css or js changes, to bust browser cache
+ASSET_VER = "20260811"  # bump when dist/assets/css or js changes, to bust browser cache
 LIVE = [p for p in props if not p.get("placeholder")]  # only real inventory renders on the live site
 LEGAL = site["legalPages"]  # placeholder privacy/terms pages — real copy swaps in here once Legal delivers it
 
