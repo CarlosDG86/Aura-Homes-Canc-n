@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aura Homes — Demostración</title>
+<style>
+  :root{
+    --teal:#0E6E71; --turq:#2CB1BC; --sand:#F7F3EC; --coral:#C0492B;
+    --ink:#1f2a2a; --muted:#6b7574; --line:#e4ddcf; --white:#ffffff;
+    --ok-bg:#E1F5EE; --ok-fg:#0F6E56; --warn-bg:#FAEEDA; --warn-fg:#854F0B;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Inter',-apple-system,Segoe UI,Roboto,sans-serif;background:var(--sand);color:var(--ink);line-height:1.5}
+  .frame{max-width:1000px;margin:24px auto;background:var(--white);border:1px solid var(--line);border-radius:16px;overflow:hidden;box-shadow:0 8px 30px rgba(14,110,113,0.08)}
+  .topbar{display:flex;align-items:center;gap:12px;padding:12px 18px;border-bottom:1px solid var(--line);background:#fff}
+  .logo{width:30px;height:30px;border-radius:8px;background:var(--teal);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700}
+  .brand{font-weight:600;font-size:15px}
+  .tenant{margin-left:6px;font-size:13px;color:var(--teal);background:#E1F5EE;border:none;padding:5px 12px;border-radius:999px;cursor:pointer}
+  .tag{margin-left:auto;font-size:11px;color:var(--muted);background:var(--sand);border:1px solid var(--line);padding:4px 10px;border-radius:999px}
+  .avatar{width:30px;height:30px;border-radius:50%;background:var(--turq);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600}
+  .body{display:grid;grid-template-columns:180px 1fr;min-height:460px}
+  nav{border-right:1px solid var(--line);padding:12px 10px;background:#faf8f2}
+  .navitem{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:9px;font-size:14px;color:var(--muted);cursor:pointer;border:none;background:none;width:100%;text-align:left;font-family:inherit}
+  .navitem:hover{background:#f0ece1}
+  .navitem.active{background:#E1F5EE;color:var(--teal);font-weight:600}
+  .dot{width:8px;height:8px;border-radius:50%;background:currentColor;flex-shrink:0}
+  main{padding:20px 22px}
+  h1{font-family:'Fraunces',Georgia,serif;font-size:22px;font-weight:600;margin-bottom:2px}
+  .sub{font-size:12px;color:var(--muted);margin-bottom:18px}
+  .metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:12px;margin-bottom:22px}
+  .metric{background:#faf8f2;border-radius:10px;padding:14px}
+  .metric .l{font-size:12px;color:var(--muted)}
+  .metric .v{font-size:24px;font-weight:700;margin-top:2px}
+  .warn{color:var(--warn-fg)}
+  .sechead{font-size:13px;color:var(--muted);margin-bottom:8px}
+  .list{border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-bottom:22px}
+  .row{display:flex;align-items:center;gap:12px;padding:12px 14px;border-bottom:1px solid var(--line)}
+  .row:last-child{border-bottom:none}
+  .row .name{flex:1;font-size:14px}
+  .row .meta{font-size:12px;color:var(--muted)}
+  .pill{font-size:11px;padding:3px 9px;border-radius:999px}
+  .pill.ok{background:var(--ok-bg);color:var(--ok-fg)}
+  .pill.free{background:var(--sand);color:var(--muted)}
+  .pill.warn{background:var(--warn-bg);color:var(--warn-fg)}
+  .icon{width:30px;height:30px;border-radius:8px;background:#eef4f0;color:var(--teal);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+  .cta{margin-top:20px;background:var(--teal);color:#fff;border:none;border-radius:9px;padding:12px 18px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit}
+  .view{display:none}
+  .view.on{display:block}
+  .banner{background:#E1F5EE;color:var(--teal);font-size:12px;text-align:center;padding:6px}
+  .foot{font-size:11px;color:var(--muted);text-align:center;padding:12px}
+  @media(max-width:600px){.body{grid-template-columns:1fr}nav{display:flex;overflow-x:auto;border-right:none;border-bottom:1px solid var(--line)}.navitem{white-space:nowrap}}
+</style>
+</head>
+<body>
+<div class="frame">
+  <div class="banner">Demostración conceptual — datos de ejemplo, no es un producto funcional</div>
+  <div class="topbar">
+    <div class="logo">A</div>
+    <span class="brand">Aura Homes</span>
+    <button class="tenant" onclick="alert('Multiempresa: cada administradora ve solo sus propiedades. Aquí: Aura Homes Cancún.')">Aura Homes Cancún ▾</button>
+    <span class="tag">Mockup</span>
+    <div class="avatar">JC</div>
+  </div>
+  <div class="body">
+    <nav>
+      <button class="navitem active" data-v="panel"><span class="dot"></span>Panel</button>
+      <button class="navitem" data-v="props"><span class="dot"></span>Propiedades</button>
+      <button class="navitem" data-v="tickets"><span class="dot"></span>Tickets</button>
+      <button class="navitem" data-v="soon"><span class="dot"></span>Inquilinos</button>
+      <button class="navitem" data-v="soon"><span class="dot"></span>Comunicación</button>
+      <button class="navitem" data-v="soon"><span class="dot"></span>Reportes</button>
+    </nav>
+    <main>
+      <section class="view on" id="panel">
+        <h1>Panel general</h1>
+        <div class="sub">Aura Homes Cancún · 3 propiedades</div>
+        <div class="metrics">
+          <div class="metric"><div class="l">Propiedades</div><div class="v">3</div></div>
+          <div class="metric"><div class="l">Inquilinos</div><div class="v">5</div></div>
+          <div class="metric"><div class="l">Tickets abiertos</div><div class="v warn">2</div></div>
+          <div class="metric"><div class="l">Ocupación</div><div class="v">67%</div></div>
+        </div>
+        <div class="sechead">Propiedades</div>
+        <div class="list">
+          <div class="row"><div class="icon">⌂</div><span class="name">Casa Demo 01</span><span class="pill ok">Rentada</span></div>
+          <div class="row"><div class="icon">⌂</div><span class="name">Casa Demo 02</span><span class="pill free">Disponible</span></div>
+          <div class="row"><div class="icon">▤</div><span class="name">Depto Demo 03</span><span class="pill ok">Rentada</span></div>
+        </div>
+        <div class="sechead">Tickets recientes · por propiedad</div>
+        <div class="list">
+          <div class="row"><div class="icon">◍</div><div><div class="name">Fuga en llave de cocina</div><div class="meta">Casa Demo 01 · abierto</div></div><span class="pill warn" style="margin-left:auto">Pendiente</span></div>
+          <div class="row"><div class="icon">⚡</div><div><div class="name">Contacto eléctrico sin corriente</div><div class="meta">Depto Demo 03 · abierto</div></div><span class="pill warn" style="margin-left:auto">En proceso</span></div>
+        </div>
+        <button class="cta">Empezar 60 días gratis</button>
+      </section>
+
+      <section class="view" id="props">
+        <h1>Propiedades</h1>
+        <div class="sub">Administración e información por propiedad</div>
+        <div class="list">
+          <div class="row"><div class="icon">⌂</div><div style="flex:1"><div class="name">Casa Demo 01</div><div class="meta">3 rec · 2.5 baños · $23,500/mes</div></div><span class="pill ok">Rentada</span></div>
+          <div class="row"><div class="icon">⌂</div><div style="flex:1"><div class="name">Casa Demo 02</div><div class="meta">2 rec · 2 baños · $18,000/mes</div></div><span class="pill free">Disponible</span></div>
+          <div class="row"><div class="icon">▤</div><div style="flex:1"><div class="name">Depto Demo 03</div><div class="meta">1 rec · 1 baño · $12,500/mes</div></div><span class="pill ok">Rentada</span></div>
+        </div>
+        <div class="sechead">Ficha de propiedad incluye</div>
+        <div class="list">
+          <div class="row"><span class="name">Datos, specs y amenidades</span></div>
+          <div class="row"><span class="name">Galería de fotos</span></div>
+          <div class="row"><span class="name">Inquilino actual y contrato</span></div>
+          <div class="row"><span class="name">Historial de tickets</span></div>
+        </div>
+        <button class="cta">Empezar 60 días gratis</button>
+      </section>
+
+      <section class="view" id="tickets">
+        <h1>Tickets de mantenimiento</h1>
+        <div class="sub">Organizados por propiedad</div>
+        <div class="sechead">Casa Demo 01</div>
+        <div class="list">
+          <div class="row"><div class="icon">◍</div><div style="flex:1"><div class="name">Fuga en llave de cocina</div><div class="meta">Reportado hace 2 días</div></div><span class="pill warn">Pendiente</span></div>
+        </div>
+        <div class="sechead">Depto Demo 03</div>
+        <div class="list">
+          <div class="row"><div class="icon">⚡</div><div style="flex:1"><div class="name">Contacto eléctrico sin corriente</div><div class="meta">Reportado hace 5 días</div></div><span class="pill warn">En proceso</span></div>
+          <div class="row"><div class="icon">✓</div><div style="flex:1"><div class="name">Cambio de chapa</div><div class="meta">Cerrado</div></div><span class="pill ok">Resuelto</span></div>
+        </div>
+        <button class="cta">Empezar 60 días gratis</button>
+      </section>
+
+      <section class="view" id="soon">
+        <h1>Módulo del MVP</h1>
+        <div class="sub">Inquilinos · Comunicación · Notificaciones y emails · Reportes</div>
+        <p style="font-size:14px;color:var(--muted);max-width:460px">Estos módulos forman parte del MVP de Aura Homes. En esta demostración conceptual se muestran Panel, Propiedades y Tickets. El agente de IA por WhatsApp queda para la fase 2.</p>
+        <button class="cta">Empezar 60 días gratis</button>
+      </section>
+    </main>
+  </div>
+  <div class="foot">Borrador de Marketing · sujeto a aprobación del CEO · precios y funciones no finales</div>
+</div>
+<script>
+  var items=document.querySelectorAll('.navitem');
+  items.forEach(function(b){
+    b.addEventListener('click',function(){
+      items.forEach(function(x){x.classList.remove('active')});
+      b.classList.add('active');
+      var v=b.getAttribute('data-v');
+      document.querySelectorAll('.view').forEach(function(s){s.classList.remove('on')});
+      document.getElementById(v).classList.add('on');
+    });
+  });
+</script>
+</body>
+</html>

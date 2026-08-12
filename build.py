@@ -59,10 +59,14 @@ def topbar(lang, page, prop=None, legal=None):
     # home page first ({home}#como). "Zonas" was removed per CEO (2026-08-07):
     # there is no zones section, so it pointed at the "Por qué Aura" block.
     frag = "" if page == "home" else home
+    # Ruta a la raíz de dist/ para el demo estático (demo.html vive en dist/,
+    # no es una página generada). Misma lógica de profundidad que apx.
+    droot = "../" if page in ("home", "legal") else "../../"
     links = (f'<nav class="nav-links">'
              f'<a data-nav="props" href="{plist}">{nav["props"]}</a>'
              f'<a data-nav="como" href="{frag}#como">{nav["how"]}</a>'
-             f'<a data-nav="contacto" href="{frag}#contacto">{nav["contact"]}</a></nav>')
+             f'<a data-nav="contacto" href="{frag}#contacto">{nav["contact"]}</a>'
+             f'<a data-nav="demo" href="{droot}demo.html" target="_blank" rel="noopener">DEMO</a></nav>')
     lang_tog = (f'<span class="lang"><a href="{es_url}" class="{"on" if lang=="es" else ""}">ES</a>'
                 f'<a href="{en_url}" class="{"on" if lang=="en" else ""}">EN</a></span>')
     # Desplegable "Ingresar": dos accesos separados, propietario e inquilino.
