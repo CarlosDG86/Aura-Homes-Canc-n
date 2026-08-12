@@ -1,0 +1,150 @@
+# Respaldo automático de la plataforma (decisión 5.1 del reporte 2026-08-11).
+#
+# Hasta ahora no había ninguno: si se perdía el volumen de Fly, se perdían la
+# base de datos y las fotos de los tickets. Un respaldo que depende de que
+# alguien se acuerde no es un respaldo.
+#
+# Qué hace, cada noche:
+#   1. Despierta la máquina (se apaga sola sin tráfico para entrar en la capa
+#      gratuita, así que hay que llamarla antes de conectarse por SSH).
+#   2. Toma una instantánea coherente con `sqlite3.backup()` — no `cp` — y la
+#      empaqueta junto a las fotos.
+#   3. La descarga y **comprueba que se puede restaurar**: abre la base, corre
+#      integrity_check y contrapone el conteo de filas contra el manifiesto.
+#      Un respaldo que no se ha verificado no es un respaldo, es una esperanza.
+#   4. La cifra con AES-256 y la guarda como artefacto del repositorio.
+#
+# Para restaurar: docs/phase2/BACKUP.md
+name: Respaldo
+
+on:
+  schedule:
+    - cron: "0 8 * * *"      # 08:00 UTC = 02:00 en Cancún, cuando no hay nadie usándola
+  workflow_dispatch:          # y a mano desde la pestaña Actions
+
+concurrency:
+  group: respaldo
+  cancel-in-progress: false   # NO cancelar: un respaldo a medias no sirve de nada
+
+permissions:
+  contents: read
+
+env:
+  APP: aura-homes-plataforma
+  REMOTE: /tmp/aura-backup.tar.gz
+
+jobs:
+  respaldo:
+    name: Respaldar base y fotos
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Comprobar que hay credenciales
+        # Sin secretos el trabajo fallaría a mitad con un error críptico.
+        # Es preferible decir exactamente qué falta.
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+          BACKUP_PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+        run: |
+          faltan=""
+          [ -z "$FLY_API_TOKEN" ] && faltan="$faltan FLY_API_TOKEN"
+          [ -z "$BACKUP_PASSPHRASE" ] && faltan="$faltan BACKUP_PASSPHRASE"
+          if [ -n "$faltan" ]; then
+            echo "::error::Faltan secretos del repositorio:$faltan (ver docs/phase2/BACKUP.md §2)"
+            exit 1
+          fi
+          echo "Credenciales presentes"
+
+      - uses: superfly/flyctl-actions/setup-flyctl@master
+
+      - name: Despertar la máquina
+        # auto_stop_machines="stop" + min_machines_running=0: la máquina duerme
+        # sin tráfico. Una petición HTTP la levanta (auto_start_machines=true);
+        # `fly ssh` por sí solo no lo hace.
+        run: |
+          for i in 1 2 3 4 5 6; do
+            codigo=$(curl -s -o /dev/null -w "%{http_code}" --max-time 30 "https://$APP.fly.dev/api/health" || echo 000)
+            echo "intento $i: HTTP $codigo"
+            [ "$codigo" = "200" ] && exit 0
+            sleep 10
+          done
+          echo "::error::La máquina no respondió tras 6 intentos"
+          exit 1
+
+      - name: Crear la instantánea dentro del contenedor
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+        run: flyctl ssh console -a "$APP" -C "python -m app.backup"
+
+      - name: Descargarla
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+        run: |
+          flyctl ssh sftp get "$REMOTE" ./aura-backup.tar.gz -a "$APP"
+          ls -la aura-backup.tar.gz
+
+      - name: Verificar que se puede restaurar
+        # El paso que convierte esto en un respaldo de verdad. Se hace ANTES de
+        # cifrar: cifrar un archivo corrupto solo produce basura ilegible.
+        run: |
+          mkdir -p verificacion && tar -xzf aura-backup.tar.gz -C verificacion
+          python - <<'PY'
+          import json, sqlite3, os, sys
+          man = json.load(open("verificacion/manifest.json", encoding="utf-8"))
+          fallos = []
+          for nombre, esperado in man["databases"].items():
+              ruta = os.path.join("verificacion", "db", nombre)
+              if not os.path.exists(ruta):
+                  fallos.append(f"{nombre}: no está en el paquete"); continue
+              # Una base corrupta lanza DatabaseError al primer SELECT. Sin este
+              # try el paso falla igual, pero con un traceback en vez de decir
+              # cuál de las dos bases es la que no sirve.
+              try:
+                  con = sqlite3.connect(ruta)
+                  if (ok := con.execute("PRAGMA integrity_check").fetchone()[0]) != "ok":
+                      fallos.append(f"{nombre}: integrity_check devolvió {ok}")
+                  for tabla, n in esperado["tables"].items():
+                      real = con.execute(f"SELECT COUNT(*) FROM {tabla}").fetchone()[0]
+                      if real != n:
+                          fallos.append(f"{nombre}.{tabla}: {real} filas, se esperaban {n}")
+                  con.close()
+                  print(f"  {nombre}: integro, {sum(esperado['tables'].values())} filas en {len(esperado['tables'])} tablas")
+              except sqlite3.DatabaseError as e:
+                  fallos.append(f"{nombre}: no se puede abrir ({e})")
+          fotos = sum(len(f) for _, _, f in os.walk("verificacion/uploads"))
+          if fotos != man["photos"]["files"]:
+              fallos.append(f"fotos: {fotos} en el paquete, {man['photos']['files']} en el manifiesto")
+          print(f"  fotos: {fotos}")
+          if fallos:
+              for f in fallos: print(f"::error::{f}")
+              sys.exit(1)
+          print("Respaldo verificado: restaurable.")
+          PY
+          rm -rf verificacion
+
+      - name: Cifrar
+        env:
+          BACKUP_PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+        run: |
+          gpg --batch --yes --symmetric --cipher-algo AES256 \
+              --passphrase "$BACKUP_PASSPHRASE" \
+              --output aura-backup.tar.gz.gpg aura-backup.tar.gz
+          # El archivo sin cifrar NO puede sobrevivir a este paso: contiene
+          # correos y, cuando Legal firme, datos personales de inquilinos.
+          shred -u aura-backup.tar.gz 2>/dev/null || rm -f aura-backup.tar.gz
+          ls -la aura-backup.tar.gz.gpg
+
+      - name: Guardar
+        uses: actions/upload-artifact@v4
+        with:
+          name: respaldo-${{ github.run_id }}
+          path: aura-backup.tar.gz.gpg
+          retention-days: 90        # el máximo; más atrás habría que sacarlo a otro sitio
+          if-no-files-found: error
+
+      - name: Borrar la copia del contenedor
+        if: always()                # también si algo falló: no dejar datos ahí sueltos
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+        run: flyctl ssh console -a "$APP" -C "rm -f $REMOTE" || true

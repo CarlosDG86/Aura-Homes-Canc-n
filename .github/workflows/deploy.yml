@@ -67,6 +67,17 @@ jobs:
           DATA_MODE: mock
         run: python -c "import app.main; print('La aplicación importa correctamente')"
 
+      - name: Suite completa
+        # Las diez suites (261 comprobaciones): aislamiento entre propietarios,
+        # CSRF, sesiones, segundo factor, SSO, portal del inquilino y del
+        # propietario. Cada una levanta su propia base desechable, así que no
+        # tocan ningún dato real. Si algo falla, el despliegue no ocurre.
+        working-directory: platform
+        env:
+          APP_ENV: dev
+          DATA_MODE: mock
+        run: python tests/run_all.py
+
   plataforma:
     name: Plataforma (Fly.io)
     needs: pruebas
