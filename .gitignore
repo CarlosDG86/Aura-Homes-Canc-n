@@ -5,3 +5,20 @@ graphify-out/
 # Imágenes fuente/originales (pesadas). Los originales viven en Drive; el repo
 # solo versiona los assets ya optimizados en dist/assets/img/.
 assets-src/
+
+# Configuración local con credenciales (SMTP, llaves de API). Nunca se versiona.
+.env
+platform/.env
+
+# Base de datos y fotos de la plataforma. Contienen datos de personas reales:
+# no deben salir del equipo donde corren.
+platform/data/*.db
+platform/data/*.db.bak-*
+platform/data/uploads/
+
+# Registros y entornos virtuales.
+*.log
+.venv/
+platform/.venv/
+__pycache__/
+*.pyc
