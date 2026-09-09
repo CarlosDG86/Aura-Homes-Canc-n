@@ -59,7 +59,9 @@ def create_my_property(
     # del cliente, cualquiera podría crear propiedades a nombre de otro.
     data = payload.model_dump()
     data.pop("owner_id", None)
-    prop = Property(owner_id=current_user.id, **data)
+    # La cuenta sale de la sesión por el mismo motivo que el dueño: es la
+    # frontera entre clientes y no puede venir del cliente.
+    prop = Property(owner_id=current_user.id, account_id=current_user.account_id, **data)
     db.add(prop)
     db.commit()
     db.refresh(prop)

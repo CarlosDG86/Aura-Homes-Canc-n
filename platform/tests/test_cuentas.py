@@ -198,7 +198,66 @@ check("derechos_de() devuelve todas las claves aunque no haya cuenta",
                         plans.FISCAL_AUTOMATIZADO, plans.GASTOS_RECURRENTES},
       "-> Jinja lanzaría UndefinedError con una clave ausente")
 
-print("\n== 11. La plataforma sigue sin saber de dinero (D-019) ==")
+print("\n== 11. Cruzar una propiedad de cliente a cliente está bloqueado ==")
+from app import cuentas
+from app.models import AuditLog
+
+
+class _Req:
+    """Petición mínima: `audit()` solo le pide la IP."""
+    client = None
+    headers = {}
+
+
+d = SessionLocal()
+u1, u2, u3 = d.get(User, ids["d1"]), d.get(User, ids["d2"]), d.get(User, ids["d3"])
+prop = d.get(Property, ids["p1"])           # es de d1
+cuenta_original = prop.account_id
+check("d1 y d2 están en cuentas distintas", u1.account_id != u2.account_id)
+
+n_audit = d.query(AuditLog).count()
+lanzo = False
+try:
+    cuentas.transferir_propiedad(d, _Req(), prop, u2, actor=u1)
+except cuentas.CruceDeCuentaBloqueado:
+    lanzo = True
+check("mover una casa a otra cuenta se rechaza", lanzo)
+check("y no escribe nada: la casa sigue en su cuenta",
+      prop.account_id == cuenta_original and prop.owner_id == ids["d1"],
+      f"-> cuenta={prop.account_id} dueño={prop.owner_id}")
+check("el intento bloqueado queda en la bitácora",
+      d.query(AuditLog).filter(AuditLog.action == "cuenta.cruce_bloqueado").count() >= 1)
+
+# Con la confirmación explícita sí se mueve, y arrastra la cuenta.
+movida = cuentas.transferir_propiedad(d, _Req(), prop, u2, actor=u1,
+                                      permitir_cruce_de_cuenta=True, motivo="prueba")
+d.commit()
+check("con confirmación explícita sí se mueve", movida is True)
+check("la cuenta viaja con la casa, no se queda atrás",
+      prop.account_id == u2.account_id and prop.owner_id == ids["d2"],
+      f"-> cuenta={prop.account_id} esperada={u2.account_id}")
+check("el cruce consumado también queda registrado",
+      d.query(AuditLog).filter(AuditLog.action == "cuenta.propiedad_cruzada").count() >= 1)
+check("tras el traspaso no hay deriva entre casa y dueño",
+      migrate.verificar_integridad_cuentas(SessionLocal, imprimir=False)
+      ["propiedades_con_cuenta_derivada"] == 0)
+# se devuelve a su sitio
+cuentas.transferir_propiedad(d, _Req(), prop, u1, actor=u1,
+                             permitir_cruce_de_cuenta=True, motivo="restaurar")
+d.commit()
+d.close()
+
+print("\n== 12. Solo una cuenta operadora puede publicar en el sitio ==")
+d = SessionLocal()
+c_d1 = cuentas.cuenta_de(d, d.get(User, ids["d1"]))   # tiene casa publicada
+c_d2 = cuentas.cuenta_de(d, d.get(User, ids["d2"]))   # no tiene
+check("la cuenta con casa publicada puede publicar", cuentas.puede_publicar(c_d1))
+check("la que no, no puede", not cuentas.puede_publicar(c_d2))
+check("sin cuenta tampoco se puede publicar (falla cerrado)",
+      not cuentas.puede_publicar(None))
+d.close()
+
+print("\n== 13. La plataforma sigue sin saber de dinero (D-019) ==")
 prohibidas = {"price", "amount", "precio", "importe", "monto", "clabe", "iban",
               "card", "tarjeta", "rfc", "ein", "billing", "invoice"}
 cols = {c.name.lower() for c in Account.__table__.columns}

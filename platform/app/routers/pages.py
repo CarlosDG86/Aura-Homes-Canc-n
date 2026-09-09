@@ -20,7 +20,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 
-from .. import google_sso, identity
+from .. import cuentas, google_sso, identity
 from ..auth import hash_password, verify_password
 from ..db import get_db
 from ..email_utils import send_temp_password_email
@@ -599,12 +599,25 @@ def sync_site_properties(
         _flash(request, "error", "Marca al menos una casa para sincronizar.")
         return RedirectResponse(url="/admin", status_code=302)
 
+    # `site_ref` es lo que liga una fila con una ficha del sitio público, así
+    # que solo puede escribirlo una cuenta operadora de Aura. Sin esta guarda,
+    # el día que exista una segunda administradora podría espejar en su cartera
+    # las casas publicadas por otra.
+    cuenta_destino = cuentas.cuenta_de(db, owner)
+    if not cuentas.puede_publicar(cuenta_destino):
+        _flash(request, "error",
+               f"«{owner.name}» no pertenece a una cuenta operadora, así que no "
+               f"puede publicar en el sitio. Sincronización cancelada.")
+        return RedirectResponse(url="/admin", status_code=302)
+
     by_id = {e.get("id"): e for e in _load_site_properties() if e.get("id")}
+    actor = _current_user_or_none(request, db)
 
     created = 0
     updated = 0
     reassigned = 0
     skipped = 0
+    bloqueadas = 0
     for ref in selected:
         entry = by_id.get(ref)
         if not entry:
@@ -613,22 +626,33 @@ def sync_site_properties(
         fields = _mirror_fields_from_site(entry)
         existing = db.query(Property).filter(Property.site_ref == ref).first()
         if existing:
+            try:
+                movida = cuentas.transferir_propiedad(
+                    db, request, existing, owner, actor=actor, motivo="sync_sitio")
+            except cuentas.CruceDeCuentaBloqueado:
+                # La ficha ya está espejada en la cartera de otro cliente: no se
+                # toca ni siquiera para actualizar sus datos.
+                bloqueadas += 1
+                continue
             for key, value in fields.items():
                 setattr(existing, key, value)
-            if existing.owner_id != owner.id:
-                existing.owner_id = owner.id
+            if movida:
                 reassigned += 1
             else:
                 updated += 1
         else:
-            db.add(Property(site_ref=ref, owner_id=owner.id, **fields))
+            db.add(Property(site_ref=ref, owner_id=owner.id,
+                            account_id=owner.account_id, **fields))
             created += 1
     db.commit()
 
     parts = [f"{created} creada(s)", f"{updated} actualizada(s)", f"{reassigned} reasignada(s)"]
     if skipped:
         parts.append(f"{skipped} sin coincidencia en el sitio")
-    _flash(request, "success", f"Sincronización con «{owner.name}»: " + ", ".join(parts) + ".")
+    if bloqueadas:
+        parts.append(f"{bloqueadas} ya espejada(s) en otra cuenta, sin tocar")
+    _flash(request, "error" if bloqueadas else "success",
+           f"Sincronización con «{owner.name}»: " + ", ".join(parts) + ".")
     return RedirectResponse(url="/admin", status_code=302)
 
 
@@ -829,14 +853,32 @@ def user_assign_properties(
         _flash(request, "error", f"Usuario #{user_id} no existe.")
         return RedirectResponse(url="/admin", status_code=302)
 
-    moved = 0
+    # Reasignar una casa mueve con ella sus tickets, las fotos del interior de
+    # la vivienda y sus comprobantes fiscales. Mientras el destinatario esté en
+    # la misma cuenta es una gestión interna; en cuanto cambia de cuenta es un
+    # traspaso de datos entre clientes distintos, y eso no puede ocurrir por
+    # descuido desde un formulario con casillas.
+    actor = _current_user_or_none(request, db)
+    moved = bloqueadas = 0
     for pid in property_ids:
         prop = db.get(Property, pid)
-        if prop and prop.owner_id != user_id:
-            prop.owner_id = user_id
-            moved += 1
+        if not prop:
+            continue
+        try:
+            if cuentas.transferir_propiedad(db, request, prop, target, actor=actor,
+                                            motivo="reasignacion_admin"):
+                moved += 1
+        except cuentas.CruceDeCuentaBloqueado:
+            bloqueadas += 1
     db.commit()
-    _flash(request, "success", f"{moved} casa(s) reasignada(s) a «{target.name}».")
+
+    if bloqueadas:
+        _flash(request, "error",
+               f"{moved} casa(s) reasignada(s). {bloqueadas} no se movieron: "
+               f"pertenecen a otra cuenta y traspasarlas sacaría datos de un "
+               f"cliente a otro.")
+    else:
+        _flash(request, "success", f"{moved} casa(s) reasignada(s) a «{target.name}».")
     return RedirectResponse(url=f"/admin/users/{user_id}", status_code=302)
 
 

@@ -36,6 +36,10 @@ def create_property(payload: PropertyAdminIn, db: Session = Depends(get_db)):
     if not owner:
         raise HTTPException(status_code=400, detail="owner_id must reference an existing user with role=owner")
     prop = Property(**payload.model_dump())
+    # `owner_id` llega en el cuerpo de la petición, así que la cuenta se deduce
+    # aquí del dueño y nunca del cliente: dejar que la API acepte `account_id`
+    # sería dejar que quien llama elija en qué cliente aterriza el dato.
+    prop.account_id = owner.account_id
     db.add(prop)
     db.commit()
     db.refresh(prop)
