@@ -43,6 +43,28 @@ El registro de decisiones vive ahora en git:
 
 ---
 
+## Espejo en Google Drive
+
+Publicado el 2026-09-08 en `Aura/Phase2.1/` y `Aura/Reports/<Departamento>/`.
+
+| Documento | Drive |
+|---|---|
+| LÉEME primero (índice) | [abrir](https://docs.google.com/document/d/1kum_mwUu-HAeE6vVWva2Ne4twWjiLgDjLB6_e-uv_6U/edit) |
+| Plan de trabajo | [abrir](https://docs.google.com/document/d/1ZeJr9h0PS1QIRi6Oa2XznVQJXcPvqt_kPx0xWX1Jd2g/edit) |
+| Decisiones que esperan al CEO | [abrir](https://docs.google.com/document/d/1epRAjVyvyrDKwSSVqkqENGuCcfi1mZpFiZgVx5mJ8aY/edit) |
+| Hallazgos de seguridad | [abrir](https://docs.google.com/document/d/1iErnsASQnUknHgbqwZXUTRjqLHAF2q9qPWRuPLjbvHw/edit) |
+| DECISION_LOG (`Aura/Decisions/`) | [abrir](https://docs.google.com/document/d/1X_emdYJONjXr2tAtE6gSvNjdk_-IQO6MSqX0BFzX7xs/edit) |
+
+Los siete reportes de departamento están en `Aura/Reports/<Departamento>/` con fecha 2026-09-08.
+Se crearon las carpetas `QA` e `Infra`, que no existían.
+
+> **El espejo es parcial a propósito.** `DB_SCHEMA.md` y los cinco documentos de área —269.000
+> caracteres de especificación de implementación— **no se copiaron**: el conversor de Google Docs
+> deforma sus tablas hasta hacerlas ilegibles, y Desarrollo trabaja desde el repositorio. El
+> índice de Drive lo dice y enumera las rutas exactas. Se copian a Drive si el CEO lo pide.
+
+---
+
 ## Lo esencial en diez líneas
 
 1. **Cuatro decisiones ya cerradas** (D-013 a D-016) fijan la cuenta como raíz de aislamiento,
