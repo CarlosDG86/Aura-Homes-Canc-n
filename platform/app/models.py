@@ -71,6 +71,97 @@ class VisitStatusEnum(str, enum.Enum):
 # ---------------------------------------------------------------------------
 
 
+class Account(Base):
+    """La empresa administradora. Raíz de aislamiento del SaaS (D-013).
+
+    Antes de esta tabla, la frontera entre clientes era `Property.owner_id`:
+    un usuario. Eso servía cuando la plataforma administraba las casas del
+    propio CEO, pero D-010 la convirtió en un producto que se vende a otras
+    administradoras, y una administradora tiene más de una persona.
+
+    Qué significa cada cosa:
+
+    - `plan` y `trial_*` son **datos administrativos**: la plataforma registra
+      QUÉ plan tiene la cuenta, nunca CUÁNTO cuesta (D-019). Cualquier importe
+      aquí sería el primer ladrillo de facturación, y la facturación cae bajo
+      la puerta legal de pagos, hoy cerrada.
+    - `is_operator` marca a las cuentas de Aura: son las únicas que pueden
+      escribir `site_ref`, es decir publicar en el sitio escaparate.
+    - `trial_ends_at` se materializa al arrancar la prueba en vez de calcularse
+      al leer, para que cambiar `trial_days` no mueva la fecha de vencimiento
+      de una prueba ya empezada.
+
+    **Prohibido por diseño en esta tabla:** importes, moneda de cobro, ciclo de
+    facturación, CLABE, IBAN, tarjeta, RFC, EIN o domicilio fiscal.
+    """
+
+    __tablename__ = "accounts"
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String, nullable=False)
+
+    # Texto validado en Python, no Enum() de SQLAlchemy: añadir un plan no debe
+    # exigir tocar la base, y un valor desconocido leído de disco no debe
+    # reventar el ORM (degrada a 'trial', ver plans.py).
+    plan = Column(String, nullable=False, default="trial", server_default="trial")
+    status = Column(String, nullable=False, default="activa", server_default="activa")
+
+    # Prueba gratuita (D-019: 90 días, una sola casa).
+    trial_days = Column(Integer, nullable=False, default=90, server_default="90")
+    trial_started_at = Column(DateTime, nullable=True)
+    trial_ends_at = Column(DateTime, nullable=True)
+    trial_property_id = Column(Integer, nullable=True)
+
+    # Excepción comercial puntual sin inventar un plan nuevo.
+    properties_max_override = Column(Integer, nullable=True)
+
+    is_operator = Column(Boolean, nullable=False, default=False, server_default="0")
+    primary_user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+
+    country = Column(String, nullable=True, default="MX", server_default="MX")
+    # Jurisdicción fiscal por omisión de las propiedades de la cuenta (E13).
+    default_tax_jurisdiction = Column(String, nullable=True, default="MX", server_default="MX")
+    base_currency = Column(String, nullable=True, default="MXN", server_default="MXN")
+
+    # NULL = «plan sin asignar»: es como quedan las cuentas migradas, para que
+    # el administrador vea que nadie ha decidido todavía su plan comercial.
+    plan_assigned_at = Column(DateTime, nullable=True)
+    plan_assigned_by_user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    plan_note = Column(String(500), nullable=True)
+
+    # Cable trampa mock↔real: nombre del archivo de base donde nació la fila.
+    # Si una cuenta creada en la base de pruebas aparece en la real, algo se
+    # copió que no debía.
+    created_in_db = Column(String, nullable=True)
+    created_by_user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    created_at = Column(DateTime, server_default=func.now())
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
+
+
+class AccountPlanEvent(Base):
+    """Historial comercial de una cuenta. Solo se añade, nunca se modifica.
+
+    Existe aparte de `audit_log` por una razón concreta: la bitácora la escribe
+    `security.audit()` y **ninguna plantilla la lee** todavía, así que un
+    historial que solo viviera ahí sería un historial que nadie puede
+    consultar. Este sí se muestra en la ficha de la cuenta.
+    """
+
+    __tablename__ = "account_plan_events"
+
+    id = Column(Integer, primary_key=True)
+    account_id = Column(Integer, ForeignKey("accounts.id"), nullable=False, index=True)
+    from_plan = Column(String, nullable=True)
+    to_plan = Column(String, nullable=True)
+    from_trial_ends_at = Column(DateTime, nullable=True)
+    to_trial_ends_at = Column(DateTime, nullable=True)
+    from_status = Column(String, nullable=True)
+    to_status = Column(String, nullable=True)
+    note = Column(Text, nullable=True)
+    actor_user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    created_at = Column(DateTime, server_default=func.now())
+
+
 class User(Base):
     __tablename__ = "users"
 
@@ -111,6 +202,13 @@ class User(Base):
     # por aquí y no por correo, porque un correo puede cambiar de dueño.
     google_sub = Column(String, nullable=True, unique=True, index=True)
 
+    # --- Cuenta a la que pertenece (E9 · D-013) ---
+    # Nullable a propósito: SQLite no admite añadir una columna NOT NULL sin
+    # default a una tabla con filas, y sobre todo porque un NULL debe caer en
+    # la rama heredada del aislamiento (filtrar por `owner_id`), que es
+    # estrictamente más estrecha. Fallar estrecho, nunca ancho.
+    account_id = Column(Integer, ForeignKey("accounts.id"), nullable=True, index=True)
+
     properties = relationship(
         "Property", back_populates="owner", cascade="all, delete-orphan"
     )
@@ -121,6 +219,20 @@ class Property(Base):
 
     id = Column(Integer, primary_key=True)
     owner_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    # De qué cliente son estos datos (E9 · D-013). EXPLÍCITA a propósito, en
+    # vez de derivarla del dueño: hay tres rutas que reasignan `owner_id`
+    # (pages.py, la sincronización del sitio y la API JSON de admin), y si la
+    # cuenta se dedujera del dueño, esas rutas moverían en silencio los
+    # tickets, las fotos del interior de una vivienda y los futuros
+    # comprobantes fiscales de un cliente a otro. Con la columna explícita,
+    # cruzar la frontera deja de ser un efecto colateral y pasa a ser una
+    # acción propia, auditada y bloqueable.
+    #
+    # El precio es que dos columnas pueden desincronizarse y SQLite no lo
+    # impide (`PRAGMA foreign_keys` devuelve 0). Lo sostienen tres cosas: un
+    # escritor único, el verificador de integridad del arranque y una prueba
+    # con deriva inyectada a propósito.
+    account_id = Column(Integer, ForeignKey("accounts.id"), nullable=True, index=True)
     # Link to the public showcase property (data/properties.json "id", e.g.
     # "AUR-001"). NULL for properties created only inside the platform. The
     # site JSON stays the source of truth for public content; this row is a

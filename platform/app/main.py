@@ -11,7 +11,7 @@ from fastapi.staticfiles import StaticFiles
 from sqlalchemy import text
 from starlette.middleware.sessions import SessionMiddleware
 
-from . import models
+from . import migrate, models
 from .auth import hash_password
 from .auth import router as auth_router
 from .db import Base, SessionLocal, engine
@@ -182,6 +182,9 @@ def _ensure_user_security_columns() -> None:
         "totp_enabled": "ALTER TABLE users ADD COLUMN totp_enabled BOOLEAN NOT NULL DEFAULT 0",
         "totp_confirmed_at": "ALTER TABLE users ADD COLUMN totp_confirmed_at DATETIME",
         "google_sub": "ALTER TABLE users ADD COLUMN google_sub VARCHAR",
+        # E9 · D-013: a qué cuenta pertenece. Nullable a propósito — un NULL
+        # cae en la rama heredada del aislamiento, que es más estrecha.
+        "account_id": "ALTER TABLE users ADD COLUMN account_id INTEGER",
     }
     with engine.begin() as conn:
         cols = {row[1] for row in conn.execute(text("PRAGMA table_info(users)"))}
@@ -241,6 +244,14 @@ def on_startup() -> None:
     _ensure_user_security_columns()
     _ensure_ticket_columns()
 
+    # E9 · cuentas. Va AQUÍ, y el sitio no es negociable: el bloque de siembra
+    # que hay más abajo hace `if existing_admin: return` y sale de esta
+    # función. La base real tiene un administrador, así que cualquier cosa
+    # registrada después de esa línea nunca correría allí — y sí correría sobre
+    # una base nueva y vacía, así que las pruebas pasarían y solo la base del
+    # CEO quedaría sin migrar.
+    migrate.migrar(engine, SessionLocal, verbose=is_mock())
+
     if is_mock():
         print("=" * 72)
         print("MODO PRUEBAS (DATA_MODE=mock)")
@@ -253,6 +264,8 @@ def on_startup() -> None:
     try:
         existing_admin = db.query(models.User).filter(models.User.role == models.RoleEnum.admin).first()
         if existing_admin:
+            # Cubre el caso de una base que ya tenía administrador antes de E9.
+            migrate.asegurar_cuenta_operadora(db, engine)
             return
         admin_user = models.User(
             name="Aura Admin",
@@ -262,6 +275,11 @@ def on_startup() -> None:
         )
         db.add(admin_user)
         db.commit()
+        # El administrador se crea DESPUÉS de `migrar()`, así que el relleno de
+        # cuentas no llegó a verlo. Sin esta llamada se quedaría sin cuenta
+        # para siempre: en el siguiente arranque el relleno se salta, porque la
+        # versión de esquema ya está fijada.
+        migrate.asegurar_cuenta_operadora(db, engine)
         # La contraseña NUNCA se imprime en producción. Los registros de un
         # servidor se conservan, se consultan desde el panel del proveedor y a
         # menudo se reenvían a otros servicios: escribir ahí la clave del

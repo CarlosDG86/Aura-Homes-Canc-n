@@ -171,23 +171,86 @@ desde el primer momento, y el CEO viviría su propia plataforma como una avería
 
 ---
 
-## D-017 y D-021 a D-030 · Abiertas
+## D-021 · El punto 6.1 era «fotos y comprobantes», no tickets encadenados
 
-Quedan **once** decisiones esperando al CEO, con opciones y recomendación en
+**Fecha:** 2026-09-08 · **Estado:** cerrada
+
+Tras resolver un ticket, el propietario adjunta **fotos del trabajo terminado y
+comprobantes** (factura del proveedor). **No** se encadenan tickets derivados:
+no se añade `parent_ticket_id` ni ruta para que el propietario cree tickets.
+Encaja con el punto 6.2 («tomar fotos… al cerrarlos el owner»).
+
+---
+
+## D-022 · La vía de emergencia del administrador es un guión de consola
+
+**Fecha:** 2026-09-08 · **Estado:** cerrada
+
+El administrador **queda fuera** de la recuperación por correo, como pedía el
+feedback («send a reset to owner and user role»). Su vía de rescate es
+`platform/scripts/restablecer_admin.py`, con opción para reiniciar también el
+segundo factor.
+
+**Por qué.** Publicar un formulario que acepte el correo del administrador
+reduciría toda la cadena de URL oculta más segundo factor a «quien controle el
+buzón». Perder la contraseña y perder el teléfono son dos averías distintas y
+el guión debe cubrir ambas.
+
+---
+
+## D-023 · Correo de producción: buzón propio con SPF y DKIM
+
+**Fecha:** 2026-09-08 · **Estado:** cerrada, pendiente de ejecución por Infra
+
+Buzón `no-responder@` en el dominio propio de Aura Homes (Google Workspace o
+Zoho), con SPF y DKIM publicados. Entre 0 y 6 USD al mes.
+
+Va ligado al registro de `aurahomescancun.com`, pendiente desde el 2026-08-11:
+**el mismo registro arregla el correo roto del sitio público y habilita la
+recuperación de contraseña.** Desarrollo prepara la configuración; el CEO crea
+la cuenta y toca el DNS.
+
+> ⚠️ **Orden obligatorio.** El arreglo del hallazgo H-2 (etapa E10) va **antes o
+> a la vez** que la configuración del SMTP, nunca después: hoy lo único que
+> impide que el modo simulación envíe correos reales con contraseñas en claro
+> es que `SMTP_PASSWORD` está vacío.
+
+---
+
+## D-024 · Se cargan los contratos y se capturan fechas y renta
+
+**Fecha:** 2026-09-08 · **Estado:** cerrada
+
+Se añaden **fecha de inicio, fecha de fin y renta mensual** al formulario de
+alta de inquilino que ya existe, y se cargan los 2-3 contratos reales.
+
+**Por qué.** La base tiene 3 propiedades y 0 arrendamientos, con una casa
+marcada como rentada en el sitio público: el panel diría «Ocupación 0 %» el
+primer día. Los tres campos existen en `leases` desde hace meses y ninguna ruta
+los escribe, así que «contratos por vencer», «renta contratada» y «antigüedad»
+quedarían en «sin datos» para siempre, y el libro fiscal saldría sin ingresos.
+
+---
+
+## D-017 y D-025 a D-030 · Abiertas
+
+Quedan **siete** decisiones esperando al CEO, con opciones y recomendación en
 [`docs/phase2.1/DECISIONES_PENDIENTES.md`](../phase2.1/DECISIONES_PENDIENTES.md).
 
-**Cinco bloquean la construcción:**
+**Solo una bloquea la construcción:**
 
 | # | Qué falta | Bloquea |
 |---|---|---|
-| D-017 | Cómo termina el punto 7.4 («Si el owner aprueba…») | E14 |
-| D-021 | Si «tickets» del punto 6.1 fue un lapsus por «fotos y comprobantes» | E12 |
-| D-022 | Vía de emergencia del administrador, excluido de la recuperación por correo | E10 |
-| D-023 | Buzón de correo de producción, SPF y DKIM — **dependencia externa** | E10 |
-| D-024 | Cargar los contratos de arrendamiento y capturar fechas y renta | E11, E13 |
+| D-017 | Cómo termina el punto 7.4 («Si el owner aprueba…») | E14, la última etapa |
 
-Cerradas el 2026-09-08: **D-018** (matriz de planes), **D-019** (prueba y precio) y
-**D-020** (migración de los propietarios actuales). Con ellas, **E9 queda desbloqueada**.
+Las otras seis (D-025 a D-030) no frenan la construcción: condicionan el paso a datos
+reales de inquilinos y proveedores, o son valores por defecto ya fijados que solo
+necesitan un visto bueno.
+
+**Cerradas el 2026-09-08:** D-013 a D-016 (premisas de diseño), **D-018** (matriz de
+planes), **D-019** (prueba y precio), **D-020** (migración), **D-021** (punto 6.1),
+**D-022** (rescate del administrador), **D-023** (correo de producción) y **D-024**
+(contratos de arrendamiento). Con ellas quedan desbloqueadas **E9 a E13**.
 
 ---
 
