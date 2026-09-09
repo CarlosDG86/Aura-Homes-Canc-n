@@ -10,6 +10,30 @@ Fecha de verificación del código: 2026-08-02
 
 ---
 
+## ⚠️ Aviso de vigencia — 2026-09-08
+
+**Este documento quedó desfasado y varias de sus afirmaciones ya no son ciertas.** Se conserva
+tal cual, sin reescribir, porque describe con precisión el estado del 2026-08-02 y sirve de
+referencia histórica. Las correcciones, verificadas contra el fuente el 2026-09-08:
+
+| Dice | Realidad hoy |
+|---|---|
+| «Fase 2b (inquilinos) y 2c (pagos): solo ANDAMIADAS — los routers `/api/tenant` y `/api/payments` devuelven `501` en todas sus rutas» | **Solo 2c sigue así.** El portal de inquilinos funciona: crea tickets, sube fotos, comenta. `leases`, `maintenance_tickets`, `ticket_photos` y `ticket_events` tienen CRUD real |
+| «No hay sesiones ni mensajería» | Existen `sessions` (revocables), `messages`, `announcements`, `announcement_recipients`, `audit_log`, `ai_usage` y `login_attempts` |
+| El modelo de datos que describe | **20 tablas** en `models.py`. De las de 2b/2c, solo `payments`, `documents` y `visits` siguen siendo forma sin uso |
+| «No desplegada en ningún lado» | Se desplegó en Fly el 2026-08-11 y se **suspendió** el 2026-08-12. El sitio público sí está en línea |
+| El producto que describe | El 2026-08-11 el CEO decidió el **pivote a SaaS multiempresa** (D-010). Ver `docs/decisions/DECISION_LOG.md` |
+
+**Para el estado vigente y lo que viene, ver:**
+- [`docs/phase2.1/README.md`](phase2.1/README.md) — índice de la Fase 2.1
+- [`docs/phase2.1/DB_SCHEMA.md`](phase2.1/DB_SCHEMA.md) — esquema unificado y migración
+- [`docs/decisions/DECISION_LOG.md`](decisions/DECISION_LOG.md) — decisiones del CEO
+
+**Dos defectos confirmados** que este documento no recoge están en
+[`docs/phase2.1/HALLAZGOS_SEGURIDAD.md`](phase2.1/HALLAZGOS_SEGURIDAD.md).
+
+---
+
 ## 1. Resumen
 
 El repositorio contiene **dos aplicaciones independientes** que no comparten

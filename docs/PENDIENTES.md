@@ -1,8 +1,7 @@
 # Pendientes — prioridades para la próxima sesión
 
-**Actualizado:** 2026-08-12
-**Estado general:** el proyecto pasa a **desarrollo local**. Nada desplegado se
-toca; se congela como está.
+**Actualizado:** 2026-09-08
+**Estado general:** desarrollo local. La Fase 2.1 está **diseñada y sin construir**.
 
 ---
 
@@ -10,80 +9,97 @@ toca; se congela como está.
 
 | | Estado |
 |---|---|
-| Sitio público (Cloudflare Worker `aura-homes-cancun`) | 🟢 Arriba, congelado |
-| Plataforma (Fly `aura-homes-plataforma`) | 🔴 **Suspendida** — terminó el periodo de prueba de Fly |
+| Sitio público (Cloudflare Worker `aura-homes-cancun`) | 🟢 Arriba — verificado HTTP 200 el 2026-09-08 |
+| Plataforma (Fly `aura-homes-plataforma`) | 🔴 **No responde** — verificado HTTP 000 el 2026-09-08 |
 | Respaldos automáticos | ⚫ Cancelados por el CEO |
-| Datos del volumen de Fly | ⚫ Inaccesibles y **no se necesitan** (decisión del CEO) |
+| Rama de trabajo | `work/feedback-usuarios`, creada desde `main` |
 
-**Decisión tomada el 2026-08-12:** no se recupera nada de producción, no se
-destruye nada, y el trabajo continúa en local con retroalimentación de usuarios.
+> ⚠️ Un `push` a `main` **republica el sitio público**: Cloudflare está conectado al
+> repositorio. Para trabajar sin publicar, usar una rama.
 
-> ⚠️ Un `push` a `main` **republica el sitio público**: Cloudflare está
-> conectado al repositorio. Para trabajar sin publicar, usar una rama.
+> ⚠️ La rama `docs/architecture-and-phase2` está **9 commits atrasada y no contiene la suite de
+> pruebas**. No trabajar ahí.
 
 ---
 
 ## 1. Prioridad alta
 
-### 1.1 El correo del sitio no existe
+### 1.1 El agujero de acceso por la API — etapa E8
 
-`hola@aurahomescancun.com` aparece en el pie de todas las páginas, en el
-formulario y en el botón de contacto. **El dominio no está registrado**
-(verificado en dos resolutores DNS: sin registro A, sin MX).
+`POST /api/auth/login` permite adivinar contraseñas **sin límite** y salta el bloqueo por cuenta,
+`is_active`, el segundo factor del administrador y la revocación de sesiones. Confirmado con
+prueba reproducible.
 
-El formulario tampoco envía por su cuenta — abre el cliente de correo del
-visitante hacia esa dirección. Resultado: **toda consulta que no llegue por
-WhatsApp se pierde sin dejar rastro.**
+Detalle y evidencia: [`docs/phase2.1/HALLAZGOS_SEGURIDAD.md`](phase2.1/HALLAZGOS_SEGURIDAD.md).
 
-- Parche inmediato: cambiar `brand.email` en `data/site.json` por un correo que
-  exista.
-- Solución: registrar el dominio (12–15 USD al año).
+**No depende de ninguna decisión del CEO. 0,5 días. Puede empezar ya.**
 
-### 1.2 Seis de siete fichas no son inventario real
+### 1.2 El sitio público enlaza a un host caído
 
-Solo `AUR-001` (La Rioja) es real. Dos son demos con imágenes grises y cuatro
-son de prueba, con precios y zonas inventados — llevan `"mock": true` en
-`data/properties.json` para poder filtrarlas de un golpe.
+El menú «Ingresar» ofrece «Soy Propietario» y «Soy Inquilino» en **22 páginas**, y ambos apuntan
+a la plataforma de Fly, que no responde. Quien pulse recibe un error del navegador.
 
-`build.py` ya respeta un campo `placeholder` para ocultar fichas sin borrarlas
-(`LIVE = [p for p in props if not p.get("placeholder")]`).
+Arreglo: cambiar `data/site.json` y reconstruir. **Requiere aprobación: republica el sitio.**
+
+### 1.3 Ocho decisiones del CEO bloquean seis de las siete etapas
+
+[`docs/phase2.1/DECISIONES_PENDIENTES.md`](phase2.1/DECISIONES_PENDIENTES.md).
+
+Las dos con más efecto por unidad de esfuerzo:
+- **D-024** — cargar los contratos de arrendamiento. Hoy hay 3 propiedades y **0 arrendamientos**;
+  sin ellos el panel del punto 2.1 dirá «Ocupación 0 %».
+- **D-023** — buzón de correo de producción. Única dependencia externa; su plazo no lo controla
+  Desarrollo.
+
+### 1.4 El correo del sitio no existe
+
+Sin cambios desde agosto. `hola@aurahomescancun.com` aparece en el pie de todas las páginas y el
+dominio no está registrado. Ahora bloquea además el punto 3.2 de la Fase 2.1: el mismo registro
+resuelve las dos cosas.
 
 ---
 
 ## 2. Prioridad media
 
-### 2.1 CI ya no ejecuta las pruebas
+### 2.1 El modo simulación no bloquea el correo en todas las rutas
 
-El paso `Suite completa` se retiró de `.github/workflows/deploy.yml`. Las 261
-comprobaciones siguen en `platform/tests/` pero nada las corre solo.
+Se puede enviar una contraseña **en claro** a una dirección real. Lo único que lo detiene hoy es
+que `SMTP_PASSWORD` está vacío. **Se activa al construir el punto 3.2.** Se corrige en E10.
+
+### 2.2 CI: las pruebas no corren solas
+
+El paso «Suite completa» se retiró del flujo de despliegue, y `test_migrate.py` conserva rutas
+absolutas de Windows que revientan en Linux. Además esa suite no imprime la línea `RESULTADO:`,
+así que sus 7 comprobaciones no suman al total.
 
 A mano: `cd platform && python tests/run_all.py`
 
-### 2.2 El logo está oculto en el sitio publicado
+### 2.3 Seis de siete fichas no son inventario real
 
-`.brand-logo{height:1px}` en `dist/assets/css/styles.css`. Con la cabecera
-actual de 120 px, unos 80 px de logo quedan proporcionados.
-
-### 2.3 Lighthouse nunca se ha medido
-
-El plan pide 90+ en móvil. Se quitaron los dos frenos evidentes (cabecera de
-216 px y logo de 1.5 MB), pero **eso no es lo mismo que haberlo comprobado**.
+Sin cambios. `build.py` ya respeta un campo `placeholder` para ocultarlas sin borrarlas.
 
 ### 2.4 Aviso de privacidad y términos
 
-Ambas páginas dicen que el texto "se publicará muy pronto" mientras el
-formulario ya pide nombre, correo y teléfono. Depende del texto de Legal.
+Ambas páginas dicen que el texto «se publicará muy pronto» mientras el formulario ya pide nombre,
+correo y teléfono. Depende del texto de Legal.
+
+### 2.5 Lighthouse nunca se ha medido
+
+El plan pide 90+ en móvil. Se quitaron los frenos evidentes, pero eso no es haberlo comprobado.
 
 ---
 
 ## 3. Prioridad baja
 
+- Nueve clases de CSS que las plantillas usan **no existen** en `platform.css` (incluida
+  `.btn-danger`, que viste acciones destructivas).
+- La plataforma no sigue el sistema visual del sitio público, y es el producto que se va a vender.
 - Tres archivos de logo conviviendo: `logo.png`, `logo1.png`, `logoold.png`.
 - `banner.jpg` pesa 280 KB.
-- La rama `docs/architecture-and-phase2` está detrás de `main`; el trabajo real
-  va en `main`.
-- Agente AI de tickets: construido y probado, sin llave de API (1–2 USD/mes).
+- Agente de IA de tickets: construido y probado, desconectado, sin llave de API.
 - Google SSO: construido y probado, sin credenciales.
+- `CLAUDE.md` describe un producto que ya no es el que se construye (dice «no user accounts, no
+  payments» y «Next.js»). No se tocó: su sección de producto requiere aprobación del CEO.
 
 ---
 
@@ -99,20 +115,19 @@ cd platform && .venv\Scripts\Activate.ps1 && uvicorn app.main:app --reload --por
 python build.py --serve
 ```
 
-- Plataforma: `http://127.0.0.1:8010` — usa `data/platform-mock.db`
-  (`DATA_MODE` por defecto es `mock`), sin segundo factor.
+- Plataforma: `http://127.0.0.1:8010` — usa `data/platform-mock.db` (`DATA_MODE` por defecto es
+  `mock`), sin segundo factor.
 - Sitio: `http://localhost:8000/es/`
 
-**Acceso:** el usuario admin es `admin@aura-homes-cancun.local`. La contraseña
-**no es la de siembra** — se cambió y bcrypt no permite recuperarla. Para poner
-una nueva:
+**Acceso:** el usuario admin es `admin@aura-homes-cancun.local`. La contraseña **no es la de
+siembra** — se cambió y bcrypt no permite recuperarla. Para poner una nueva:
 
 ```
 cd platform && python scripts/reset_local_password.py admin@aura-homes-cancun.local
 ```
 
-La pide por teclado (no se muestra ni queda en el historial) y hace una copia
-de la base antes de escribir.
+La pide por teclado (no se muestra ni queda en el historial) y hace una copia de la base antes
+de escribir.
 
 ---
 
@@ -120,9 +135,14 @@ de la base antes de escribir.
 
 | Tema | Archivo |
 |---|---|
-| Diseño de la fase 2 | `docs/phase2/DESIGN.md` |
+| **Fase 2.1 — índice** | `docs/phase2.1/README.md` |
+| Plan y secuencia de entrega | `docs/phase2.1/PLAN.md` |
+| Esquema y migración | `docs/phase2.1/DB_SCHEMA.md` |
+| Decisiones abiertas | `docs/phase2.1/DECISIONES_PENDIENTES.md` |
+| Hallazgos de seguridad | `docs/phase2.1/HALLAZGOS_SEGURIDAD.md` |
+| **Registro de decisiones** | `docs/decisions/DECISION_LOG.md` |
+| Diseño de la Fase 2 (anterior) | `docs/phase2/DESIGN.md` |
 | Seguridad | `docs/phase2/SECURITY.md` |
 | Despliegue | `docs/phase2/DEPLOY.md` |
-| Respaldo y restauración | `docs/phase2/BACKUP.md` |
 | Reportes por departamento | `docs/reports/` y Google Drive `Aura/Reports/` |
-| Grafo de conocimiento | `graphify-out/graph.html` (773 nodos) |
+| Grafo de conocimiento | `graphify-out/graph.html` (943 nodos) |
