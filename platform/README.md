@@ -49,9 +49,10 @@ runs on port 8000, so the two can run side by side without conflicting.
 Server-rendered HTML pages (Jinja2 templates, no JS framework) live
 alongside the JSON API so a human can actually log in and see something:
 
-- `GET /login` — email/password form, posts to the existing
-  `POST /api/auth/login` JSON endpoint from an inline handler, sets the
-  session cookie, redirects to `/admin` or `/owner` based on role.
+- `GET /login` — email/password form. `POST /login` is the only way in: it
+  applies the per-IP throttle, the account lockout, `is_active`, the admin
+  gate, TOTP and the server-side `sessions` row, then redirects to `/admin`,
+  `/owner` or `/inquilino` based on role.
 - `GET /admin` — role=admin only. Read-only dashboard: properties, owners,
   users tables. Queries the DB directly (same models/session pattern as
   `routers/admin.py`), not via an internal HTTP call.
@@ -78,11 +79,23 @@ file, unless that's added later).
 
 ## Auth model
 
-- `POST /api/auth/login` — email + password, sets a signed session cookie.
-- `POST /api/auth/logout` — clears the session.
-- `GET /api/auth/me` — current user, 401 if not logged in.
+- `POST /login` — the single entry point (HTML form). See E8 below.
+- `POST /api/auth/login`, `POST /api/auth/logout`, `GET /api/auth/me` —
+  **retired in E8**; they return 404 unless `LEGACY_JSON_AUTH_ENABLED=true`,
+  which exists only as a deployment rollback.
+- Session resolution lives in **one** place, `security.resolve_session_user`:
+  active account, live `sessions` row (revocation + idle/absolute expiry) and
+  admin TOTP. Both the HTML pages and the JSON API call it.
 - Routes are gated with a `require_role()` FastAPI dependency: 401 if not
   logged in, 403 if logged in with the wrong role.
+
+> **Why E8 exists.** `POST /api/auth/login` used to check e-mail and password
+> and nothing else — no throttle, no lockout, no `is_active`, no TOTP, no
+> `sessions` row (so revoking sessions did not close it) and no audit trail.
+> Measured: 20 failed calls returned 401 twenty times with no `429`, while the
+> same attack on the HTML form stopped at the fifth; and a disabled, locked-out
+> admin account read `/api/admin/users` through it. `tests/test_e8.py` keeps
+> that path closed.
 - `admin` router: role=admin only, sees/edits everything.
 - `owner` router: role=owner or admin, but every query is scoped to
   `Property.owner_id == current_user.id` — this is what actually prevents

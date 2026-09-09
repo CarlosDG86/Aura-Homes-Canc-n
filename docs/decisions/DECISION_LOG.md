@@ -117,15 +117,77 @@ igual que el resto de la plataforma. No se crea un criterio legal nuevo.
 
 ---
 
-## D-017 a D-030 · Abiertas
+## D-018 · Matriz de planes: lo manual es gratis, lo automático se cobra
 
-Catorce decisiones consolidadas esperan al CEO, con opciones y recomendación en
+**Fecha:** 2026-09-08 · **Estado:** cerrada
+
+- Directorio de proveedores, captura de gastos y exportación fiscal **manual**
+  están en **todos** los planes, incluido el de prueba.
+- Lo que se cobra es la **automatización**: agente de WhatsApp y correo,
+  cotización automática, paquete anual precalculado y gastos recurrentes.
+- El sufijo **«+» significa siempre «agente»**, y el nombre base significa
+  escala: **Enterprise incluye todo lo de Standard+** más el volumen.
+- **Límite: Standard hasta 20 propiedades; Enterprise a partir de 21.** Superar
+  el límite bloquea el alta de casas nuevas, nunca la lectura ni los tickets.
+
+**Por qué.** Resuelve dos contradicciones del feedback del 2026-09-07: el punto
+5 daba los proveedores a todo propietario mientras el 7.2 los reservaba a
+Enterprise+, y tal como estaba escrito un cliente de 25 casas tendría menos
+funciones que uno de 5. Además, retener los registros fiscales de un cliente
+tras un muro de pago es frágil: captura datos once meses y en marzo, con la
+auditoría encima, descubre que no puede sacar nada.
+
+---
+
+## D-019 · La prueba de 90 días sustituye a los 60 días de D-010; el precio no entra en la plataforma
+
+**Fecha:** 2026-09-08 · **Estado:** cerrada · **Sustituye a:** el modelo comercial de D-010
+
+- **90 días de prueba para una sola casa**, para todos.
+- La regla de **60 días para «clientes fundadores» queda retirada.** Un fundador
+  pasa a ser una cuenta con la duración de prueba puesta a mano y una nota que
+  explica por qué — no un segundo régimen con su propio camino de código.
+- **El precio vive en el sitio público y en el documento comercial, nunca en la
+  base de datos.** Cualquier importe dentro de la plataforma es el primer
+  ladrillo de facturación, y la facturación cae bajo la puerta legal de pagos,
+  hoy cerrada por un 501 incondicional.
+
+---
+
+## D-020 · Migración: una cuenta por propietario actual, sin límite y sin reloj
+
+**Fecha:** 2026-09-08 · **Estado:** cerrada
+
+Los dos propietarios de la base real reciben **una cuenta cada uno**, con plan
+sin límite, sin prueba corriendo y marcadas «plan sin asignar» hasta que el CEO
+decida. **Ambas se marcan como cuentas operadoras.**
+
+**Por qué operadoras:** las tres propiedades reales llegaron por la
+sincronización del sitio público. Si no se marcan así, la siguiente
+sincronización deja de publicarlas el primer día.
+
+**Por qué sin reloj de prueba:** el límite de una casa las pondría en falta
+desde el primer momento, y el CEO viviría su propia plataforma como una avería.
+
+---
+
+## D-017 y D-021 a D-030 · Abiertas
+
+Quedan **once** decisiones esperando al CEO, con opciones y recomendación en
 [`docs/phase2.1/DECISIONES_PENDIENTES.md`](../phase2.1/DECISIONES_PENDIENTES.md).
 
-Ocho de ellas **bloquean la construcción**: D-017 (final del flujo de cotización), D-018 (matriz
-de planes), D-019 (prueba gratuita y precio), D-020 (migración de los propietarios actuales),
-D-021 (lapsus del punto 6.1), D-022 (vía de emergencia del administrador), D-023 (correo de
-producción), D-024 (contratos de arrendamiento).
+**Cinco bloquean la construcción:**
+
+| # | Qué falta | Bloquea |
+|---|---|---|
+| D-017 | Cómo termina el punto 7.4 («Si el owner aprueba…») | E14 |
+| D-021 | Si «tickets» del punto 6.1 fue un lapsus por «fotos y comprobantes» | E12 |
+| D-022 | Vía de emergencia del administrador, excluido de la recuperación por correo | E10 |
+| D-023 | Buzón de correo de producción, SPF y DKIM — **dependencia externa** | E10 |
+| D-024 | Cargar los contratos de arrendamiento y capturar fechas y renta | E11, E13 |
+
+Cerradas el 2026-09-08: **D-018** (matriz de planes), **D-019** (prueba y precio) y
+**D-020** (migración de los propietarios actuales). Con ellas, **E9 queda desbloqueada**.
 
 ---
 

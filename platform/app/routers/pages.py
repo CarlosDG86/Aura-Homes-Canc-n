@@ -36,7 +36,7 @@ from ..security import (
     register_failed_login,
     register_successful_login,
     register_template_globals,
-    resolve_server_session,
+    resolve_session_user,
     revoke_all_sessions,
     revoke_session,
     rotate_csrf_token,
@@ -61,37 +61,14 @@ def _pop_flash(request: Request) -> Optional[dict]:
 
 
 def _current_user_or_none(request: Request, db: Session) -> Optional[User]:
-    """Same resolution as auth.get_current_user, but returns None instead
-    of raising, since these are page routes that redirect instead of 401.
+    """Envoltorio de `security.resolve_session_user` para rutas de página.
 
-    E1: además aplica la caducidad de sesión (inactividad y límite absoluto)
-    y expulsa a las cuentas desactivadas, para que dar de baja a alguien surta
-    efecto de inmediato en vez de esperar a que cierre sesión.
+    Devuelve `None` en vez de lanzar, porque estas rutas redirigen a `/login`
+    en lugar de responder 401. Toda la lógica de «quién eres» —cuenta activa,
+    fila viva en `sessions`, caducidad y segundo factor— vive en
+    `security.resolve_session_user`, que es también la que usa la API JSON.
     """
-    user_id = request.session.get("user_id")
-    if not user_id:
-        return None
-    user = db.get(User, user_id)
-    if not user:
-        request.session.clear()
-        return None
-    if not getattr(user, "is_active", True):
-        request.session.clear()
-        return None
-
-    # La cookie dice quién dice ser; la tabla `sessions` decide si sigue
-    # teniendo derecho a entrar. Esto es lo que permite revocar de verdad:
-    # sin fila viva, la cookie no vale aunque esté firmada y sin caducar.
-    is_admin = user.role == RoleEnum.admin
-    if resolve_server_session(db, request, is_admin=is_admin) is None:
-        request.session.clear()
-        return None
-    # Última comprobación: una sesión de administrador sin segundo factor
-    # verificado no vale, aunque la cookie y la fila de sesión sean correctas.
-    if not identity.totp_satisfied(request, user):
-        request.session.clear()
-        return None
-    return user
+    return resolve_session_user(request, db)
 
 
 def _home_for(user: User) -> str:

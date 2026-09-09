@@ -68,7 +68,19 @@ require_secure_secret_key(SECRET_KEY)
 # el valor por defecto es público en el repositorio.
 require_secure_seed_password(SEED_ADMIN_PASSWORD)
 
-app = FastAPI(title="Aura Homes Cancún — Platform API", version="2a")
+# En producción no se publica el mapa de la API: `/docs`, `/redoc` y
+# `/openapi.json` listan de forma navegable toda la superficie de
+# administración, que es reconocimiento gratuito para quien busque por dónde
+# entrar. En desarrollo siguen disponibles. `is_production()` falla del lado
+# seguro: sin `APP_ENV` definido, se asume producción (security.py:58-67).
+_expone_docs = not is_production()
+app = FastAPI(
+    title="Aura Homes Cancún — Platform API",
+    version="2a",
+    docs_url="/docs" if _expone_docs else None,
+    redoc_url="/redoc" if _expone_docs else None,
+    openapi_url="/openapi.json" if _expone_docs else None,
+)
 
 # El orden importa: Starlette ejecuta los middlewares en orden inverso al de
 # registro, así que SessionMiddleware debe añadirse DESPUÉS de CSRFMiddleware

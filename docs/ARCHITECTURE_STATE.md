@@ -180,9 +180,9 @@ Routers montados en `main.py`: `auth` (prefijo `/api/auth`), `admin`,
 
 | Ruta | Método | Auth / rol | Estado |
 |---|---|---|---|
-| `/api/auth/login` | POST | pública (valida credenciales) | vivo |
-| `/api/auth/logout` | POST | sesión | vivo |
-| `/api/auth/me` | GET | logueado | vivo |
+| `/api/auth/login` | POST | — | **retirada en E8 (2026-09-08): 404** |
+| `/api/auth/logout` | POST | — | **retirada en E8 (2026-09-08): 404** |
+| `/api/auth/me` | GET | — | **retirada en E8 (2026-09-08): 404** |
 | `/api/admin/properties` | GET | admin | vivo |
 | `/api/admin/properties` | POST | admin | vivo (exige `owner_id` con rol owner) |
 | `/api/admin/properties/{id}` | GET | admin | vivo |

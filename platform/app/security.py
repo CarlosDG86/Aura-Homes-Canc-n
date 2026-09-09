@@ -480,6 +480,66 @@ def ip_is_rate_limited(db, ip: str) -> bool:
     return fails >= MAX_FAILS_PER_IP
 
 
+# --- Resolución de la sesión ------------------------------------------------
+
+
+def resolve_session_user(request: Request, db):
+    """Quién es el usuario de esta petición, o `None` si la sesión no vale.
+
+    **Esta es la única implementación de «quién eres» de la plataforma.**
+    `pages._current_user_or_none` y `auth.get_current_user` son envoltorios
+    suyos y no deben volver a resolver la sesión por su cuenta.
+
+    Que exista una sola es el punto. Antes había dos: las páginas HTML
+    comprobaban `is_active`, la fila viva en `sessions` y el segundo factor,
+    mientras que `auth.get_current_user` se conformaba con leer `user_id` de
+    la cookie y comprobar que el usuario existiera. Como `/api/admin/*` y
+    `/api/owner/*` dependen de la segunda, una cuenta desactivada, bloqueada
+    y sin segundo factor entraba por ahí y leía datos de personas — mientras
+    la misma cuenta era rechazada en el HTML. Dos implementaciones de un
+    control de acceso son una implementación y un agujero.
+
+    Comprueba, en este orden:
+
+    1. Hay `user_id` en la cookie de sesión.
+    2. El usuario existe todavía.
+    3. Sigue activo — dar de baja a alguien surte efecto de inmediato.
+    4. Hay fila viva en `sessions`: la cookie dice quién dice ser, pero es la
+       tabla la que decide. Esto es lo que hace que revocar funcione de
+       verdad, y aplica caducidad por inactividad y límite absoluto.
+    5. Si es administrador, tiene el segundo factor verificado en esta sesión.
+
+    Ante cualquier fallo limpia la sesión y devuelve `None`: una cookie que ya
+    no vale no debe sobrevivir a la petición que lo demostró.
+    """
+    from . import identity
+    from .models import RoleEnum, User
+
+    user_id = request.session.get("user_id")
+    if not user_id:
+        return None
+
+    user = db.get(User, user_id)
+    if not user:
+        request.session.clear()
+        return None
+
+    if not getattr(user, "is_active", True):
+        request.session.clear()
+        return None
+
+    is_admin = user.role == RoleEnum.admin
+    if resolve_server_session(db, request, is_admin=is_admin) is None:
+        request.session.clear()
+        return None
+
+    if not identity.totp_satisfied(request, user):
+        request.session.clear()
+        return None
+
+    return user
+
+
 # --- Bitácora de auditoría --------------------------------------------------
 
 

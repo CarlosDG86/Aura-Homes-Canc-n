@@ -24,15 +24,22 @@
 
 ## 1. Prioridad alta
 
-### 1.1 El agujero de acceso por la API — etapa E8
+### 1.1 ~~El agujero de acceso por la API~~ — etapa E8 ✅ HECHA (2026-09-08)
 
-`POST /api/auth/login` permite adivinar contraseñas **sin límite** y salta el bloqueo por cuenta,
-`is_active`, el segundo factor del administrador y la revocación de sesiones. Confirmado con
-prueba reproducible.
+Las tres rutas de `/api/auth/*` quedan retiradas tras `LEGACY_JSON_AUTH_ENABLED`
+(apagada por omisión) y devuelven 404. La resolución de sesión vive ahora en una sola
+función, `security.resolve_session_user`, que usan tanto las páginas HTML como la API.
+
+Verificado: las dos pruebas de concepto que demostraron el agujero ya no lo reproducen, y
+`tests/test_e8.py` añade **22 comprobaciones** que lo mantienen cerrado — incluida la que
+antes fallaba en silencio: *revocar la sesión ahora sí cierra la API*.
 
 Detalle y evidencia: [`docs/phase2.1/HALLAZGOS_SEGURIDAD.md`](phase2.1/HALLAZGOS_SEGURIDAD.md).
 
-**No depende de ninguna decisión del CEO. 0,5 días. Puede empezar ya.**
+### 1.1b Siguiente: E9 — cuentas, aislamiento y migración
+
+**Desbloqueada** al cerrarse D-018, D-019 y D-020 el 2026-09-08. Es la raíz de la que
+dependen E11, E12, E13 y E14. 5 días.
 
 ### 1.2 El sitio público enlaza a un host caído
 
@@ -41,7 +48,7 @@ a la plataforma de Fly, que no responde. Quien pulse recibe un error del navegad
 
 Arreglo: cambiar `data/site.json` y reconstruir. **Requiere aprobación: republica el sitio.**
 
-### 1.3 Ocho decisiones del CEO bloquean seis de las siete etapas
+### 1.3 Cinco decisiones del CEO bloquean cuatro etapas
 
 [`docs/phase2.1/DECISIONES_PENDIENTES.md`](phase2.1/DECISIONES_PENDIENTES.md).
 
