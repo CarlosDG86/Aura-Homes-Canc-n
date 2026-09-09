@@ -36,10 +36,30 @@ antes fallaba en silencio: *revocar la sesión ahora sí cierra la API*.
 
 Detalle y evidencia: [`docs/phase2.1/HALLAZGOS_SEGURIDAD.md`](phase2.1/HALLAZGOS_SEGURIDAD.md).
 
-### 1.1b Siguiente: E9 — cuentas, aislamiento y migración
+### 1.1b ~~E9 — cuentas, aislamiento y migración~~ ✅ HECHA (2026-09-08)
 
-**Desbloqueada** al cerrarse D-018, D-019 y D-020 el 2026-09-08. Es la raíz de la que
-dependen E11, E12, E13 y E14. 5 días.
+Tablas `accounts` y `account_plan_events`, `users.account_id`, `properties.account_id`,
+migración con relleno idempotente, matriz de planes (D-018) y escritor único de cuenta.
+
+`scoping.py` **no cambió de predicado**, a propósito: un `account_id` en NULL cae en la
+rama heredada, que es más estrecha. `test_scoping.py` se ejecuta sin tocar una línea y
+mantiene sus 27 comprobaciones — el contrato de la etapa.
+
+Ensayo en seco contra la base real: pasa dos veces con diff vacío la segunda, y el hash
+del archivo original queda idéntico. Ejecutarlo antes de cualquier arranque real:
+
+```
+cd platform && python -m app.migrate --simular
+```
+
+> ⚠️ El primer arranque contra `platform.db` **no es «añadir account_id»**: descarga de
+> golpe la deuda de E1 y E5 — 8 tablas, ~19 columnas y 20 índices. Ese es el momento
+> delicado, no la migración de cuentas. Hacer la instantánea antes.
+
+### 1.1c Siguiente: E10 — recuperación de contraseña y ver contraseña
+
+**Desbloqueada** al cerrarse D-022 y D-023. 3 días. Incluye el arreglo del hallazgo H-2,
+que **debe ir antes o a la vez** que configurar el SMTP de producción, nunca después.
 
 ### 1.2 El sitio público enlaza a un host caído
 
