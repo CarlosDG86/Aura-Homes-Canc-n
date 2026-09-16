@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Elige tu contraseña — Aura Homes Cancún{% endblock %}
+{% block main_class %}login-page{% endblock %}
+{% block content %}
+<div class="card login-card">
+  <h1>Elige tu contraseña nueva</h1>
+  <p class="muted">Al menos 12 caracteres. Una frase que recuerdes es mejor que algo corto y retorcido.</p>
+  {% if flash %}
+  <div class="alert alert-{{ 'error' if flash.kind == 'error' else 'success' }}">{{ flash.message }}</div>
+  {% endif %}
+  <form method="post" action="/recuperar/nueva">
+    {{ csrf_input(request) }}
+    <label for="password">Contraseña nueva</label>
+    <div class="pw-field">
+      <input type="password" id="password" name="password" required autofocus
+             autocomplete="new-password" minlength="12">
+      <button type="button" class="pw-toggle" data-pw-toggle="password"
+              aria-controls="password" aria-pressed="false"
+              aria-label="Mostrar la contraseña">Mostrar</button>
+    </div>
+    <label for="password2">Repítela</label>
+    <div class="pw-field">
+      <input type="password" id="password2" name="password2" required
+             autocomplete="new-password" minlength="12">
+      <button type="button" class="pw-toggle" data-pw-toggle="password2"
+              aria-controls="password2" aria-pressed="false"
+              aria-label="Mostrar la contraseña">Mostrar</button>
+    </div>
+    <button type="submit" class="btn btn-primary">Guardar y entrar</button>
+  </form>
+</div>
+{% endblock %}

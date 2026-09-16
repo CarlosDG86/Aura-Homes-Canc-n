@@ -568,3 +568,18 @@ code {
 .or{display:flex;align-items:center;gap:12px;color:#8a939b;font-size:12px;
   margin:14px 0;text-transform:uppercase;letter-spacing:.1em}
 .or::before,.or::after{content:"";flex:1;height:1px;background:#e4ddcf}
+
+/* --- Campo de contraseña con botón «ver» (E10 · punto 3.1) ----------------
+   El botón va DENTRO del recuadro del campo, alineado a la derecha. El área
+   táctil es de 44px, que es el mínimo de la guía de marca para dedo. */
+.pw-field { position: relative; display: flex; align-items: center; }
+.pw-field input { flex: 1; padding-right: 92px; }
+.pw-toggle {
+  position: absolute; right: 6px;
+  min-height: 44px; min-width: 44px; padding: 0 12px;
+  border: none; background: none;
+  font: inherit; font-size: 13px; font-weight: 600;
+  color: var(--teal); cursor: pointer; border-radius: 8px;
+}
+.pw-toggle:hover { background: #eef4f0; }
+.pw-toggle:focus { outline: 2px solid var(--teal); outline-offset: 2px; }

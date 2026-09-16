@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}Enlace no válido — Aura Homes Cancún{% endblock %}
+{% block main_class %}login-page{% endblock %}
+{% block content %}
+<div class="card login-card">
+  <h1>Ese enlace ya no vale</h1>
+  {# Un solo mensaje para los cuatro casos (desconocido, caducado, ya usado y
+     con el correo cambiado): distinguirlos diría más de lo necesario. #}
+  <p>Puede que haya caducado, que ya se haya usado o que se pidiera uno más nuevo.</p>
+  <p class="muted">Pide otro y te mandamos uno recién hecho.</p>
+  <a class="btn btn-primary" href="/recuperar">Pedir otro enlace</a>
+  <p class="muted"><a href="/login">Volver a iniciar sesión</a></p>
+</div>
+{% endblock %}

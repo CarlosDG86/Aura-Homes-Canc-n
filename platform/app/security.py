@@ -464,7 +464,18 @@ def register_successful_login(db, user, email: str, ip: str) -> None:
 
 
 def ip_is_rate_limited(db, ip: str) -> bool:
-    """True si esta IP acumuló demasiados fallos en la ventana reciente."""
+    """True si esta IP acumuló demasiados fallos de ACCESO en la ventana reciente.
+
+    El filtro `kind IS NULL` acota la cuenta a los intentos de entrar. Sin él,
+    las solicitudes de recuperación de contraseña (`kind='reset'`) sumarían
+    aquí, y once peticiones a `/recuperar` dejarían sin `/login` a toda una IP
+    compartida durante un minuto — una oficina entera, o un rango de móvil.
+    Sería una negación de servicio trivial contra usuarios reales, y regalada
+    por una función pensada para protegerlos.
+
+    Las filas anteriores a E10 tienen `kind` a NULL, que es justo lo que
+    significa «intento de acceso»: no hace falta rellenarlas.
+    """
     from .models import LoginAttempt
 
     since = _now() - timedelta(minutes=IP_WINDOW_MINUTES)
@@ -474,10 +485,40 @@ def ip_is_rate_limited(db, ip: str) -> bool:
             LoginAttempt.ip == ip[:64],
             LoginAttempt.success.is_(False),
             LoginAttempt.created_at >= since,
+            LoginAttempt.kind.is_(None),
         )
         .count()
     )
     return fails >= MAX_FAILS_PER_IP
+
+
+# --- Fuerza de la contraseña ------------------------------------------------
+
+#: Mínimo de caracteres. `docs/phase2/SECURITY.md` §1.2 lo fija en 12; el
+#: código aceptaba 8 en el restablecimiento del administrador. E10 unifica en
+#: el número aprobado: tener dos mínimos significa que el más laxo es el real.
+MIN_PASSWORD_LEN = 12
+
+
+def validar_fuerza_contrasena(nueva: str, confirmacion: str = None,
+                              actual: str = None) -> Optional[str]:
+    """Devuelve el motivo del rechazo, o `None` si la contraseña vale.
+
+    Se queda en longitud y en un par de comprobaciones obvias a propósito. Las
+    reglas de composición (una mayúscula, un símbolo…) empujan a la gente hacia
+    contraseñas cortas y predecibles y hacia apuntarlas en un papel; la
+    longitud es lo que de verdad cuesta romper.
+    """
+    nueva = nueva or ""
+    if len(nueva) < MIN_PASSWORD_LEN:
+        return f"La contraseña debe tener al menos {MIN_PASSWORD_LEN} caracteres."
+    if confirmacion is not None and nueva != confirmacion:
+        return "Las dos contraseñas no coinciden."
+    if actual is not None and nueva == actual:
+        return "La contraseña nueva tiene que ser distinta de la actual."
+    if nueva.strip() != nueva:
+        return "La contraseña no puede empezar ni terminar con espacios."
+    return None
 
 
 # --- Resolución de la sesión ------------------------------------------------

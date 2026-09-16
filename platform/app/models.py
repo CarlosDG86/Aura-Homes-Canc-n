@@ -209,6 +209,11 @@ class User(Base):
     # estrictamente más estrecha. Fallar estrecho, nunca ancho.
     account_id = Column(Integer, ForeignKey("accounts.id"), nullable=True, index=True)
 
+    # E10: cuándo se cambió la contraseña por última vez. Sirve para tres
+    # cosas: mostrárselo al usuario, invalidar tokens de recuperación emitidos
+    # antes del cambio, y responder al auditor cuándo se tocó la credencial.
+    password_changed_at = Column(DateTime, nullable=True)
+
     properties = relationship(
         "Property", back_populates="owner", cascade="all, delete-orphan"
     )
@@ -303,8 +308,82 @@ class LoginAttempt(Base):
     success = Column(Boolean, nullable=False, default=False)
     created_at = Column(DateTime, server_default=func.now(), index=True)
 
+    # Qué clase de intento fue (E10). NULL = intento de acceso, que es lo que
+    # son todas las filas anteriores a esta columna. `reset` = solicitud de
+    # recuperación; `reset_token` = intento de canjear un enlace.
+    #
+    # No es opcional: sin ella, el freno por IP contaría las solicitudes de
+    # recuperación como fallos de acceso, y once peticiones a /recuperar
+    # dejarían sin /login a toda una oficina o a un rango de móvil durante un
+    # minuto. Sería una negación de servicio trivial contra usuarios reales.
+    kind = Column(String, nullable=True)
+
     # Consulta caliente: "fallos de esta IP en la última ventana".
     __table_args__ = (Index("ix_login_attempts_ip_created", "ip", "created_at"),)
+
+
+class PasswordResetToken(Base):
+    """Enlaces de «olvidé mi contraseña» (E10 · punto 3.2 del CEO).
+
+    **El token nunca se guarda**: se guarda su SHA-256. Quien lea la base no
+    puede fabricar un enlace válido.
+
+    SHA-256 y no bcrypt a propósito: el token tiene 32 bytes de entropía, no
+    hay nada que ralentizar por fuerza bruta, y un hash determinista permite
+    buscarlo por igualdad con índice único en vez de recorrer la tabla
+    comparando fila por fila.
+
+    `user_email_at_issue` cierra un agujero que la base no puede cerrar: con
+    `PRAGMA foreign_keys = 0`, borrar un usuario deja sus tokens huérfanos, y
+    SQLite reutiliza el rowid máximo. Un token viejo podría acabar apuntando a
+    un id que después ocupa otra persona. Se compara el correo al validar.
+    """
+
+    __tablename__ = "password_reset_tokens"
+
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    token_hash = Column(String(64), nullable=False)
+    user_email_at_issue = Column(String, nullable=False)
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+    expires_at = Column(DateTime, nullable=False)
+    used_at = Column(DateTime, nullable=True)
+    # VARCHAR y no Enum: un valor desconocido en un Enum rompe la lectura del
+    # ORM, y este es justo el flujo que no puede romperse.
+    consumed_reason = Column(String, nullable=True)
+    requested_ip = Column(String(64), nullable=True)
+    requested_user_agent = Column(String(300), nullable=True)
+    used_ip = Column(String(64), nullable=True)
+
+    __table_args__ = (
+        Index("ux_password_reset_tokens_hash", "token_hash", unique=True),
+        Index("ix_password_reset_tokens_user", "user_id", "used_at"),
+    )
+
+
+class OutboxEmail(Base):
+    """Todo correo que la plataforma intenta enviar.
+
+    Resuelve dos cosas a la vez: hace **comprobable** un camino que hoy solo
+    imprime por consola cuando no hay SMTP, y permite responder «¿le llegó o
+    no?» cuando lo haya.
+
+    La regla de `body` es dura: el cuerpo lleva el enlace con el token en
+    claro, así que **solo se guarda en modo simulación**. Guardarlo con datos
+    reales anularía el sentido de hashear el token.
+    """
+
+    __tablename__ = "outbox_emails"
+
+    id = Column(Integer, primary_key=True)
+    to_email = Column(String, nullable=False)
+    subject = Column(String, nullable=False)
+    body = Column(Text, nullable=True)
+    kind = Column(String, nullable=True)
+    user_id = Column(Integer, nullable=True)
+    created_at = Column(DateTime, server_default=func.now(), nullable=False, index=True)
+    sent_at = Column(DateTime, nullable=True)
+    error = Column(String(300), nullable=True)
 
 
 class PlatformSetting(Base):

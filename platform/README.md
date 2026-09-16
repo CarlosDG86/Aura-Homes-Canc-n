@@ -111,3 +111,35 @@ property + user management) is real and working. 2b (tenant portal) and 2c
 no tenant PII or payment data — Legal review is required before either goes
 live. No hosting, domain, or deploy pipeline has been set up; that is
 infra's job once QA signs off and the CEO approves a deploy.
+
+## Recuperación de contraseña (E10)
+
+```
+GET/POST /recuperar            — pedir el enlace. SIEMPRE responde igual
+GET      /recuperar/enviado    — mensaje genérico, exista o no la cuenta
+GET      /recuperar/{token}    — valida y saca el token de la URL. NO lo consume
+GET/POST /recuperar/nueva      — elegir la contraseña nueva
+GET      /recuperar/caducado   — destino único de todo enlace que no vale
+GET/POST /cambiar-contrasena   — cambio voluntario, exige la contraseña actual
+GET      /admin/correos        — buzón de salida (solo admin y solo en simulación)
+```
+
+Reglas que no son negociables:
+
+- **El enlace no concede sesión.** Solo permite escribir una contraseña nueva.
+  Nunca autologin, nunca administrador, nunca salta el segundo factor.
+- **Todas las respuestas de `POST /recuperar` son idénticas**: mismo código,
+  mismo `Location`, mismo cuerpo. Correo inexistente, cuenta inactiva, cuenta
+  de administrador y límite superado responden lo mismo que el éxito. Nunca un
+  429 con cuerpo distinto: el propio límite sería el oráculo de enumeración que
+  este flujo intenta cerrar.
+- **El token nunca se guarda**: se guarda su SHA-256.
+- **El GET del enlace no lo consume**, porque los previsualizadores de correo
+  siguen las URL y lo quemarían antes de que la persona lo abriera.
+- El envío va en `BackgroundTasks`: `smtplib` es síncrono con 15 s de espera, y
+  enviar en línea haría que un correo existente tardara y uno inexistente no —
+  un oráculo cronometrable.
+- **El administrador queda fuera** (D-022). Su rescate es
+  `scripts/restablecer_admin.py`, que exige estar en la consola del servidor.
+- **En modo simulación no sale ningún correo**, y la guarda vive dentro de
+  `email_utils`, no en quien llama.

@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Cambiar contraseña — Aura Homes Cancún{% endblock %}
+{% block content %}
+<div class="card" style="max-width:520px">
+  <h1>{% if forzado %}Elige una contraseña propia{% else %}Cambiar contraseña{% endif %}</h1>
+  {% if forzado %}
+  <div class="alert alert-error">
+    Entraste con una contraseña temporal. Elige una propia para continuar:
+    mientras no lo hagas, quien te la haya dado puede entrar a tu cuenta.
+  </div>
+  {% endif %}
+  {% if flash %}
+  <div class="alert alert-{{ 'error' if flash.kind == 'error' else 'success' }}">{{ flash.message }}</div>
+  {% endif %}
+  <form method="post" action="/cambiar-contrasena">
+    {{ csrf_input(request) }}
+    <label for="actual">Contraseña actual</label>
+    <div class="pw-field">
+      <input type="password" id="actual" name="actual" required autofocus
+             autocomplete="current-password">
+      <button type="button" class="pw-toggle" data-pw-toggle="actual"
+              aria-controls="actual" aria-pressed="false"
+              aria-label="Mostrar la contraseña">Mostrar</button>
+    </div>
+    <label for="password">Contraseña nueva</label>
+    <div class="pw-field">
+      <input type="password" id="password" name="password" required
+             autocomplete="new-password" minlength="12">
+      <button type="button" class="pw-toggle" data-pw-toggle="password"
+              aria-controls="password" aria-pressed="false"
+              aria-label="Mostrar la contraseña">Mostrar</button>
+    </div>
+    <label for="password2">Repite la nueva</label>
+    <div class="pw-field">
+      <input type="password" id="password2" name="password2" required
+             autocomplete="new-password" minlength="12">
+      <button type="button" class="pw-toggle" data-pw-toggle="password2"
+              aria-controls="password2" aria-pressed="false"
+              aria-label="Mostrar la contraseña">Mostrar</button>
+    </div>
+    <p class="muted">Al menos 12 caracteres. Se cerrarán tus sesiones en otros dispositivos.</p>
+    <button type="submit" class="btn btn-primary">Guardar</button>
+  </form>
+</div>
+{% endblock %}

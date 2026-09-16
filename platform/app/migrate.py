@@ -65,6 +65,25 @@ def _ensure_account_columns(engine) -> None:
             conn.execute(text("ALTER TABLE properties ADD COLUMN account_id INTEGER"))
 
 
+def _ensure_login_attempt_kind(engine) -> None:
+    """`login_attempts.kind` (E10).
+
+    Va acompañada **en el mismo commit** del filtro `kind IS NULL` en
+    `security.ip_is_rate_limited`. Sin esa línea, las solicitudes de
+    recuperación cuentan como fallos de acceso y once peticiones a
+    `/recuperar` dejan sin `/login` a toda una IP compartida durante un
+    minuto: una negación de servicio trivial contra una oficina.
+    """
+    if not engine.url.get_backend_name().startswith("sqlite"):
+        return
+    with engine.begin() as conn:
+        cols = {row[1] for row in conn.execute(text("PRAGMA table_info(login_attempts)"))}
+        if not cols:
+            return
+        if "kind" not in cols:
+            conn.execute(text("ALTER TABLE login_attempts ADD COLUMN kind VARCHAR"))
+
+
 def _ensure_missing_indexes(engine) -> None:
     """Índices nuevos y deuda acumulada, todos con `IF NOT EXISTS`.
 
@@ -393,6 +412,7 @@ def verificar_integridad_cuentas(SessionLocal, imprimir: bool = True) -> dict:
 def migrar(engine, SessionLocal, verbose: bool = False) -> dict:
     """DDL + relleno + verificación. Idempotente: correrlo dos veces no cambia nada."""
     _ensure_account_columns(engine)
+    _ensure_login_attempt_kind(engine)
     _ensure_missing_indexes(engine)
     resumen = _backfill_accounts(engine, SessionLocal)
     if verbose and not resumen["omitida"]:

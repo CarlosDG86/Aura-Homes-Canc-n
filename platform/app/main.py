@@ -15,7 +15,9 @@ from . import migrate, models
 from .auth import hash_password
 from .auth import router as auth_router
 from .db import Base, SessionLocal, engine
-from .routers import admin, owner, owner_portal, pages, payments, site_content, tenant
+from .routers import (
+    acceso, admin, owner, owner_portal, pages, payments, site_content, tenant,
+)
 from .mockmode import is_mock, require_legal_clearance_for_live
 from .security import (
     ABSOLUTE_TIMEOUT_HOURS,
@@ -134,6 +136,9 @@ app.include_router(payments.router)
 app.include_router(pages.router)
 app.include_router(site_content.router)
 app.include_router(owner_portal.router)
+# E10 · recuperación y cambio de contraseña. Va después de `pages` porque
+# importa `_current_user_or_none` de allí, igual que hace `owner_portal`.
+app.include_router(acceso.router)
 
 
 @app.get("/")
@@ -185,6 +190,8 @@ def _ensure_user_security_columns() -> None:
         # E9 · D-013: a qué cuenta pertenece. Nullable a propósito — un NULL
         # cae en la rama heredada del aislamiento, que es más estrecha.
         "account_id": "ALTER TABLE users ADD COLUMN account_id INTEGER",
+        # E10: última vez que se cambió la contraseña.
+        "password_changed_at": "ALTER TABLE users ADD COLUMN password_changed_at DATETIME",
     }
     with engine.begin() as conn:
         cols = {row[1] for row in conn.execute(text("PRAGMA table_info(users)"))}

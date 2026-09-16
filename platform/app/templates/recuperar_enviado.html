@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Revisa tu correo — Aura Homes Cancún{% endblock %}
+{% block main_class %}login-page{% endblock %}
+{% block content %}
+<div class="card login-card">
+  <h1>Revisa tu correo</h1>
+  {# Este texto es deliberadamente el mismo exista o no la cuenta: decir
+     "no encontramos esa dirección" convertiría esta pantalla en una forma
+     cómoda de averiguar quién tiene cuenta aquí. #}
+  <p>
+    Si esa dirección corresponde a una cuenta, le acabamos de enviar un enlace
+    para elegir una contraseña nueva.
+  </p>
+  <p class="muted">
+    El enlace caduca en {{ minutos }} minutos y solo se puede usar una vez.
+    Si no lo ves, revisa la carpeta de correo no deseado.
+  </p>
+  <p class="muted"><a href="/login">Volver a iniciar sesión</a></p>
+</div>
+{% endblock %}

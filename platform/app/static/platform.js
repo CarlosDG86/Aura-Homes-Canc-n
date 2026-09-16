@@ -23,6 +23,53 @@
     });
   });
 
+  // «Ver contraseña» (punto 3.1 del CEO).
+  //
+  // Por delegación en el documento y no atando un manejador a cada botón:
+  // así funciona también en formularios que se pinten después, y es un solo
+  // manejador en vez de uno por campo.
+  //
+  // Solo cambia el `type` del campo. No copia el valor a ningún sitio, no lo
+  // guarda y no lo manda a ninguna parte: lo que se ve en pantalla es el
+  // mismo campo de siempre, y el gestor de contraseñas del navegador lo sigue
+  // reconociendo porque `name` y `autocomplete` no se tocan.
+  document.addEventListener("click", function (event) {
+    var boton = event.target.closest("[data-pw-toggle]");
+    if (!boton) return;
+    var campo = document.getElementById(boton.getAttribute("data-pw-toggle"));
+    if (!campo) return;
+
+    var mostrando = campo.type === "text";
+    campo.type = mostrando ? "password" : "text";
+    if (mostrando) {
+      campo.removeAttribute("data-was-password");
+    } else {
+      // Marca para poder volver a ocultarlo al enviar el formulario.
+      campo.setAttribute("data-was-password", "1");
+    }
+    boton.setAttribute("aria-pressed", mostrando ? "false" : "true");
+    boton.setAttribute("aria-label", mostrando ? "Mostrar la contraseña" : "Ocultar la contraseña");
+    boton.textContent = mostrando ? "Mostrar" : "Ocultar";
+
+    // Devolver el foco al campo y dejar el cursor al final: si no, al pulsar
+    // el botón se pierde el sitio donde se estaba escribiendo.
+    campo.focus();
+    try {
+      var n = campo.value.length;
+      campo.setSelectionRange(n, n);
+    } catch (e) {
+      // Algunos navegadores no admiten setSelectionRange según el tipo.
+    }
+  });
+
+  // Una contraseña visible no debe quedarse en pantalla al enviar el
+  // formulario ni al salir de la página.
+  document.addEventListener("submit", function () {
+    document.querySelectorAll("input[type='text'][data-was-password]").forEach(function (campo) {
+      campo.type = "password";
+    });
+  });
+
   // Menú lateral en móvil: se abre y cierra con el botón del encabezado.
   var toggle = document.querySelector("[data-sidebar-toggle]");
   var shell = document.querySelector(".app-shell");
