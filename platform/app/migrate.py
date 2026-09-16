@@ -84,6 +84,57 @@ def _ensure_login_attempt_kind(engine) -> None:
             conn.execute(text("ALTER TABLE login_attempts ADD COLUMN kind VARCHAR"))
 
 
+def _ensure_columnas_e12(engine) -> None:
+    """Columnas de E12: proveedores, fase de la foto y comprobantes.
+
+    `ticket_photos.phase` entra **NOT NULL con DEFAULT constante**, que SQLite
+    sí admite en `ADD COLUMN` — el propio repo lo hace con `users.is_active`.
+    Eso ahorra el UPDATE de relleno: las fotos que ya existen son todas del
+    inquilino al reportar, que es justo el valor por omisión.
+    """
+    if not engine.url.get_backend_name().startswith("sqlite"):
+        return
+
+    porTabla = {
+        "maintenance_tickets": {
+            "provider_id": "ALTER TABLE maintenance_tickets ADD COLUMN provider_id INTEGER",
+        },
+        "ticket_photos": {
+            "phase": "ALTER TABLE ticket_photos ADD COLUMN phase VARCHAR NOT NULL DEFAULT 'report'",
+        },
+        "documents": {
+            "ticket_id": "ALTER TABLE documents ADD COLUMN ticket_id INTEGER",
+            "account_id": "ALTER TABLE documents ADD COLUMN account_id INTEGER",
+            "expense_id": "ALTER TABLE documents ADD COLUMN expense_id INTEGER",
+            "provider_id": "ALTER TABLE documents ADD COLUMN provider_id INTEGER",
+            "stored_path": "ALTER TABLE documents ADD COLUMN stored_path VARCHAR",
+            "content_type": "ALTER TABLE documents ADD COLUMN content_type VARCHAR",
+            "bytes": "ALTER TABLE documents ADD COLUMN bytes INTEGER",
+            "sha256": "ALTER TABLE documents ADD COLUMN sha256 VARCHAR",
+            "uploaded_by_user_id": "ALTER TABLE documents ADD COLUMN uploaded_by_user_id INTEGER",
+            "doc_date": "ALTER TABLE documents ADD COLUMN doc_date DATE",
+            "fiscal_year": "ALTER TABLE documents ADD COLUMN fiscal_year INTEGER",
+            "deleted_at": "ALTER TABLE documents ADD COLUMN deleted_at DATETIME",
+        },
+        "ai_usage": {
+            # El tope de gasto del agente es hoy mensual y GLOBAL: con varias
+            # cuentas, la primera que use cotización automática dejaría sin
+            # presupuesto a todas las demás. Esta columna es el requisito para
+            # que el tope pase a ser por cuenta; la fórmula es de otra área.
+            "account_id": "ALTER TABLE ai_usage ADD COLUMN account_id INTEGER",
+        },
+    }
+
+    with engine.begin() as conn:
+        for tabla, columnas in porTabla.items():
+            cols = {r[1] for r in conn.execute(text(f"PRAGMA table_info({tabla})"))}
+            if not cols:
+                continue  # la tabla no existe todavía; create_all se encarga
+            for nombre, ddl in columnas.items():
+                if nombre not in cols:
+                    conn.execute(text(ddl))
+
+
 def _ensure_missing_indexes(engine) -> None:
     """Índices nuevos y deuda acumulada, todos con `IF NOT EXISTS`.
 
@@ -105,6 +156,13 @@ def _ensure_missing_indexes(engine) -> None:
         "ix_leases_property_status": "CREATE INDEX IF NOT EXISTS ix_leases_property_status ON leases (property_id, status)",
         "ix_leases_tenant_status": "CREATE INDEX IF NOT EXISTS ix_leases_tenant_status ON leases (tenant_id, status)",
         "ix_maintenance_tickets_property_id": "CREATE INDEX IF NOT EXISTS ix_maintenance_tickets_property_id ON maintenance_tickets (property_id)",
+        # E12. `create_all(checkfirst)` salta las tablas existentes y por tanto
+        # no crea índices sobre columnas añadidas por ALTER: van a mano.
+        "ix_tickets_provider": "CREATE INDEX IF NOT EXISTS ix_tickets_provider ON maintenance_tickets (provider_id)",
+        "ix_ticket_photos_phase": "CREATE INDEX IF NOT EXISTS ix_ticket_photos_phase ON ticket_photos (ticket_id, phase)",
+        "ix_documents_ticket": "CREATE INDEX IF NOT EXISTS ix_documents_ticket ON documents (ticket_id)",
+        "ix_documents_account_year": "CREATE INDEX IF NOT EXISTS ix_documents_account_year ON documents (account_id, fiscal_year)",
+        "ix_ai_usage_account": "CREATE INDEX IF NOT EXISTS ix_ai_usage_account ON ai_usage (account_id)",
     }
     unicos = {
         "ix_properties_site_ref": ("properties", "site_ref"),
@@ -413,6 +471,7 @@ def migrar(engine, SessionLocal, verbose: bool = False) -> dict:
     """DDL + relleno + verificación. Idempotente: correrlo dos veces no cambia nada."""
     _ensure_account_columns(engine)
     _ensure_login_attempt_kind(engine)
+    _ensure_columnas_e12(engine)
     _ensure_missing_indexes(engine)
     resumen = _backfill_accounts(engine, SessionLocal)
     if verbose and not resumen["omitida"]:

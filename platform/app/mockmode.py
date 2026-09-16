@@ -109,6 +109,65 @@ def validate_mock_phone(phone: str) -> None:
         )
 
 
+def validate_mock_optional_email(email: str) -> None:
+    """Como `validate_mock_email`, pero tolera el campo vacío.
+
+    Existe porque `validate_mock_email("")` **lanza 400**: calcula
+    `domain = ""` y la cadena vacía no está entre los dominios de prueba. El
+    correo de un proveedor es opcional, así que llamar a la otra directamente
+    haría imposible dar de alta a un plomero sin correo.
+    """
+    if (email or "").strip():
+        validate_mock_email(email)
+
+
+#: Un correo dentro de un texto libre.
+_CORREO_EN_TEXTO = re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}")
+#: Diez o más dígitos seguidos, admitiendo espacios, guiones y paréntesis.
+_TELEFONO_EN_TEXTO = re.compile(r"(?:\d[\s\-().]*){10,}")
+
+
+def reject_real_contact_in_text(texto: str, campo: str = "el texto") -> None:
+    """Impide que un contacto real entre por un campo de texto libre.
+
+    Sin esto, el campo de notas es el agujero por el que entra el teléfono
+    real del plomero el primer día, y la puerta legal de D-016 queda abierta
+    sin que nadie lo note: las validaciones de correo y teléfono solo miran
+    sus propios campos.
+
+    Falso positivo conocido y asumido: un folio o un número de serie de diez
+    dígitos se rechaza. Solo actúa en modo simulación, así que el coste es
+    fricción mientras se prueba, y el mensaje dice exactamente qué se detectó
+    para que no haya que adivinarlo.
+    """
+    if not is_mock() or not (texto or "").strip():
+        return
+    if _CORREO_EN_TEXTO.search(texto):
+        raise HTTPException(
+            status_code=400,
+            detail=(f"Modo pruebas: {campo} contiene algo que parece un correo "
+                    "electrónico. Quítalo: mientras Legal no firme, no pueden "
+                    "guardarse datos de contacto reales."),
+        )
+    if _TELEFONO_EN_TEXTO.search(texto):
+        raise HTTPException(
+            status_code=400,
+            detail=(f"Modo pruebas: {campo} contiene una secuencia de 10 o más "
+                    "dígitos, que parece un teléfono. Quítala: mientras Legal "
+                    "no firme, no pueden guardarse datos de contacto reales."),
+        )
+
+
+def reject_tax_id_in_mock(tax_id: str) -> None:
+    """El RFC o EIN de un proveedor solo se captura con datos reales."""
+    if is_mock() and (tax_id or "").strip():
+        raise HTTPException(
+            status_code=400,
+            detail=("Modo pruebas: el RFC o identificador fiscal no se captura "
+                    "hasta que Legal firme. Deja el campo vacío."),
+        )
+
+
 def emails_are_sent() -> bool:
     """En simulación nunca sale un correo: un inquilino ficticio no recibe nada."""
     return not is_mock()

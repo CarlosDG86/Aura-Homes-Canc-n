@@ -75,4 +75,108 @@
     </div>
   </form>
 </section>
+
+{# --- Proveedor (punto 5). Asignarlo es una anotación interna: no se le
+     manda nada, no se le genera enlace y no se le da acceso. --- #}
+<section class="card">
+  <h2>Proveedor</h2>
+  <p>Actualmente: <strong>{{ proveedor.name if proveedor else 'sin proveedor' }}</strong></p>
+  <form method="post" action="/owner/tickets/{{ ticket.id }}/actualizar">
+    {{ csrf_input(request) }}
+    <input type="hidden" name="accion" value="asignar_proveedor">
+    <label for="tk-prov">Quién lo va a atender</label>
+    <select id="tk-prov" name="proveedor_id">
+      {% for p in proveedores %}
+      <option value="{{ p.id }}" {% if ticket.provider_id == p.id %}selected{% endif %}>
+        {{ p.name }}{% if p.trade %} · {{ p.trade }}{% endif %}
+      </option>
+      {% endfor %}
+    </select>
+    <div class="actions">
+      <button class="btn btn-primary" type="submit">Asignar</button>
+    </div>
+  </form>
+  {% if not proveedores %}
+  <p class="hint">Todavía no tienes proveedores. <a href="/owner/proveedores">Añade el primero</a>.</p>
+  {% endif %}
+  {% if ticket.provider_id %}
+  <form method="post" action="/owner/tickets/{{ ticket.id }}/actualizar" class="inline-form">
+    {{ csrf_input(request) }}
+    <input type="hidden" name="accion" value="quitar_proveedor">
+    <button class="btn-ghost-inline" type="submit">Quitar proveedor</button>
+  </form>
+  {% endif %}
+  <p class="hint">Asignarlo es una anotación tuya: no le llega nada ni entra a la plataforma.</p>
+</section>
+
+{# --- Evidencia del trabajo (puntos 6.1 y 6.2) --- #}
+<section class="card">
+  <h2>Fotos del trabajo</h2>
+  {% if fotos_propietario %}
+  <div class="photo-grid">
+    {% for f in fotos_propietario %}
+    <img src="/media/tickets/{{ ticket.id }}/{{ f.id }}" alt="Foto del trabajo" loading="lazy">
+    {% endfor %}
+  </div>
+  {% endif %}
+  <form method="post" action="/owner/tickets/{{ ticket.id }}/fotos"
+        enctype="multipart/form-data">
+    {{ csrf_input(request) }}
+    <label for="tk-fase">Momento</label>
+    <select id="tk-fase" name="fase">
+      <option value="work">Durante el trabajo</option>
+      <option value="closing">Al cerrar</option>
+    </select>
+    {# `capture="environment"` abre directamente la cámara trasera del
+       teléfono. Es un atributo del propio HTML: no es JavaScript, así que no
+       lo bloquea `script-src`, y no lo gobierna `Permissions-Policy: camera`,
+       que rige la cámara EN VIVO dentro de la página. En un ordenador se
+       comporta como un selector de archivos normal. #}
+    <label for="tk-fotos">Fotos</label>
+    <input type="file" id="tk-fotos" name="fotos" accept="image/*"
+           capture="environment" multiple>
+    <p class="hint">Hasta 3 por envío. Se les quita la ubicación GPS al subirlas.</p>
+    <button class="btn btn-primary" type="submit">Subir fotos</button>
+  </form>
+</section>
+
+<section class="card">
+  <h2>Comprobantes</h2>
+  {% if documentos %}
+  <table>
+    <thead><tr><th>Archivo</th><th>Tipo</th><th>Fecha</th><th></th></tr></thead>
+    <tbody>
+      {% for doc in documentos %}
+      <tr>
+        <td><a href="/media/documentos/{{ doc.id }}">{{ doc.file_name }}</a></td>
+        <td>{{ doc.doc_type.value if doc.doc_type else "—" }}</td>
+        <td>{{ doc.doc_date.strftime('%d/%m/%Y') if doc.doc_date else "—" }}</td>
+        <td>
+          <form method="post" action="/owner/tickets/{{ ticket.id }}/documentos/{{ doc.id }}/eliminar"
+                class="inline-form" data-confirm="¿Retirar este comprobante?">
+            {{ csrf_input(request) }}
+            <button type="submit" class="btn-danger-inline">Retirar</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% endif %}
+  <form method="post" action="/owner/tickets/{{ ticket.id }}/documentos"
+        enctype="multipart/form-data">
+    {{ csrf_input(request) }}
+    <label for="tk-tipo">Tipo</label>
+    <select id="tk-tipo" name="tipo">
+      <option value="invoice">Factura</option>
+      <option value="receipt">Recibo</option>
+      <option value="quote">Cotización</option>
+      <option value="other">Otro</option>
+    </select>
+    <label for="tk-doc">Archivo</label>
+    <input type="file" id="tk-doc" name="documento" accept=".pdf,.xml,.jpg,.jpeg,.png" required>
+    <p class="hint">PDF, XML, JPG o PNG. Hasta 5 MB. El inquilino no los ve.</p>
+    <button class="btn btn-primary" type="submit">Adjuntar comprobante</button>
+  </form>
+</section>
 {% endblock %}

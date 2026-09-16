@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+{% block title %}Proveedores — Aura Homes Cancún{% endblock %}
+{% block content %}
+<h1 class="page-title">Proveedores</h1>
+<p class="muted">Tu directorio de plomeros, electricistas y quien te resuelve las cosas.</p>
+
+{% if flash %}
+<div class="alert alert-{{ 'error' if flash.kind == 'error' else 'success' }}">{{ flash.message }}</div>
+{% endif %}
+
+{% if es_mock %}
+<div class="alert alert-warning">
+  Modo pruebas: usa datos ficticios. El teléfono, el correo y el RFC de un
+  proveedor son datos de una persona real que no ha aceptado nada, así que no
+  se guardan hasta que Legal firme.
+</div>
+{% endif %}
+
+<section class="card narrow-form">
+  <h2>Añadir un proveedor</h2>
+  <form method="post" action="/owner/proveedores">
+    {{ csrf_input(request) }}
+    <input type="hidden" name="accion" value="crear">
+    <label for="np-name">Nombre o razón social</label>
+    <input type="text" id="np-name" name="name" required maxlength="200">
+
+    <div class="form-grid">
+      <div>
+        <label for="np-trade">Oficio</label>
+        <select id="np-trade" name="trade">
+          <option value="">Sin especificar</option>
+          {% for o in oficios %}<option value="{{ o }}">{{ o }}</option>{% endfor %}
+        </select>
+      </div>
+      <div>
+        <label for="np-contact">Persona de contacto</label>
+        <input type="text" id="np-contact" name="contact_name" maxlength="200">
+      </div>
+      <div>
+        <label for="np-phone">Teléfono</label>
+        <input type="text" id="np-phone" name="phone" maxlength="60">
+      </div>
+      <div>
+        <label for="np-email">Correo</label>
+        <input type="email" id="np-email" name="email" maxlength="200">
+      </div>
+    </div>
+
+    <label for="np-notes">Notas</label>
+    <textarea id="np-notes" name="notes" maxlength="2000"
+              placeholder="Horarios, zonas donde trabaja, garantías…"></textarea>
+    <button type="submit" class="btn btn-primary">Guardar proveedor</button>
+  </form>
+</section>
+
+<div class="section-head">
+  <h2>Directorio</h2>
+  {% if mostrar_archivados %}
+  <a class="btn btn-ghost" href="/owner/proveedores">Ver solo activos</a>
+  {% else %}
+  <a class="btn btn-ghost" href="/owner/proveedores?archivados=1">Ver también archivados</a>
+  {% endif %}
+</div>
+
+<div class="card">
+  <table>
+    <thead>
+      <tr><th>Proveedor</th><th>Oficio</th><th>Contacto</th><th>Estado</th><th>Acciones</th></tr>
+    </thead>
+    <tbody>
+      {% for p in proveedores %}
+      <tr>
+        <td>
+          {{ p.name }}
+          {% if p.notes %}<div class="meta">{{ p.notes }}</div>{% endif %}
+        </td>
+        <td>{{ p.trade or "—" }}</td>
+        <td>
+          {% if p.redacted_at %}
+            <span class="meta">Contacto suprimido a petición</span>
+          {% else %}
+            {{ p.contact_name or "" }}
+            {% if p.phone %}<div class="meta">{{ p.phone }}</div>{% endif %}
+            {% if p.email %}<div class="meta">{{ p.email }}</div>{% endif %}
+            {% if not (p.contact_name or p.phone or p.email) %}—{% endif %}
+          {% endif %}
+        </td>
+        <td>
+          {% if p.is_active %}<span class="status status-rented">Activo</span>
+          {% else %}<span class="status status-available">Archivado</span>{% endif %}
+        </td>
+        <td>
+          <div class="actions">
+            {% if p.is_active %}
+            <form method="post" action="/owner/proveedores" class="inline-form">
+              {{ csrf_input(request) }}
+              <input type="hidden" name="accion" value="archivar">
+              <input type="hidden" name="proveedor_id" value="{{ p.id }}">
+              <button type="submit" class="btn-ghost-inline">Archivar</button>
+            </form>
+            {% else %}
+            <form method="post" action="/owner/proveedores" class="inline-form">
+              {{ csrf_input(request) }}
+              <input type="hidden" name="accion" value="restaurar">
+              <input type="hidden" name="proveedor_id" value="{{ p.id }}">
+              <button type="submit" class="btn-ghost-inline">Restaurar</button>
+            </form>
+            {% endif %}
+            <form method="post" action="/owner/proveedores" class="inline-form"
+                  data-confirm="¿Eliminar a {{ p.name }}? Si aparece en algún ticket o comprobante se archivará en vez de borrarse.">
+              {{ csrf_input(request) }}
+              <input type="hidden" name="accion" value="eliminar">
+              <input type="hidden" name="proveedor_id" value="{{ p.id }}">
+              <button type="submit" class="btn-danger-inline">Eliminar</button>
+            </form>
+            {% if not p.redacted_at %}
+            <form method="post" action="/owner/proveedores" class="inline-form"
+                  data-confirm="Se borrarán teléfono, correo y RFC de {{ p.name }}, conservando el nombre. No se puede deshacer.">
+              {{ csrf_input(request) }}
+              <input type="hidden" name="accion" value="redactar">
+              <input type="hidden" name="proveedor_id" value="{{ p.id }}">
+              <button type="submit" class="btn-ghost-inline">Borrar contacto</button>
+            </form>
+            {% endif %}
+          </div>
+        </td>
+      </tr>
+      {% else %}
+      <tr class="empty-row">
+        <td colspan="5">Todavía no tienes proveedores. Añade el primero arriba.</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

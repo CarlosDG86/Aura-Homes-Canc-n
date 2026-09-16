@@ -537,6 +537,12 @@ def create_owner_submit(
         role=RoleEnum.owner,
     )
     db.add(owner)
+    db.flush()
+    # Un propietario nuevo estrena cuenta propia: es un cliente distinto. Sin
+    # esto nacería con `account_id` en NULL, y el aislamiento por cuenta
+    # respondería 503 en vez de funcionar — el relleno de cuentas corre una
+    # sola vez y no vuelve a pasar por aquí.
+    cuentas.asegurar_cuenta_de_usuario(db, owner, creado_por=_current_user_or_none(request, db))
     db.commit()
 
     # Email the temporary password to the new owner, advising them to change

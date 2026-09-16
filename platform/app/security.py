@@ -41,6 +41,11 @@ CSRF_EXEMPT_PATHS = frozenset({
     "/api/health",  # sondeo de salud, sin efectos ni sesión
 })
 
+#: Tope del cuerpo de un envío con archivos, comprobado por `Content-Length`
+#: antes de leer nada. Deja sitio para tres fotos de 8 MB más el sobre
+#: multipart; por encima de eso es un volcado, no un adjunto.
+MAX_UPLOAD_BODY_BYTES = int(os.environ.get("MAX_UPLOAD_BODY_BYTES", str(26 * 1024 * 1024)))
+
 SESSION_CSRF_KEY = "_csrf"
 CSRF_FORM_FIELD = "csrf_token"
 CSRF_HEADER = "x-csrf-token"
@@ -186,6 +191,22 @@ class CSRFMiddleware(BaseHTTPMiddleware):
 
         if not submitted:
             ctype = request.headers.get("content-type", "")
+            # Rechazo temprano por tamaño, ANTES de leer un solo byte. Este
+            # middleware lee el cuerpo multipart entero en memoria y lo vuelve
+            # a parsear (dos copias), así que sin este tope dos subidas
+            # simultáneas de 8 MB bastarían para tumbar el proceso en la capa
+            # gratuita. 413 es la respuesta correcta: el problema es el
+            # tamaño, no el token.
+            if ctype.startswith("multipart/form-data"):
+                declarado = request.headers.get("content-length")
+                try:
+                    if declarado is not None and int(declarado) > MAX_UPLOAD_BODY_BYTES:
+                        return PlainTextResponse(
+                            "El envío es demasiado grande. Sube los archivos de uno en uno.",
+                            status_code=413,
+                        )
+                except ValueError:
+                    pass
             if ctype.startswith(("application/x-www-form-urlencoded", "multipart/form-data")):
                 # Leer el formulario aquí consume el cuerpo de la petición, y la
                 # ruta de destino se quedaría sin datos (o colgada esperándolos).

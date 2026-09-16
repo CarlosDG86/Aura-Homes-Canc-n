@@ -213,12 +213,36 @@ def ticket_detail(ticket_id: int, request: Request, db: Session = Depends(get_db
     if ticket is None:
         raise HTTPException(status_code=404, detail="Ticket no encontrado")
     events = db.query(TicketEvent).filter(TicketEvent.ticket_id == ticket.id).order_by(TicketEvent.id).all()
-    photos = db.query(TicketPhoto).filter(TicketPhoto.ticket_id == ticket.id).all()
+    # Las del inquilino al reportar y las del propietario van separadas: se
+    # pintan en bloques distintos y tienen cupos distintos.
+    photos = db.query(TicketPhoto).filter(
+        TicketPhoto.ticket_id == ticket.id,
+        TicketPhoto.phase == "report").all()
+    fotos_propietario = db.query(TicketPhoto).filter(
+        TicketPhoto.ticket_id == ticket.id,
+        TicketPhoto.phase.in_(("work", "closing"))).all()
+
+    from ..models import Document, Provider
+    from ..scoping import scoped_documents, scoped_providers
+
+    # Los archivados NO aparecen para elegir, pero el que ya está asignado sí
+    # debe poder mostrarse aunque se haya archivado después.
+    try:
+        proveedores = scoped_providers(db, user).order_by(Provider.name).all()
+        proveedor = db.get(Provider, ticket.provider_id) if ticket.provider_id else None
+    except HTTPException:
+        # Usuario sin cuenta todavía: la ficha del ticket sigue siendo útil sin
+        # el bloque de proveedores, así que no se tumba la página entera.
+        proveedores, proveedor = [], None
+    documentos = scoped_documents(db, user).filter(
+        Document.ticket_id == ticket.id).order_by(Document.id).all()
     reporter = db.query(User).filter(User.id == ticket.reported_by_user_id).first()
     prop = db.query(Property).filter(Property.id == ticket.property_id).first()
     return templates.TemplateResponse(
         request=request, name="owner_ticket_detail.html",
         context=_ctx(user, request, active='tickets', **_nav_badges(db, user), ticket=ticket, events=events, photos=photos,
+                     fotos_propietario=fotos_propietario, proveedores=proveedores,
+                     proveedor=proveedor, documentos=documentos,
                      reporter=reporter, prop=prop, statuses=list(TicketStatusEnum),
                      assignables=[u for u in scoped_users(db, user).all()],
                      assigned=db.query(User).filter(
@@ -229,7 +253,8 @@ def ticket_detail(ticket_id: int, request: Request, db: Session = Depends(get_db
 
 @router.post("/owner/tickets/{ticket_id}/actualizar")
 def ticket_update(ticket_id: int, request: Request, db: Session = Depends(get_db),
-                  accion: str = Form(...), body: str = Form(""), csrf_token: str = Form("")):
+                  accion: str = Form(...), body: str = Form(""),
+                  proveedor_id: str = Form(""), csrf_token: str = Form("")):
     """Comentar, cambiar estado, resolver o reabrir. Todo queda en el historial."""
     user, resp = _require_owner(request, db)
     if resp:
@@ -290,6 +315,31 @@ def ticket_update(ticket_id: int, request: Request, db: Session = Depends(get_db
             nota = f"Asignado a {target.name}"
         db.add(TicketEvent(ticket_id=ticket.id, actor_user_id=user.id,
                            event_type=TicketEventTypeEnum.assigned, body=nota))
+    elif accion == "asignar_proveedor":
+        # El id llega en su propio campo y NO sobrecargando `body`, como hace
+        # `asignar`. Esa sobrecarga es frágil y no conviene propagarla.
+        #
+        # No se añade ningún miembro a `TicketEventTypeEnum`: ese enum lo lee la
+        # línea de tiempo en las dos vistas, se guarda por NOMBRE, y una
+        # reversión de despliegue con filas nuevas ya escritas rompería la
+        # página entera para propietario e inquilino.
+        from ..scoping import assert_can_assign_provider
+
+        pid = int(proveedor_id) if str(proveedor_id or "").strip().isdigit() else None
+        if pid is None:
+            raise HTTPException(status_code=400, detail="Falta el proveedor.")
+        proveedor = assert_can_assign_provider(db, user, pid)
+        ticket.provider_id = proveedor.id
+        db.add(TicketEvent(ticket_id=ticket.id, actor_user_id=user.id,
+                           event_type=TicketEventTypeEnum.assigned,
+                           body=f"Proveedor: {proveedor.name}"))
+
+    elif accion == "quitar_proveedor":
+        ticket.provider_id = None
+        db.add(TicketEvent(ticket_id=ticket.id, actor_user_id=user.id,
+                           event_type=TicketEventTypeEnum.assigned,
+                           body="Proveedor retirado"))
+
     elif accion == "reabrir":
         ticket.status = TicketStatusEnum.open
         ticket.resolved_at = None
@@ -351,6 +401,11 @@ def create_tenant(request: Request, db: Session = Depends(get_db),
         must_change_password=True,
     )
     db.add(tenant)
+    db.flush()
+    # El inquilino entra en la cuenta de su casero, que es la de la casa donde
+    # va a vivir. Nunca estrena una propia.
+    from .. import cuentas
+    cuentas.asegurar_cuenta_de_usuario(db, tenant, creado_por=user)
     db.commit()
     db.refresh(tenant)
 

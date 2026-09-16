@@ -925,3 +925,11 @@ tbody tr:hover td { background: var(--surface-soft); }
   .filtros-botones { margin-left: 0; }
   .filtros-botones .btn { flex: 1; }
 }
+
+/* --- Proveedores y adjuntos (E12) ---------------------------------------- */
+.narrow-form { max-width: 720px; }
+.inline-form { display: inline-block; margin: 0; }
+.hint { color: var(--text-muted); font-size: .82rem; margin: .4rem 0 0; }
+.photo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: .6rem; margin-bottom: 1rem; }
+.photo-grid img { width: 100%; border-radius: 12px; border: 1px solid var(--border); display: block; }
+input[type="file"] { background: var(--white); padding: .55rem; }

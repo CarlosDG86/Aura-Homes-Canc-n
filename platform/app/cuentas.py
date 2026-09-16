@@ -95,6 +95,54 @@ def transferir_propiedad(db, request, prop, nuevo_owner, actor=None,
     return True
 
 
+def asegurar_cuenta_de_usuario(db, usuario, creado_por=None) -> Optional[int]:
+    """Da cuenta a un usuario recién creado. Devuelve el id de la cuenta.
+
+    Existe porque el relleno de cuentas corre **una sola vez**, al arrancar, y
+    marca la versión de esquema para no repetirse. Todo usuario creado después
+    —un propietario dado de alta por el administrador, un inquilino dado de
+    alta por su casero— nacía sin cuenta, y con `account_id` en NULL el
+    aislamiento por cuenta responde 503 en vez de funcionar.
+
+    Las dos reglas:
+
+    - Un **propietario** estrena cuenta propia: es un cliente distinto.
+    - Un **inquilino** entra en la cuenta de quien lo da de alta, que es la de
+      la casa donde va a vivir. Nunca estrena una.
+    """
+    from .models import Account, RoleEnum
+
+    if usuario is None or getattr(usuario, "account_id", None) is not None:
+        return getattr(usuario, "account_id", None)
+
+    rol = getattr(getattr(usuario, "role", None), "value", None)
+
+    if rol == "owner":
+        from . import plans
+
+        cuenta = Account(
+            name=usuario.name or f"Propietario #{usuario.id}",
+            # Sin plan asignado y sin reloj de prueba corriendo: quién paga qué
+            # lo decide una persona, no el alta (D-019, D-020).
+            plan=plans.PLAN_TRIAL,
+            status=plans.ESTADO_ACTIVA,
+            plan_assigned_at=None,
+            trial_started_at=None,
+            primary_user_id=usuario.id,
+            created_by_user_id=getattr(creado_por, "id", None),
+        )
+        db.add(cuenta)
+        db.flush()
+        usuario.account_id = cuenta.id
+        return cuenta.id
+
+    # Inquilino, o cualquier otro rol: hereda la cuenta de quien lo creó.
+    heredada = getattr(creado_por, "account_id", None)
+    if heredada is not None:
+        usuario.account_id = heredada
+    return heredada
+
+
 def sincronizar_cuenta_con_duenio(db, prop) -> bool:
     """Pone la cuenta de la propiedad a la de su dueño. Devuelve si cambió.
 

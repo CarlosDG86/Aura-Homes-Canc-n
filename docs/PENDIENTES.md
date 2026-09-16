@@ -81,9 +81,21 @@ aquí lo revertiría la siguiente sincronización.
 El panel **no escribe ni una fila** y **ningún CSV lleva datos del inquilino**. Las dos
 cosas tienen prueba.
 
-### 1.1e Siguiente: E12 — proveedores, archivos de ticket y cámara en móvil
+### 1.1e ~~E12 — proveedores, archivos de ticket y cámara en móvil~~ ✅ HECHA (2026-09-16)
 
-Puntos 5, 6.1 y 6.2 del CEO. 5 días. Depende de E9 (hecha), así que no espera nada.
+Directorio de proveedores con alta, archivado, borrado y supresión de contacto; asignación
+a tickets; fotos del trabajo y del cierre con la cámara del teléfono; y comprobantes en
+PDF, XML, JPG o PNG.
+
+El proveedor es **un dato de la cuenta, nunca una fila en `users`**: `users.email` es único
+global, así que dos administradoras no podrían registrar al mismo plomero.
+
+**El inquilino no ve ningún comprobante**, ni de su propia vivienda. Ve las fotos del
+trabajo terminado; lo que costó y a quién se le pagó es asunto del propietario.
+
+### 1.1f Siguiente: E13 — gastos desglosados y libro fiscal
+
+Puntos 2.3 y 2.4 del CEO. 8 días, la etapa más larga. Depende de E9 y E12, las dos hechas.
 
 ### 1.2 El sitio público enlaza a un host caído
 

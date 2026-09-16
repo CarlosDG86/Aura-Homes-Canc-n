@@ -27,7 +27,30 @@ from fastapi import HTTPException, UploadFile
 from PIL import Image, UnidentifiedImageError
 
 PLATFORM_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-UPLOAD_DIR = os.environ.get("UPLOAD_DIR") or os.path.join(PLATFORM_ROOT, "data", "uploads")
+
+
+def _resolve_upload_dir() -> str:
+    """Carpeta de archivos subidos, separada por modo igual que la base.
+
+    `db.py` ya elige `platform-mock.db` o `platform.db` según `DATA_MODE`,
+    pero los archivos iban todos al mismo sitio. Eso importa porque los ids de
+    ticket **se repiten entre las dos bases**: el ticket 1 de pruebas y el
+    ticket 1 real comparten carpeta, así que una foto de prueba podía
+    aparecer en la ficha de un ticket real y la purga de pruebas no podía ser
+    «borrar una carpeta».
+
+    Un `UPLOAD_DIR` explícito siempre gana: es lo que usan las pruebas para
+    trabajar sobre un directorio desechable.
+    """
+    explicito = os.environ.get("UPLOAD_DIR")
+    if explicito:
+        return explicito
+    modo = os.environ.get("DATA_MODE", "mock").strip().lower()
+    sufijo = "uploads" if modo == "live" else "uploads-mock"
+    return os.path.join(PLATFORM_ROOT, "data", sufijo)
+
+
+UPLOAD_DIR = _resolve_upload_dir()
 
 MAX_BYTES = int(os.environ.get("UPLOAD_MAX_BYTES", str(8 * 1024 * 1024)))  # 8 MB
 MAX_PHOTOS_PER_TICKET = int(os.environ.get("AI_MAX_PHOTOS_PER_TICKET", "5"))

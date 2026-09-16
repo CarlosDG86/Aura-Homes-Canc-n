@@ -17,7 +17,7 @@ from .auth import router as auth_router
 from .db import Base, SessionLocal, engine
 from .routers import (
     acceso, admin, owner, owner_dashboard, owner_portal, pages, payments,
-    site_content, tenant,
+    proveedores, site_content, tenant,
 )
 from .mockmode import is_mock, require_legal_clearance_for_live
 from .security import (
@@ -150,6 +150,9 @@ app.include_router(acceso.router)
 # y pages va antes, así que dejarla viva habría hecho que este módulo no
 # se ejecutara nunca sin que nada fallara de forma visible.
 app.include_router(owner_dashboard.router)
+# E12 · proveedores y adjuntos del ticket. Va después de owner_portal
+# porque importa de allí `_require_owner`, `_ctx` y `_nav_badges`.
+app.include_router(proveedores.router)
 
 
 @app.get("/")

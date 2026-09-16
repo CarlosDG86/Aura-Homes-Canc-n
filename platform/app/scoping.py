@@ -199,3 +199,109 @@ def owner_of_property(db: Session, property_id: int) -> Optional[User]:
     """
     prop = db.query(Property).filter(Property.id == property_id).first()
     return db.query(User).filter(User.id == prop.owner_id).first() if prop else None
+
+
+# --- Proveedores y comprobantes (E12) ---------------------------------------
+#
+# Ni una consulta a `providers` o a `documents` fuera de este módulo, por el
+# mismo motivo que el resto: cada copia del filtro es una oportunidad de
+# olvidarlo, y basta una para abrir la fuga.
+
+
+def current_account_id(user: User) -> int:
+    """Cuenta del usuario. Falla CERRADA y diagnosticable.
+
+    Devuelve 503 y no una lista vacía cuando falta. La diferencia importa: una
+    lista vacía se lee como «desaparecieron mis proveedores» y manda a la
+    persona a darlos de alta otra vez; el 503 dice exactamente qué falta.
+
+    Solo puede ocurrir si el relleno de cuentas no llegó a esta fila, que es
+    justamente el caso que hay que ver y no disimular.
+    """
+    account_id = getattr(user, "account_id", None)
+    if account_id is None:
+        raise HTTPException(
+            status_code=503,
+            detail=("Tu usuario todavía no está asociado a una cuenta. Avisa al "
+                    "administrador: falta completar la migración de cuentas."),
+        )
+    return account_id
+
+
+def scoped_providers(db: Session, user: User, include_archived: bool = False) -> Query:
+    """Proveedores de la cuenta del usuario.
+
+    `include_archived` es un único punto de decisión a propósito. Si una sola
+    llamada lo olvidara, los archivados reaparecerían en el desplegable y se
+    volverían a usar. La regla: **excluidos en toda lista de selección,
+    incluidos en toda lectura histórica.**
+    """
+    from .models import Provider
+
+    q = db.query(Provider).filter(Provider.account_id == current_account_id(user))
+    if not include_archived:
+        q = q.filter(Provider.is_active.is_(True))
+    return q
+
+
+def get_scoped_provider_or_404(db: Session, user: User, provider_id: int):
+    from .models import Provider
+
+    p = (scoped_providers(db, user, include_archived=True)
+         .filter(Provider.id == provider_id).first())
+    if p is None:
+        raise HTTPException(status_code=404, detail="Proveedor no encontrado")
+    return p
+
+
+def assert_can_assign_provider(db: Session, user: User, provider_id: int):
+    """Solo se asigna un proveedor ACTIVO de la propia cuenta.
+
+    Mismo criterio que `assert_can_assign_property`: lo ajeno o lo archivado
+    devuelve 404, nunca 403.
+    """
+    from .models import Provider
+
+    p = scoped_providers(db, user).filter(Provider.id == provider_id).first()
+    if p is None:
+        raise HTTPException(status_code=404, detail="Proveedor no encontrado")
+    return p
+
+
+def scoped_documents(db: Session, user: User) -> Query:
+    """Comprobantes visibles: los que cuelgan de un ticket del usuario.
+
+    Se resuelve por la cadena documento → ticket → `scoped_tickets`, para no
+    tener un segundo criterio de pertenencia que pueda divergir del primero.
+    Los borrados quedan fuera: sus bytes ya no están en disco.
+
+    **El inquilino no ve NINGÚN comprobante, ni siquiera los de su propia
+    vivienda.** Sin esta línea heredaba el alcance de sus tickets —que sí son
+    suyos— y con él la factura del trabajo, su importe y el nombre del
+    proveedor. Ve las fotos del trabajo terminado, que es lo que le concierne;
+    lo que costó y a quién se le pagó es asunto del propietario.
+
+    Se corta aquí y no en la ruta a propósito: en la ruta habría que acordarse
+    en cada una, y basta olvidarlo en la siguiente.
+    """
+    from .models import Document
+
+    if _role_of(user) == "tenant":
+        return db.query(Document).filter(Document.id.is_(None))
+
+    ids = [t.id for t in scoped_tickets(db, user).all()]
+    if not ids:
+        # Consulta que no devuelve nada, en vez de `None`: quien llama sigue
+        # pudiendo encadenar `.filter()` sin comprobaciones extra.
+        return db.query(Document).filter(Document.id.is_(None))
+    return (db.query(Document)
+            .filter(Document.ticket_id.in_(ids), Document.deleted_at.is_(None)))
+
+
+def get_scoped_document_or_404(db: Session, user: User, document_id: int):
+    from .models import Document
+
+    doc = scoped_documents(db, user).filter(Document.id == document_id).first()
+    if doc is None:
+        raise HTTPException(status_code=404, detail="Documento no encontrado")
+    return doc

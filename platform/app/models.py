@@ -58,6 +58,11 @@ class DocTypeEnum(str, enum.Enum):
     policy = "policy"
     receipt = "receipt"
     other = "other"
+    # E12: comprobantes del trabajo de mantenimiento. Solo se APENDIZA, jamás
+    # se renombra — los enums se guardan por nombre. Es seguro incluso ante
+    # una reversión porque hoy ningún router lee `Document`.
+    invoice = "invoice"
+    quote = "quote"
 
 
 class VisitStatusEnum(str, enum.Enum):
@@ -361,6 +366,53 @@ class PasswordResetToken(Base):
     )
 
 
+class Provider(Base):
+    """Proveedor de mantenimiento (E12 · punto 5 del CEO).
+
+    **Es un dato de la cuenta, nunca una fila en `users`.** La tentación es
+    obvia —ya hay tabla de personas— y es un error por tres motivos
+    verificables: `users.email` es UNIQUE global, así que dos administradoras
+    no podrían registrar al mismo plomero y el fallo solo aparecería con el
+    segundo cliente; `password_hash` es NOT NULL, así que habría que
+    inventarle una contraseña a alguien que no va a entrar; y entraría en
+    `scoped_users`, apareciendo como persona asignable y como destinatario de
+    mensajes.
+
+    **Prohibido por diseño:** CLABE, cuenta bancaria y domicilio. Un dato
+    bancario de un tercero es materia de pagos y cae tras otra puerta; el
+    domicilio no aporta nada al ticket y sí es dato personal de alguien que no
+    firmó nada.
+    """
+
+    __tablename__ = "providers"
+
+    id = Column(Integer, primary_key=True)
+    # NOT NULL: es tabla nueva, así que `create_all` la crea así sin problema,
+    # y el aislamiento puede fallar cerrado desde el primer día.
+    account_id = Column(Integer, ForeignKey("accounts.id"), nullable=False, index=True)
+    name = Column(String, nullable=False)
+    contact_name = Column(String, nullable=True)
+    # Oficio. VARCHAR validado en Python contra los nombres de
+    # `TicketCategoryEnum` + 'otro'; no se crea un catálogo nuevo ni un Enum.
+    trade = Column(String, nullable=True)
+    phone = Column(String, nullable=True)
+    # Sin UNIQUE a propósito: el mismo plomero puede estar en dos cuentas.
+    email = Column(String, nullable=True)
+    tax_id = Column(String, nullable=True)
+    notes = Column(Text, nullable=True)
+    is_active = Column(Boolean, nullable=False, default=True, server_default="1")
+    archived_at = Column(DateTime, nullable=True)
+    # Sella una supresión de contacto conservando el nombre: responde a un
+    # derecho de supresión del proveedor sin destruir el registro fiscal que
+    # lo cita.
+    redacted_at = Column(DateTime, nullable=True)
+    created_by_user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    created_at = Column(DateTime, server_default=func.now())
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
+
+    __table_args__ = (Index("ix_providers_account", "account_id", "is_active"),)
+
+
 class OutboxEmail(Base):
     """Todo correo que la plataforma intenta enviar.
 
@@ -604,6 +656,13 @@ class MaintenanceTicket(Base):
     location_in_unit = Column(String, nullable=True)
     created_via = Column(Enum(TicketSourceEnum), default=TicketSourceEnum.form)
     assigned_to_user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    #: Proveedor a cargo (E12). Va aparte de `assigned_to_user_id` y no lo
+    #: sustituye: ese apunta a una persona con cuenta —el propietario o su
+    #: inquilino—, y un proveedor no es ninguna de las dos cosas.
+    #:
+    #: Asignar un proveedor es una **anotación interna**: no le manda nada, no
+    #: genera enlace y no le da acceso a la plataforma.
+    provider_id = Column(Integer, ForeignKey("providers.id"), nullable=True, index=True)
     resolved_at = Column(DateTime, nullable=True)
     resolution_notes = Column(Text, nullable=True)
     # Qué entendió el agente AI y con cuánta seguridad. Se guarda para poder
@@ -637,6 +696,16 @@ class TicketPhoto(Base):
     # Se re-codifica siempre al subir, lo que elimina EXIF (incluidas
     # coordenadas GPS: revelar dónde vive un inquilino es una fuga de datos).
     exif_stripped = Column(Boolean, nullable=False, default=True)
+    #: En qué momento se tomó: `report` (el inquilino al reportar), `work`
+    #: (durante el trabajo) o `closing` (evidencia de cierre del propietario).
+    #:
+    #: Existe para separar cupos. El tope de 5 fotos por ticket era único y
+    #: compartido, así que un ticket con 5 fotos del inquilino dejaba al
+    #: propietario sin margen para la evidencia justo al cerrarlo.
+    #:
+    #: NOT NULL con DEFAULT constante: SQLite SÍ lo admite en ADD COLUMN
+    #: —`main.py` ya lo hace con `is_active`— y eso evita un UPDATE de relleno.
+    phase = Column(String, nullable=False, default="report", server_default="report")
     created_at = Column(DateTime, server_default=func.now())
 
     ticket = relationship("MaintenanceTicket", back_populates="photos")
@@ -682,11 +751,36 @@ class Document(Base):
     property_id = Column(Integer, ForeignKey("properties.id"), nullable=True)
     owner_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     tenant_id = Column(Integer, ForeignKey("users.id"), nullable=True)
-    file_name = Column(String, nullable=True)
+    file_name = Column(String, nullable=True)   # nombre original recibido, saneado
+    #: DEPRECADA. Se escribe NULL para siempre: su nombre promete una URL
+    #: pública y estos archivos no se sirven en público jamás. No se borra
+    #: porque SQLite no admite DROP COLUMN sin reconstruir la tabla, y
+    #: reconstruir la de comprobantes fiscales para ahorrar una columna vacía
+    #: no compensa el riesgo.
     file_url = Column(String, nullable=True)
     doc_type = Column(Enum(DocTypeEnum), nullable=True)
     meta = Column(String, nullable=True)
     uploaded_at = Column(DateTime, server_default=func.now())
+
+    # --- E12: lo que faltaba para adjuntar un comprobante a un ticket ---
+    ticket_id = Column(Integer, ForeignKey("maintenance_tickets.id"), nullable=True, index=True)
+    account_id = Column(Integer, ForeignKey("accounts.id"), nullable=True, index=True)
+    expense_id = Column(Integer, nullable=True)     # contrato con el área fiscal (E13)
+    provider_id = Column(Integer, ForeignKey("providers.id"), nullable=True)
+    stored_path = Column(String, nullable=True)     # relativa a UPLOAD_DIR
+    content_type = Column(String, nullable=True)    # distingue un PDF de un XML al entregarlo
+    bytes = Column(Integer, nullable=True)
+    sha256 = Column(String, nullable=True)
+    # Responde «quién subió esto», que `owner_id`/`tenant_id` no responden:
+    # ahí el usuario es el sujeto del documento, no quien lo cargó.
+    uploaded_by_user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    doc_date = Column(Date, nullable=True)          # fecha del comprobante, != uploaded_at
+    #: Materializada y no calculada al vuelo: la exportación por año fiscal
+    #: filtra por aquí, y un índice sobre columna es barato mientras que sobre
+    #: una expresión de fecha no lo es.
+    fiscal_year = Column(Integer, nullable=True, index=True)
+    #: Los bytes desaparecen del disco; la constancia de que existieron, no.
+    deleted_at = Column(DateTime, nullable=True)
 
 
 class Visit(Base):
