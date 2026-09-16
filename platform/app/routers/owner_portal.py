@@ -97,9 +97,14 @@ def _nav_badges(db: Session, user: User) -> dict:
     reportes abiertos solo apareciera en la portada, el propietario tendría
     que volver ahí para saber si llegó algo nuevo.
     """
-    tickets = scoped_tickets(db, user).all()
+    # Se cuenta en la base y NO trayendo las filas. Esta función corre en las
+    # doce pantallas del portal, y antes hidrataba en objetos ORM todos los
+    # tickets del propietario en cada carga solo para contar cuántos no
+    # estaban resueltos. Con tres casas da igual; con una administradora de
+    # cincuenta, no.
     return {
-        "open_tickets": sum(1 for t in tickets if t.status != TicketStatusEnum.resolved),
+        "open_tickets": scoped_tickets(db, user).filter(
+            MaintenanceTicket.status != TicketStatusEnum.resolved).count(),
         "unread_messages": db.query(Message).filter(
             Message.recipient_user_id == user.id, Message.read_at.is_(None)).count(),
     }

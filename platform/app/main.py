@@ -16,7 +16,8 @@ from .auth import hash_password
 from .auth import router as auth_router
 from .db import Base, SessionLocal, engine
 from .routers import (
-    acceso, admin, owner, owner_portal, pages, payments, site_content, tenant,
+    acceso, admin, owner, owner_dashboard, owner_portal, pages, payments,
+    site_content, tenant,
 )
 from .mockmode import is_mock, require_legal_clearance_for_live
 from .security import (
@@ -144,6 +145,11 @@ app.include_router(owner_portal.router)
 # E10 · recuperación y cambio de contraseña. Va después de `pages` porque
 # importa `_current_user_or_none` de allí, igual que hace `owner_portal`.
 app.include_router(acceso.router)
+# E11 · panel del propietario. La definición vieja de GET /owner se BORRÓ
+# de pages.py en el mismo cambio: FastAPI resuelve por orden de registro
+# y pages va antes, así que dejarla viva habría hecho que este módulo no
+# se ejecutara nunca sin que nada fallara de forma visible.
+app.include_router(owner_dashboard.router)
 
 
 @app.get("/")

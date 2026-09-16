@@ -907,3 +907,21 @@ tbody tr:hover td { background: var(--surface-soft); }
   .login-card, .narrow-card { margin: 1.25rem auto; padding: 1.5rem 1.25rem; }
   h1 { font-size: 1.45rem; }
 }
+
+/* --- Panel del propietario (E11) ----------------------------------------- */
+.metrics-secundarios { margin-top: .9rem; }
+.metrics-secundarios .metric-value { font-size: 1.45rem; }
+/* La definición va bajo cada cifra: un indicador sin definición visible es un
+   indicador que dos personas leen distinto. */
+.metric-def { color: var(--text-muted); font-size: .72rem; line-height: 1.35; margin-top: .35rem; }
+.revisar { margin-top: 1.4rem; }
+.revisar ul { margin: .5rem 0 0; padding-left: 1.15rem; }
+.revisar li { margin-bottom: .3rem; font-size: .92rem; }
+.filtros-botones { display: flex; gap: .5rem; align-items: flex-end; margin-left: auto; }
+.filtros-botones .btn { min-height: 42px; padding: .5rem 1rem; font-size: .88rem; }
+@media (max-width: 860px) {
+  .filters { flex-direction: column; align-items: stretch; }
+  .filters select { width: 100%; }
+  .filtros-botones { margin-left: 0; }
+  .filtros-botones .btn { flex: 1; }
+}

@@ -656,53 +656,11 @@ def sync_site_properties(
     return RedirectResponse(url="/admin", status_code=302)
 
 
-@router.get("/owner", response_class=HTMLResponse)
-def owner_dashboard(request: Request, db: Session = Depends(get_db)):
-    user = _current_user_or_none(request, db)
-    if not user:
-        return RedirectResponse(url="/login", status_code=302)
-    if user.role not in (RoleEnum.owner, RoleEnum.admin):
-        # Tiene sesión válida, solo no le toca esta pantalla: se le manda a la
-        # suya, NO al formulario de acceso. Rebotar a `/login` a alguien que ya
-        # inició sesión es lo que cerraba el bucle de redirecciones, porque
-        # `/login` devuelve a los usuarios con sesión a su panel.
-        return RedirectResponse(url=_home_for(user), status_code=302)
-
-    # El filtrado por pertenencia vive en scoping.py: `owned_properties` acota
-    # por `owner_id == user.id` incluso para un admin, igual que routers/owner.py.
-    from ..mockmode import template_context
-    from ..models import MaintenanceTicket, Message, TicketStatusEnum
-    from ..scoping import owned_properties, scoped_tickets
-
-    properties = owned_properties(db, user).order_by(Property.id).all()
-
-    tickets = scoped_tickets(db, user).all()
-    open_tickets = sum(1 for t in tickets if t.status != TicketStatusEnum.resolved)
-    urgent_tickets = sum(
-        1 for t in tickets
-        if t.priority and getattr(t.priority, "value", None) == "emergencia"
-        and t.status != TicketStatusEnum.resolved
-    )
-
-    unread_messages = (
-        db.query(Message)
-        .filter(Message.recipient_user_id == user.id, Message.read_at.is_(None))
-        .count()
-    )
-
-    return templates.TemplateResponse(
-        request=request,
-        name="owner.html",
-        context={
-            "active": "owner",
-            "user": user,
-            "properties": properties,
-            "open_tickets": open_tickets,
-            "urgent_tickets": urgent_tickets,
-            "unread_messages": unread_messages,
-            **template_context(),
-        },
-    )
+# El panel del propietario vive ahora en `routers/owner_dashboard.py`.
+# La definición que había aquí SE BORRA, no se comenta: `main.py`
+# registra este router antes que aquel y FastAPI resuelve por orden de
+# registro, así que dejarla viva haría que el módulo nuevo no se
+# ejecutara nunca — sin que nada fallara de forma visible.
 
 
 # --- User administration submodule -----------------------------------------

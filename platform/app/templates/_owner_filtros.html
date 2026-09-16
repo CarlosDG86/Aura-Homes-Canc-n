@@ -1,0 +1,61 @@
+{# Barra de filtros del propietario (E11 · punto 2.2 del CEO).
+
+   Es un formulario GET, así que NO lleva `csrf_input`: el middleware solo
+   guarda los métodos que cambian estado (POST, PUT, PATCH, DELETE). Hay que
+   resistir la tentación de añadirlo «por costumbre»; una prueba lo fija.
+
+   El formulario envuelve la barra Y la tabla, para que las casillas de
+   selección de cada fila viajen con los filtros en el mismo envío. #}
+<form method="get" action="/owner" class="filters">
+  <div>
+    <label for="f-zona">{{ t("filtros.zona") }}</label>
+    <select id="f-zona" name="zona">
+      <option value="">{{ t("filtros.todas") }}</option>
+      {% for clave, nombre in zonas %}
+      <option value="{{ clave }}" {% if filtros.zona == clave %}selected{% endif %}>{{ nombre }}</option>
+      {% endfor %}
+      <option value="sin-zona" {% if filtros.zona == 'sin-zona' %}selected{% endif %}>{{ t("filtros.sin_dato") }}</option>
+    </select>
+  </div>
+
+  <div>
+    <label for="f-rec">{{ t("filtros.recamaras") }}</label>
+    <select id="f-rec" name="recamaras">
+      <option value="">{{ t("filtros.todas") }}</option>
+      {% for v in ["1", "2", "3", "4mas"] %}
+      <option value="{{ v }}" {% if filtros.recamaras == v %}selected{% endif %}>{{ t("recamaras." ~ v) }}</option>
+      {% endfor %}
+      <option value="sin-dato" {% if filtros.recamaras == 'sin-dato' %}selected{% endif %}>{{ t("filtros.sin_dato") }}</option>
+    </select>
+  </div>
+
+  <div>
+    <label for="f-m2">{{ t("filtros.m2") }}</label>
+    <select id="f-m2" name="m2">
+      <option value="">{{ t("filtros.todas") }}</option>
+      {% for v in ["hasta80", "80a150", "mas150"] %}
+      <option value="{{ v }}" {% if filtros.m2 == v %}selected{% endif %}>{{ t("m2." ~ v) }}</option>
+      {% endfor %}
+      <option value="sin-dato" {% if filtros.m2 == 'sin-dato' %}selected{% endif %}>{{ t("filtros.sin_dato") }}</option>
+    </select>
+  </div>
+
+  <div>
+    <label for="f-ocu">{{ t("filtros.ocupacion") }}</label>
+    <select id="f-ocu" name="ocupacion">
+      <option value="">{{ t("filtros.todas") }}</option>
+      {% for v in ["ocupada", "vacante", "revisar"] %}
+      <option value="{{ v }}" {% if filtros.ocupacion == v %}selected{% endif %}>{{ t("ocupacion." ~ v) }}</option>
+      {% endfor %}
+    </select>
+  </div>
+
+  <div class="filtros-botones">
+    <button type="submit" class="btn btn-primary">{{ t("filtros.aplicar") }}</button>
+    {# «Limpiar» es un enlace y no un reset por JS: sin estado que deshacer. #}
+    <a class="btn btn-ghost" href="/owner">{{ t("filtros.limpiar") }}</a>
+    {# Un botón de envío aporta su name/value solo cuando es el pulsado, así
+       que el mismo formulario sirve para filtrar y para descargar. #}
+    <button type="submit" name="formato" value="csv" class="btn btn-ghost">{{ t("filtros.exportar") }}</button>
+  </div>
+</form>

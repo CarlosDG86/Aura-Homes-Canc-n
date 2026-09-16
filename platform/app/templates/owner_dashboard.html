@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+{% block title %}{{ t("panel.titulo") }} — Aura Homes Cancún{% endblock %}
+{% block content %}
+
+{# Ojo al tocar esta cabecera: una prueba comprueba que `class="actions"` NO
+   aparezca en los primeros 600 caracteres de <main>. #}
+<h1 class="page-title">{{ t("panel.titulo") }}</h1>
+<p class="muted">{{ t("panel.subtitulo") }}</p>
+
+{% if flash %}
+<div class="alert alert-{{ 'error' if flash.kind == 'error' else 'success' }}">{{ flash.message }}</div>
+{% endif %}
+
+{% if kpi.emergencias %}
+<p class="flash flash-urgent">Tienes {{ kpi.emergencias }} reporte(s) marcados como EMERGENCIA.</p>
+{% endif %}
+
+{# --- Indicadores. Cada ficha lleva su definición debajo: un indicador sin
+     definición visible es un indicador que dos personas leen distinto. --- #}
+<div class="metrics">
+  <div class="metric">
+    <div class="metric-label">{{ t("panel.propiedades") }}</div>
+    <div class="metric-value">{{ kpi.propiedades }}</div>
+    <div class="metric-def">{{ t("panel.propiedades.def") }}</div>
+  </div>
+  <div class="metric">
+    <div class="metric-label">{{ t("panel.inquilinos") }}</div>
+    <div class="metric-value">{{ kpi.inquilinos }}</div>
+    <div class="metric-def">{{ t("panel.inquilinos.def") }}</div>
+  </div>
+  <div class="metric">
+    <div class="metric-label">{{ t("panel.tickets") }}</div>
+    <div class="metric-value{% if kpi.abiertos %} warn{% endif %}">{{ kpi.abiertos }}</div>
+    <div class="metric-def">{{ t("panel.tickets.def") }}</div>
+  </div>
+  <div class="metric">
+    <div class="metric-label">{{ t("panel.ocupacion") }}</div>
+    <div class="metric-value">{{ kpi.ocupacion_pct }}%</div>
+    <div class="metric-def">{{ t("panel.ocupacion.def") }}</div>
+  </div>
+</div>
+
+<div class="metrics metrics-secundarios">
+  <div class="metric">
+    <div class="metric-label">{{ t("panel.emergencias") }}</div>
+    <div class="metric-value{% if kpi.emergencias %} warn{% endif %}">{{ kpi.emergencias }}</div>
+    <div class="metric-def">{{ t("panel.emergencias.def") }}</div>
+  </div>
+  <div class="metric">
+    <div class="metric-label">{{ t("panel.masviejo") }}</div>
+    <div class="metric-value">{% if kpi.dias_mas_viejo is not none %}{{ kpi.dias_mas_viejo }}{% else %}—{% endif %}</div>
+    <div class="metric-def">{{ t("panel.masviejo.def") }}</div>
+  </div>
+  <div class="metric">
+    <div class="metric-label">{{ t("panel.vacias") }}</div>
+    <div class="metric-value">{{ kpi.vacias }}</div>
+    <div class="metric-def">{{ t("panel.vacias.def") }}</div>
+  </div>
+  <div class="metric">
+    <div class="metric-label">{{ t("panel.mensajes") }}</div>
+    <div class="metric-value">{{ unread_messages or 0 }}</div>
+    <div class="metric-def">{{ t("panel.mensajes.def") }}</div>
+  </div>
+</div>
+
+{# --- Estado vacío explícito. Sin este texto, un propietario que abre el
+     panel por primera vez y ve «Ocupación 0 %» concluye que está roto. --- #}
+{% if sin_contratos %}
+<div class="alert alert-warning">{{ t("panel.vacio.sin_contratos") }}</div>
+{% endif %}
+
+{# --- Datos por revisar: lo que decide si en marzo el dato existe. --- #}
+<section class="card revisar">
+  <h2>{{ t("panel.revisar.titulo") }}</h2>
+  <p class="muted">{{ t("panel.revisar.intro") }}</p>
+  {% set hay = calidad.discrepancias or calidad.sin_renta or calidad.sin_fechas
+               or calidad.sin_zona or calidad.sin_m2 or calidad.sin_recamaras %}
+  {% if not hay %}
+  <p class="muted">{{ t("panel.revisar.nada") }}</p>
+  {% else %}
+  <ul>
+    {% if calidad.discrepancias %}
+    <li><a href="/owner?ocupacion=revisar">{{ t("panel.revisar.discrepancia", n=calidad.discrepancias) }}</a></li>
+    {% endif %}
+    {% if calidad.sin_renta %}<li>{{ t("panel.revisar.sin_renta", n=calidad.sin_renta) }}</li>{% endif %}
+    {% if calidad.sin_fechas %}<li>{{ t("panel.revisar.sin_fechas", n=calidad.sin_fechas) }}</li>{% endif %}
+    {% if calidad.sin_zona %}<li>{{ t("panel.revisar.sin_zona", n=calidad.sin_zona) }}</li>{% endif %}
+    {% if calidad.sin_m2 %}<li>{{ t("panel.revisar.sin_m2", n=calidad.sin_m2) }}</li>{% endif %}
+    {% if calidad.sin_recamaras %}<li>{{ t("panel.revisar.sin_recamaras", n=calidad.sin_recamaras) }}</li>{% endif %}
+  </ul>
+  {% endif %}
+</section>
+
+{% include "_owner_filtros.html" %}
+
+{% for campo in filtros.avisos %}
+<p class="meta">{{ t("filtros.ignorado", campo=campo) }}</p>
+{% endfor %}
+{% if filtros.seleccion_parcial %}
+<p class="meta">{{ t("filtros.seleccion_parcial") }}</p>
+{% endif %}
+
+{# Un filtro que excluye filas sin decirlo produce reportes truncados que nadie
+   detecta. Por eso el recuento va siempre, incluso sin filtro. #}
+<p class="meta">
+  {{ t("filtros.resumen", n=visibles|length, total=kpi.propiedades) }}
+  {%- if calidad.sin_zona %} · {{ t("filtros.resumen.sin_zona", n=calidad.sin_zona) }}{% endif %}
+  {%- if calidad.sin_m2 %} · {{ t("filtros.resumen.sin_m2", n=calidad.sin_m2) }}{% endif %}
+</p>
+
+<div class="card">
+  <table>
+    <thead>
+      <tr>
+        <th>{{ t("tabla.casa") }}</th>
+        <th>{{ t("tabla.zona") }}</th>
+        <th>{{ t("tabla.recamaras") }}</th>
+        <th>{{ t("tabla.m2") }}</th>
+        <th>{{ t("tabla.ocupacion") }}</th>
+        <th>{{ t("tabla.tickets") }}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in visibles %}
+      <tr{% if r.emergencias %} class="row-urgent"{% endif %}>
+        <td>{{ r.prop.title }}</td>
+        <td>{{ r.prop.zone or "—" }}</td>
+        <td>{{ r.prop.bedrooms if r.prop.bedrooms is not none else "—" }}</td>
+        <td>{{ r.prop.area_m2 if r.prop.area_m2 is not none else "—" }}</td>
+        <td>
+          <span class="status status-{{ 'rented' if r.ocupacion == 'ocupada' else 'available' }}">
+            {{ t("ocupacion." ~ r.ocupacion) }}
+          </span>
+        </td>
+        <td>
+          {{ r.abiertos }}
+          {% if r.emergencias %}<span class="badge badge-admin">{{ r.emergencias }} urgente(s)</span>{% endif %}
+        </td>
+      </tr>
+      {% else %}
+      <tr class="empty-row">
+        <td colspan="6">
+          {% if kpi.propiedades %}{{ t("panel.vacio.filtro") }}
+          {% else %}{{ t("panel.vacio.titulo") }} — {{ t("panel.vacio.texto") }}{% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

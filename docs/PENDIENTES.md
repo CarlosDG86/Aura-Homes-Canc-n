@@ -66,11 +66,24 @@ mínimo de contraseña unificado en 12, obligación de cambiar la clave temporal
 `email_utils`. Ya se puede configurar el SMTP de producción sin riesgo de que salga una
 contraseña en claro desde el modo de pruebas.
 
-### 1.1d Siguiente: E11 — panel del propietario, filtros y reportes
+### 1.1d ~~E11 — panel del propietario, filtros y reportes~~ ✅ HECHA (2026-09-16)
 
-Los cuatro indicadores del punto 2.1 y los filtros del 2.2. 3 días. No espera ninguna
-decisión del CEO, pero **D-024 condiciona lo que se verá**: sin contratos cargados, el
-panel dirá «Ocupación 0 %» y tres indicadores quedarán en «sin datos».
+Ocho indicadores (los cuatro del CEO más cuatro de salud operativa), cada uno con su
+definición impresa debajo; bloque «Datos por revisar»; filtros por zona, recámaras,
+tamaño y ocupación; selección efímera por URL; y descarga de la cartera en CSV.
+
+**Ocupación = contratos vigentes ÷ total**, no el estatus publicado. Ese estatus lo
+sobrescribe la sincronización del sitio en cada corrida y el propietario no tiene ninguna
+pantalla para cambiarlo: un indicador que su dueño no puede mover no es un indicador.
+Cuando los dos no coinciden, el panel **avisa y no reconcilia** — escribir `status` desde
+aquí lo revertiría la siguiente sincronización.
+
+El panel **no escribe ni una fila** y **ningún CSV lleva datos del inquilino**. Las dos
+cosas tienen prueba.
+
+### 1.1e Siguiente: E12 — proveedores, archivos de ticket y cámara en móvil
+
+Puntos 5, 6.1 y 6.2 del CEO. 5 días. Depende de E9 (hecha), así que no espera nada.
 
 ### 1.2 El sitio público enlaza a un host caído
 
