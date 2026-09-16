@@ -26,7 +26,7 @@ from typing import Optional
 from markupsafe import Markup
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
-from starlette.responses import PlainTextResponse, Response
+from starlette.responses import PlainTextResponse, RedirectResponse, Response
 
 # --- Configuración ----------------------------------------------------------
 
@@ -211,6 +211,67 @@ class CSRFMiddleware(BaseHTTPMiddleware):
                 "Sesión expirada o solicitud no válida. Vuelve a cargar la página e inténtalo de nuevo.",
                 status_code=403,
             )
+        return await call_next(request)
+
+
+#: Rutas que el cambio forzado NUNCA intercepta. Sin esta lista, obligar a
+#: cambiar la contraseña dejaría a la persona encerrada: no podría llegar al
+#: formulario para cambiarla, ni cerrar sesión, ni cargar el CSS de la página.
+RUTAS_LIBRES_CAMBIO_FORZADO = (
+    "/cambiar-contrasena",
+    "/logout",
+    "/login",
+    "/recuperar",
+    "/2fa",          # el segundo factor se completa antes que nada
+    "/auth/google",
+    "/static",
+    "/site-images",
+    "/api/health",
+)
+
+
+class ForcedPasswordChangeMiddleware(BaseHTTPMiddleware):
+    """Obliga a cambiar una contraseña temporal antes de usar la plataforma.
+
+    `users.must_change_password` existía desde E1 y `owner_portal.py` la marca
+    en cada inquilino que se da de alta, pero **ninguna ruta la leía**: la
+    persona podía quedarse indefinidamente con la clave que le dictó su
+    casero, y quien se la dio podía entrar a su cuenta cuando quisiera.
+
+    Aprobado por el CEO el 2026-09-15 (parte de D-030), tras verificar que no
+    hay ningún inquilino real: la base de producción ni siquiera tiene la
+    columna, y los dos que existen son de prueba.
+
+    Solo redirige peticiones de navegación. Deja pasar la lista de rutas libres
+    de arriba, sin la cual la persona no podría ni llegar al formulario.
+    """
+
+    async def dispatch(self, request: Request, call_next):
+        ruta = request.url.path
+        if any(ruta == libre or ruta.startswith(libre + "/")
+               for libre in RUTAS_LIBRES_CAMBIO_FORZADO):
+            return await call_next(request)
+
+        user_id = request.session.get("user_id")
+        if not user_id:
+            return await call_next(request)
+
+        # Consulta mínima: solo la bandera, no el usuario entero.
+        try:
+            from .db import SessionLocal
+            from .models import User
+
+            db = SessionLocal()
+            try:
+                fila = db.query(User.must_change_password).filter(
+                    User.id == user_id).first()
+            finally:
+                db.close()
+        except Exception:  # noqa: BLE001 — nunca dejar fuera por un fallo de lectura
+            return await call_next(request)
+
+        if fila and fila[0]:
+            return RedirectResponse(url="/cambiar-contrasena", status_code=302)
         return await call_next(request)
 
 

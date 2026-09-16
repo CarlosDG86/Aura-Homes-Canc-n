@@ -22,6 +22,7 @@ from .mockmode import is_mock, require_legal_clearance_for_live
 from .security import (
     ABSOLUTE_TIMEOUT_HOURS,
     CSRFMiddleware,
+    ForcedPasswordChangeMiddleware,
     SecurityHeadersMiddleware,
     is_production,
     require_secure_secret_key,
@@ -89,6 +90,10 @@ app = FastAPI(
 # para quedar por fuera y tener la sesión ya cargada cuando CSRF la consulta.
 app.add_middleware(SecurityHeadersMiddleware)
 app.add_middleware(CSRFMiddleware)
+# E10 · obliga a cambiar una clave temporal antes de usar nada. Se registra
+# ANTES que SessionMiddleware para quedar por dentro y tener la sesión ya
+# cargada cuando la consulta, igual que CSRFMiddleware.
+app.add_middleware(ForcedPasswordChangeMiddleware)
 app.add_middleware(
     SessionMiddleware,
     secret_key=SECRET_KEY,

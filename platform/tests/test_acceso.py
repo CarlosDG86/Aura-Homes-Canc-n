@@ -289,5 +289,62 @@ with TestClient(app) as boot:
         check(f"{ruta} tampoco trae código en línea",
               "onclick=" not in t_html and "<script>" not in t_html)
 
+    print("\n== 15. Clave temporal: obliga a cambiarla, pero NO encierra ==")
+    d = SessionLocal()
+    temp = User(name="Inquilino nuevo", email="temporal@test.local",
+                password_hash=hash_password("ClaveTemporal123"),
+                role=RoleEnum.tenant, must_change_password=True)
+    d.add(temp); d.commit(); temp_id = temp.id; d.close()
+
+    tmp = TestClient(app)
+    t = csrf(tmp)
+    r = tmp.post("/login", data={"email": "temporal@test.local",
+                                 "password": "ClaveTemporal123", "csrf_token": t},
+                 follow_redirects=False)
+    check("puede iniciar sesión con la clave temporal", r.status_code == 302,
+          f"-> {r.status_code}")
+
+    r = tmp.get("/inquilino", follow_redirects=False)
+    check("al navegar se le manda a cambiarla",
+          r.status_code == 302 and r.headers.get("location") == "/cambiar-contrasena",
+          f"-> {r.status_code} {r.headers.get('location')}")
+
+    # Lo más importante de esta sección: que la puerta de salida esté abierta.
+    r = tmp.get("/cambiar-contrasena", follow_redirects=False)
+    check("SÍ puede abrir el formulario de cambio (sin bucle de redirecciones)",
+          r.status_code == 200, f"-> {r.status_code}")
+    check("y el formulario le explica por qué está ahí", "temporal" in r.text.lower())
+    check("puede cerrar sesión",
+          tmp.get("/logout", follow_redirects=False).status_code == 302)
+    check("el CSS carga, así que la pantalla no sale en crudo",
+          TestClient(app).get("/static/platform.css").status_code == 200)
+
+    # Vuelve a entrar y cambia la contraseña de verdad.
+    t = csrf(tmp)
+    tmp.post("/login", data={"email": "temporal@test.local",
+                             "password": "ClaveTemporal123", "csrf_token": t},
+             follow_redirects=False)
+    t = csrf(tmp, "/cambiar-contrasena")
+    r = tmp.post("/cambiar-contrasena",
+                 data={"actual": "ClaveTemporal123", "password": "MiPropiaFrase12345",
+                       "password2": "MiPropiaFrase12345", "csrf_token": t},
+                 follow_redirects=False)
+    check("el cambio se acepta", r.status_code == 302)
+    d = SessionLocal()
+    u = d.get(User, temp_id)
+    check("la marca de clave temporal se levanta", not u.must_change_password)
+    d.close()
+    r = tmp.get("/inquilino", follow_redirects=False)
+    check("y ya puede navegar con normalidad", r.status_code == 200, f"-> {r.status_code}")
+
+    print("\n== 16. A quien no tiene clave temporal no le afecta ==")
+    normal = TestClient(app)
+    t = csrf(normal)
+    normal.post("/login", data={"email": "duenia@test.local",
+                                "password": "OtraFraseLarga12345", "csrf_token": t},
+                follow_redirects=False)
+    check("entra y navega sin interceptación",
+          normal.get("/owner", follow_redirects=False).status_code == 200)
+
 print(f"\nRESULTADO: {ok} pasaron, {fail} fallaron")
 sys.exit(1 if fail else 0)

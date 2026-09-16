@@ -56,10 +56,21 @@ cd platform && python -m app.migrate --simular
 > golpe la deuda de E1 y E5 — 8 tablas, ~19 columnas y 20 índices. Ese es el momento
 > delicado, no la migración de cuentas. Hacer la instantánea antes.
 
-### 1.1c Siguiente: E10 — recuperación de contraseña y ver contraseña
+### 1.1c ~~E10 — recuperación de contraseña y ver contraseña~~ ✅ HECHA (2026-09-15)
 
-**Desbloqueada** al cerrarse D-022 y D-023. 3 días. Incluye el arreglo del hallazgo H-2,
-que **debe ir antes o a la vez** que configurar el SMTP de producción, nunca después.
+Nueve rutas de recuperación, botón «ver contraseña» en cinco pantallas, buzón de salida,
+mínimo de contraseña unificado en 12, obligación de cambiar la clave temporal (D-030a) y
+`scripts/restablecer_admin.py` como vía de rescate del administrador (D-022).
+
+**El hallazgo H-2 queda cerrado**: la guarda del modo simulación vive ahora dentro de
+`email_utils`. Ya se puede configurar el SMTP de producción sin riesgo de que salga una
+contraseña en claro desde el modo de pruebas.
+
+### 1.1d Siguiente: E11 — panel del propietario, filtros y reportes
+
+Los cuatro indicadores del punto 2.1 y los filtros del 2.2. 3 días. No espera ninguna
+decisión del CEO, pero **D-024 condiciona lo que se verá**: sin contratos cargados, el
+panel dirá «Ocupación 0 %» y tres indicadores quedarán en «sin datos».
 
 ### 1.2 El sitio público enlaza a un host caído
 

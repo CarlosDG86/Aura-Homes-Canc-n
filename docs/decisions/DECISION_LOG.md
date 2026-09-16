@@ -232,6 +232,28 @@ quedarían en «sin datos» para siempre, y el libro fiscal saldría sin ingreso
 
 ---
 
+## D-030a · La clave temporal obliga a cambiarla antes de usar la plataforma
+
+**Fecha:** 2026-09-15 · **Estado:** cerrada · **Parte de:** D-030
+
+Quien entra con una contraseña temporal no puede usar nada hasta poner una
+propia. Afecta también a los inquilinos ya dados de alta.
+
+**Por qué se preguntó:** `owner_portal.py` marca `must_change_password=True` en
+cada inquilino que se crea, y hasta ahora ninguna ruta lo leía. Encenderlo
+cambia el comportamiento de cuentas existentes.
+
+**Por qué se pudo cerrar sin riesgo:** verificado antes de implementarlo —
+`platform.db` no tiene siquiera la columna y no hay ningún inquilino real; los
+dos que existen están en la base de pruebas. El CEO lo confirmó: son de prueba.
+
+**Por qué importa:** mientras la persona conserve la clave que le dictó su
+casero, quien se la dio puede entrar a su cuenta cuando quiera.
+
+El resto de D-030 (los otros trece valores por defecto) sigue abierto.
+
+---
+
 ## D-017 y D-025 a D-030 · Abiertas
 
 Quedan **siete** decisiones esperando al CEO, con opciones y recomendación en
