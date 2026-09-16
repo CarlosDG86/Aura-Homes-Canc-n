@@ -78,8 +78,14 @@ def _require_owner(request: Request, db: Session):
     return user, None
 
 
-def _ctx(user: User, **extra) -> dict:
-    ctx = {"user": user, **template_context()}
+def _ctx(user: User, request: Request = None, **extra) -> dict:
+    ctx = {"user": user, "flash": None, **template_context()}
+    # El aviso se consume aquí para que cualquier pantalla del portal pueda
+    # mostrarlo sin acordarse de recogerlo. `flash` va siempre en el contexto,
+    # aunque sea None: Jinja lanza UndefinedError al leer una variable que no
+    # se inyectó, y eso rompería la plantilla entera.
+    if request is not None:
+        ctx["flash"] = request.session.pop("owner_flash", None)
     ctx.update(extra)
     return ctx
 
@@ -207,7 +213,7 @@ def ticket_detail(ticket_id: int, request: Request, db: Session = Depends(get_db
     prop = db.query(Property).filter(Property.id == ticket.property_id).first()
     return templates.TemplateResponse(
         request=request, name="owner_ticket_detail.html",
-        context=_ctx(user, active='tickets', **_nav_badges(db, user), ticket=ticket, events=events, photos=photos,
+        context=_ctx(user, request, active='tickets', **_nav_badges(db, user), ticket=ticket, events=events, photos=photos,
                      reporter=reporter, prop=prop, statuses=list(TicketStatusEnum),
                      assignables=[u for u in scoped_users(db, user).all()],
                      assigned=db.query(User).filter(
@@ -243,8 +249,19 @@ def ticket_update(ticket_id: int, request: Request, db: Session = Depends(get_db
     elif accion == "resolver":
         # Resolver exige nota: sin ella, el inquilino no sabe qué se hizo y el
         # historial no sirve para una disputa posterior.
+        #
+        # Se avisa en la propia ficha y no con un 400. Antes, esto lanzaba una
+        # excepción y el navegador acababa en una página en blanco con un JSON
+        # crudo: quien pulsaba «resolver» sin escribir nada perdía de vista el
+        # ticket y no entendía qué había pasado. La regla no cambia — sin nota
+        # el ticket NO se resuelve —, solo cómo se cuenta.
         if not text:
-            raise HTTPException(status_code=400, detail="Para resolver hay que explicar qué se hizo.")
+            request.session["owner_flash"] = {
+                "kind": "error",
+                "message": "Para dar el ticket por resuelto, explica qué se hizo. "
+                           "Es lo que verá el inquilino y lo que queda en el historial.",
+            }
+            return RedirectResponse(url=f"/owner/tickets/{ticket_id}", status_code=302)
         ticket.status = TicketStatusEnum.resolved
         ticket.resolved_at = datetime.now(timezone.utc)
         ticket.resolution_notes = text

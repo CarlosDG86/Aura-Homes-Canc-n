@@ -47,9 +47,11 @@
       // Marca para poder volver a ocultarlo al enviar el formulario.
       campo.setAttribute("data-was-password", "1");
     }
+    // El botón es solo un icono (lo pinta el CSS según `aria-pressed`), así
+    // que lo único que cambia aquí es el estado y la etiqueta accesible. Sin
+    // `aria-label` el botón sería un cuadro mudo para un lector de pantalla.
     boton.setAttribute("aria-pressed", mostrando ? "false" : "true");
     boton.setAttribute("aria-label", mostrando ? "Mostrar la contraseña" : "Ocultar la contraseña");
-    boton.textContent = mostrando ? "Mostrar" : "Ocultar";
 
     // Devolver el foco al campo y dejar el cursor al final: si no, al pulsar
     // el botón se pierde el sitio donde se estaba escribiendo.

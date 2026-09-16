@@ -1,16 +1,53 @@
-/* Aura Homes Cancun -- internal platform UI (login + dashboards).
-   Minimal, single stylesheet. Brand colors: teal #0E6E71, sand #F7F3EC,
-   coral #C0492B. Not meant to match the public site pixel-for-pixel. */
+/* Aura Homes Cancún — interfaz de la plataforma.
+
+   Los tokens son los del sistema de marca aprobado (Aura_Design_System v1.0),
+   no una aproximación. Hasta ahora la plataforma iba por su cuenta —tinta
+   #1F2724 en vez de #14212B, borde #E1DACB en vez de #E4DDCF, sin turquesa y
+   sin el coral de botón— y eso tenía sentido cuando era una herramienta
+   interna. Con el pivote a SaaS deja de tenerlo: la plataforma es el producto
+   que se enseña y se vende, así que tiene que parecerse a la marca. */
 
 :root {
+  /* Marca */
   --teal: #0E6E71;
+  --teal-deep: #0E3A3D;
   --teal-dark: #0A5254;
+  --turquoise: #2CB1BC;
+  --turquoise-light: #9BE3E9;
+  --teal-tint: rgba(44, 177, 188, .14);
+  --coral: #D9654A;          /* decorativo */
+  --coral-cta: #C0492B;      /* botones con texto blanco, contraste AA */
+
+  /* Superficies */
   --sand: #F7F3EC;
-  --coral: #C0492B;
-  --ink: #1F2724;
-  --muted: #6B7570;
-  --border: #E1DACB;
+  --sand-deep: #E9E4D9;
+  --sand-input: #FBF9F4;
   --white: #FFFFFF;
+  --surface-soft: #FAF8F2;   /* fichas dentro de una tarjeta, como en el demo */
+
+  /* Texto y líneas */
+  --ink: #14212B;
+  --muted: #5A625F;
+  --text-muted: #8A939B;
+  --border: #E4DDCF;
+
+  /* Estados, tomados del demo */
+  --ok-bg: #E1F5EE;  --ok-fg: #0F6E56;
+  --warn-bg: #FAEEDA; --warn-fg: #854F0B;
+  --err-bg: #FDECEA;  --err-fg: #9B2C1B;
+
+  /* Curvatura: el motivo de que antes se viera «cuadrado». El sistema pide
+     16-20px en tarjetas y 12-14px en botones; había 6-10px. */
+  --r-card: 18px;
+  --r-btn: 13px;
+  --r-input: 12px;
+  --r-pill: 999px;
+
+  /* Profundidad: sombras muy suaves y teñidas de teal, como el demo. Es lo
+     que separa las superficies sin recurrir a más líneas. */
+  --shadow-card: 0 6px 20px rgba(20, 33, 43, .07);
+  --shadow-raised: 0 12px 40px rgba(20, 33, 43, .10);
+  --shadow-soft: 0 2px 8px rgba(14, 110, 113, .06);
 }
 
 * {
@@ -583,3 +620,290 @@ code {
 }
 .pw-toggle:hover { background: #eef4f0; }
 .pw-toggle:focus { outline: 2px solid var(--teal); outline-offset: 2px; }
+
+
+/* ==========================================================================
+   Capa de actualización visual (2026-09-15)
+   ==========================================================================
+   Va al final a propósito: en CSS gana la última regla, así que esto ajusta
+   lo anterior sin reescribir 570 líneas y sin riesgo de romper una pantalla
+   que no se haya revisado.
+
+   Tres cosas cambian: la curvatura (era de 6-10px y por eso todo se veía
+   cuadrado), la profundidad (sombras suaves en vez de más líneas) y la
+   tipografía (serif en los títulos, como la marca).
+   -------------------------------------------------------------------------- */
+
+/* --- Tipografía ---------------------------------------------------------- */
+/* Fraunces e Inter son las fuentes de la marca. NO se descargan: la política
+   de contenido obliga a autohospedarlas (100-200 KB) en una aplicación pensada
+   para el teléfono, y esa decisión es del CEO. Se declaran igualmente para que
+   el día que se autohospeden entren solas; mientras, cae en Georgia para los
+   títulos —que ya es cálida y con carácter— y en la de sistema para el cuerpo.
+   Es la misma estrategia que usa el demo. */
+body {
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+               Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  line-height: 1.55;
+}
+
+h1, h2, h3, .brand-name, .metric-value {
+  font-family: "Fraunces", Georgia, "Times New Roman", serif;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+h1 { font-size: 1.75rem; line-height: 1.2; margin: 0 0 .35rem; }
+h2 { font-size: 1.2rem; margin: 0 0 .75rem; }
+
+.muted, .help { color: var(--muted); }
+
+/* --- Superficies --------------------------------------------------------- */
+.card,
+.section {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--r-card);
+  box-shadow: var(--shadow-card);
+  padding: 1.35rem 1.5rem;
+}
+
+.container { max-width: 1120px; padding: 2rem 1.5rem 3.5rem; }
+
+/* --- Menú lateral -------------------------------------------------------- */
+/* El fondo pasa de negro azulado a teal profundo: es color de marca y no un
+   gris cualquiera. La opción activa se marca con la pastilla clara del demo. */
+.sidebar {
+  background: var(--teal-deep);
+  border-right: none;
+}
+.sidebar-brand { padding-bottom: 1.1rem; }
+.brand-name { color: var(--white); font-size: 1.15rem; }
+.brand-sub {
+  color: var(--turquoise-light);
+  font-size: .68rem; letter-spacing: .18em; text-transform: uppercase;
+}
+.nav-group-title {
+  color: rgba(255, 255, 255, .45);
+  font-size: .66rem; letter-spacing: .14em; text-transform: uppercase;
+  margin: 1.1rem 0 .35rem; padding: 0 .85rem;
+}
+.sidebar-nav a {
+  display: flex; align-items: center; gap: .6rem;
+  color: rgba(255, 255, 255, .78);
+  padding: .6rem .85rem;
+  border-radius: 10px;
+  text-decoration: none;
+  font-size: .93rem;
+  transition: background .12s ease, color .12s ease;
+}
+.sidebar-nav a:hover { background: rgba(255, 255, 255, .08); color: var(--white); }
+.sidebar-nav a.active,
+.sidebar-nav a[aria-current="page"] {
+  background: var(--ok-bg);
+  color: var(--teal);
+  font-weight: 600;
+}
+
+/* --- Barra superior ------------------------------------------------------ */
+/* Deja de ser una franja teal sólida: en pantalla grande competía con el menú
+   lateral, que ya es la superficie oscura de la página. */
+.topbar {
+  background: var(--white);
+  color: var(--ink);
+  border-bottom: 1px solid var(--border);
+  padding: .85rem 1.75rem;
+}
+.topbar a { color: var(--teal); }
+.user-chip { color: var(--muted); font-size: .88rem; }
+
+/* --- Botones ------------------------------------------------------------- */
+.btn,
+.btn-primary, .btn-ghost,
+.btn-primary-inline, .btn-ghost-inline, .btn-danger-inline {
+  border-radius: var(--r-btn);
+  font-weight: 600;
+  transition: background .12s ease, box-shadow .12s ease, transform .06s ease;
+}
+.btn { min-height: 46px; padding: .7rem 1.25rem; font-size: .95rem; }
+.btn:active { transform: translateY(1px); }
+
+.btn-primary {
+  background: var(--teal);
+  border: 1px solid var(--teal);
+  color: var(--white);
+  box-shadow: var(--shadow-soft);
+}
+.btn-primary:hover { background: var(--teal-dark); border-color: var(--teal-dark); }
+
+/* Acción destructiva. `.btn-danger` la citaban las plantillas desde hace
+   meses y NO existía en la hoja: eliminar una propiedad se veía igual que
+   cualquier otro botón. */
+.btn-danger, .btn-danger-inline {
+  background: var(--coral-cta);
+  border: 1px solid var(--coral-cta);
+  color: var(--white);
+}
+.btn-danger:hover, .btn-danger-inline:hover { background: #A63D23; }
+
+.btn-ghost, .btn-ghost-inline {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--teal);
+}
+.btn-ghost:hover { background: var(--sand); }
+
+.btn-block { display: block; width: 100%; text-align: center; }
+
+/* --- Campos -------------------------------------------------------------- */
+input, select, textarea {
+  border-radius: var(--r-input);
+  border: 1px solid var(--border);
+  background: var(--sand-input);
+  min-height: 48px;
+  padding: .65rem .85rem;
+  font: inherit;
+  color: var(--ink);
+  width: 100%;
+}
+textarea { min-height: 110px; }
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  border-color: var(--turquoise);
+  box-shadow: 0 0 0 3px var(--teal-tint);
+  background: var(--white);
+}
+input[type="checkbox"], input[type="radio"] { width: auto; min-height: 0; }
+label { display: block; font-size: .88rem; font-weight: 600; margin: .9rem 0 .35rem; }
+
+/* --- Pastillas y estados ------------------------------------------------- */
+.badge, .status, .pill, .nav-badge {
+  border-radius: var(--r-pill);
+  font-size: .72rem;
+  font-weight: 600;
+  padding: .2rem .65rem;
+  letter-spacing: .02em;
+}
+.status-available { background: var(--sand-deep); color: var(--muted); }
+.status-rented    { background: var(--ok-bg);   color: var(--ok-fg); }
+.badge-admin  { background: var(--teal-tint);  color: var(--teal); }
+.badge-owner  { background: var(--ok-bg);      color: var(--ok-fg); }
+.badge-tenant { background: var(--sand-deep);  color: var(--muted); }
+.nav-badge { background: var(--turquoise); color: var(--white); }
+
+/* --- Avisos -------------------------------------------------------------- */
+.alert {
+  border-radius: 14px;
+  border: 1px solid transparent;
+  padding: .85rem 1.1rem;
+  font-size: .93rem;
+}
+.alert-error,   .flash-urgent { background: var(--err-bg);  color: var(--err-fg);  border-color: #F3D2CC; }
+.alert-success, .flash-ok     { background: var(--ok-bg);   color: var(--ok-fg);   border-color: #C3E8DA; }
+.alert-warning                { background: var(--warn-bg); color: var(--warn-fg); border-color: #EFDCB8; }
+
+.mock-banner {
+  background: var(--warn-bg);
+  color: var(--warn-fg);
+  font-weight: 600;
+  border-bottom: 1px solid #EFDCB8;
+}
+
+/* --- Tablas -------------------------------------------------------------- */
+/* Sin líneas verticales y con la cabecera en mayúsculas pequeñas: se lee
+   mejor y pesa menos visualmente que una rejilla completa. */
+table { border-collapse: separate; border-spacing: 0; width: 100%; }
+th {
+  background: transparent;
+  color: var(--text-muted);
+  font-size: .7rem; font-weight: 700;
+  letter-spacing: .1em; text-transform: uppercase;
+  border-bottom: 1px solid var(--border);
+  padding: .6rem .75rem;
+  text-align: left;
+}
+td { border-bottom: 1px solid var(--border); padding: .8rem .75rem; }
+tr:last-child td { border-bottom: none; }
+tbody tr:hover td { background: var(--surface-soft); }
+.row-urgent td { background: var(--warn-bg); }
+
+/* --- Piezas que las plantillas citaban y no existían --------------------- */
+.filters {
+  display: flex; flex-wrap: wrap; gap: .6rem; align-items: flex-end;
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--r-card);
+  padding: 1rem 1.2rem;
+  margin-bottom: 1.1rem;
+  box-shadow: var(--shadow-soft);
+}
+.filters label { margin: 0 0 .25rem; font-size: .78rem; }
+.filters input, .filters select { min-height: 42px; width: auto; min-width: 150px; }
+
+.section-head {
+  display: flex; align-items: baseline; justify-content: space-between;
+  gap: 1rem; margin: 1.75rem 0 .75rem;
+}
+.actions, .actions-cell { display: flex; gap: .5rem; flex-wrap: wrap; align-items: center; }
+.meta { color: var(--text-muted); font-size: .82rem; }
+
+/* --- Acceso: tarjeta centrada y estrecha --------------------------------- */
+/* El formulario de cambio de contraseña se veía descolocado porque heredaba
+   el ancho completo del contenedor: un campo de 1000 px para escribir doce
+   caracteres. Se acota y se centra. */
+.login-card,
+.narrow-card {
+  max-width: 440px;
+  margin: 2.5rem auto;
+  padding: 2rem 1.9rem;
+  border-radius: 20px;
+  box-shadow: var(--shadow-raised);
+}
+.login-card h1, .narrow-card h1 { font-size: 1.5rem; }
+.login-card .btn, .narrow-card .btn { width: 100%; margin-top: 1.1rem; }
+.login-card p.muted, .narrow-card p.muted { font-size: .88rem; margin-top: 1rem; }
+.login-page { background: var(--sand); }
+
+/* --- Botón «ver contraseña»: icono, sin texto ---------------------------- */
+/* El texto «Mostrar» competía con la etiqueta del campo y se salía del
+   recuadro en pantallas estrechas. Ahora es un ojo, dibujado en CSS con una
+   imagen `data:` —que la política de contenido permite— y el nombre accesible
+   vive en `aria-label`, que platform.js mantiene al día. */
+.pw-field { position: relative; display: block; }
+.pw-field input { padding-right: 52px; }
+.pw-toggle {
+  position: absolute; right: 4px; top: 50%; transform: translateY(-50%);
+  width: 44px; height: 44px;              /* área táctil mínima de la guía */
+  padding: 0; border: none; background-color: transparent;
+  border-radius: 10px; cursor: pointer;
+  background-repeat: no-repeat; background-position: center;
+  background-size: 21px 21px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235A625F' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M1.8 12S5.7 5 12 5s10.2 7 10.2 7-3.9 7-10.2 7S1.8 12 1.8 12z'/%3E%3Ccircle cx='12' cy='12' r='3'/%3E%3C/svg%3E");
+}
+.pw-toggle:hover { background-color: var(--sand-deep); }
+.pw-toggle:focus-visible { outline: 2px solid var(--turquoise); outline-offset: 1px; }
+/* Pulsado = la contraseña está a la vista: ojo tachado, en teal. */
+.pw-toggle[aria-pressed="true"] {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%230E6E71' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9.9 5.2A9.5 9.5 0 0 1 12 5c6.3 0 10.2 7 10.2 7a17 17 0 0 1-3.2 4.1M6.1 6.3A17 17 0 0 0 1.8 12S5.7 19 12 19a9.6 9.6 0 0 0 4.2-1'/%3E%3Cpath d='M10 10a3 3 0 0 0 4 4'/%3E%3Cpath d='M3 3l18 18'/%3E%3C/svg%3E");
+}
+
+/* --- Fichas de indicador (las usará el panel de E11) --------------------- */
+.metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: .9rem; }
+.metric {
+  background: var(--surface-soft);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 1rem 1.1rem;
+}
+.metric-label { color: var(--muted); font-size: .8rem; }
+.metric-value { font-size: 1.85rem; line-height: 1.1; margin-top: .15rem; }
+.metric-value.warn { color: var(--warn-fg); }
+
+/* --- Teléfono ------------------------------------------------------------ */
+@media (max-width: 860px) {
+  .container { padding: 1.25rem 1rem 2.5rem; }
+  .card, .section { padding: 1.1rem 1.15rem; border-radius: 16px; }
+  .login-card, .narrow-card { margin: 1.25rem auto; padding: 1.5rem 1.25rem; }
+  h1 { font-size: 1.45rem; }
+}

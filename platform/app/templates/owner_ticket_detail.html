@@ -10,6 +10,9 @@
   Prioridad: <strong>{{ ticket.priority.value if ticket.priority else '—' }}</strong> ·
   Estado: <strong>{{ ticket.status.value if ticket.status else '—' }}</strong>
 </p>
+{% if flash %}
+<div class="alert alert-{{ 'error' if flash.kind == 'error' else 'success' }}">{{ flash.message }}</div>
+{% endif %}
 {% if ticket.priority and ticket.priority.value=='emergencia' %}
 <p class="flash flash-urgent">EMERGENCIA — atiende esto primero.</p>
 {% endif %}

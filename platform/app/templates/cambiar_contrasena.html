@@ -1,7 +1,9 @@
 {% extends "base.html" %}
 {% block title %}Cambiar contraseña — Aura Homes Cancún{% endblock %}
 {% block content %}
-<div class="card" style="max-width:520px">
+{# `narrow-card` en vez de un style en línea: la política de contenido prohíbe
+   los estilos en línea y hay una prueba que falla si aparece `style=`. #}
+<div class="card narrow-card">
   <h1>{% if forzado %}Elige una contraseña propia{% else %}Cambiar contraseña{% endif %}</h1>
   {% if forzado %}
   <div class="alert alert-error">
@@ -20,7 +22,7 @@
              autocomplete="current-password">
       <button type="button" class="pw-toggle" data-pw-toggle="actual"
               aria-controls="actual" aria-pressed="false"
-              aria-label="Mostrar la contraseña">Mostrar</button>
+              aria-label="Mostrar la contraseña"></button>
     </div>
     <label for="password">Contraseña nueva</label>
     <div class="pw-field">
@@ -28,7 +30,7 @@
              autocomplete="new-password" minlength="12">
       <button type="button" class="pw-toggle" data-pw-toggle="password"
               aria-controls="password" aria-pressed="false"
-              aria-label="Mostrar la contraseña">Mostrar</button>
+              aria-label="Mostrar la contraseña"></button>
     </div>
     <label for="password2">Repite la nueva</label>
     <div class="pw-field">
@@ -36,7 +38,7 @@
              autocomplete="new-password" minlength="12">
       <button type="button" class="pw-toggle" data-pw-toggle="password2"
               aria-controls="password2" aria-pressed="false"
-              aria-label="Mostrar la contraseña">Mostrar</button>
+              aria-label="Mostrar la contraseña"></button>
     </div>
     <p class="muted">Al menos 12 caracteres. Se cerrarán tus sesiones en otros dispositivos.</p>
     <button type="submit" class="btn btn-primary">Guardar</button>

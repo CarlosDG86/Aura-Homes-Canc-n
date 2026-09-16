@@ -72,7 +72,20 @@ with TestClient(app) as c:
     t = tok(ca, f"/owner/tickets/{TKA}")
     r = ca.post(f"/owner/tickets/{TKA}/actualizar",
                 data={"accion": "resolver", "body": "", "csrf_token": t}, follow_redirects=False)
-    check("resolver sin nota -> 400", r.status_code == 400, f"({r.status_code})")
+    # Antes esto devolvía un 400 y el navegador acababa en un JSON crudo. Lo
+    # que importa no es el código sino la regla: sin nota, el ticket NO se
+    # resuelve. Ahora se avisa en la propia ficha.
+    check("resolver sin nota -> vuelve a la ficha, no a un JSON",
+          r.status_code == 302 and f"/owner/tickets/{TKA}" in r.headers.get("location", ""),
+          f"({r.status_code} {r.headers.get('location')})")
+    _d = SessionLocal()
+    _t = _d.query(MaintenanceTicket).filter(MaintenanceTicket.id == TKA).first()
+    check("y el ticket sigue SIN resolver",
+          _t.status != TicketStatusEnum.resolved and _t.resolved_at is None,
+          f"({_t.status})")
+    _d.close()
+    check("la ficha explica por qué no se resolvió",
+          "explica qué se hizo" in ca.get(f"/owner/tickets/{TKA}").text)
     t = tok(ca, f"/owner/tickets/{TKA}")
     r = ca.post(f"/owner/tickets/{TKA}/actualizar",
                 data={"accion": "resolver", "body": "Se cambio el empaque", "csrf_token": t},
