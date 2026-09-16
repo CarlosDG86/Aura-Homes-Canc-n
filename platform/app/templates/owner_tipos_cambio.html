@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}Tipos de cambio — Aura Homes Cancún{% endblock %}
+{% block content %}
+<h1 class="page-title">Tipos de cambio</h1>
+<p class="muted">
+  Las tasas las cargas tú y declaras de dónde salieron. La plataforma no las
+  consulta sola a propósito: una cifra bajada de internet produce un importe
+  cuyo origen no se puede justificar ante un auditor, y el origen que declaras
+  aquí se imprime en cada línea del reporte.
+</p>
+
+{% if flash %}
+<div class="alert alert-{{ 'error' if flash.kind == 'error' else 'success' }}">{{ flash.message }}</div>
+{% endif %}
+
+<section class="card narrow-form">
+  <h2>Cargar una tasa</h2>
+  <form method="post" action="/owner/fiscal/tipos-de-cambio">
+    {{ csrf_input(request) }}
+    <div class="form-grid">
+      <div>
+        <label for="fx-de">De</label>
+        <select id="fx-de" name="currency_from">
+          {% for m in monedas %}<option value="{{ m }}">{{ m }}</option>{% endfor %}
+        </select>
+      </div>
+      <div>
+        <label for="fx-a">A</label>
+        <select id="fx-a" name="currency_to">
+          {% for m in monedas %}<option value="{{ m }}" {% if not loop.first %}selected{% endif %}>{{ m }}</option>{% endfor %}
+        </select>
+      </div>
+      <div>
+        <label for="fx-fecha">Fecha</label>
+        <input type="date" id="fx-fecha" name="rate_date" value="{{ hoy }}" required>
+      </div>
+      <div>
+        <label for="fx-valor">Tasa</label>
+        <input type="text" id="fx-valor" name="rate" inputmode="decimal" required placeholder="17.50">
+      </div>
+    </div>
+    <label for="fx-origen">De dónde la sacaste</label>
+    <input type="text" id="fx-origen" name="source" maxlength="40" required
+           placeholder="DOF, tu banco, promedio anual del IRS…">
+    <p class="hint">Obligatorio. Un auditor va a preguntar de dónde salió esta cifra.</p>
+    <button type="submit" class="btn btn-primary">Guardar tasa</button>
+  </form>
+</section>
+
+<div class="card">
+  <table>
+    <thead><tr><th>Fecha</th><th>Par</th><th>Tasa</th><th>Origen</th><th>Tipo</th></tr></thead>
+    <tbody>
+      {% for t in tasas %}
+      <tr>
+        <td>{{ t.rate_date }}</td>
+        <td>{{ t.currency_from }} → {{ t.currency_to }}</td>
+        <td>{{ t.rate }}</td>
+        <td>{{ t.source }}</td>
+        <td>{{ t.kind }}</td>
+      </tr>
+      {% else %}
+      <tr class="empty-row"><td colspan="5">Ninguna tasa cargada todavía.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block title %}Registrar gasto — Aura Homes Cancún{% endblock %}
+{% block content %}
+<h1 class="page-title">Registrar gasto</h1>
+{% if flash %}
+<div class="alert alert-{{ 'error' if flash.kind == 'error' else 'success' }}">{{ flash.message }}</div>
+{% endif %}
+
+<section class="card narrow-form">
+  <form method="post" action="/owner/gastos" enctype="multipart/form-data">
+    {{ csrf_input(request) }}
+    <input type="hidden" name="ticket_id" value="{{ ticket_sel }}">
+    <label for="gf-prop">Casa</label>
+    <select id="gf-prop" name="property_id" required>
+      {% for p in propiedades %}
+      <option value="{{ p.id }}" {% if prop_sel == p.id|string %}selected{% endif %}>{{ p.title }}</option>
+      {% endfor %}
+    </select>
+
+    <div class="form-grid">
+      <div>
+        <label for="gf-fecha">Fecha del gasto</label>
+        <input type="date" id="gf-fecha" name="expense_date" value="{{ hoy }}" required>
+      </div>
+      <div>
+        <label for="gf-monto">Importe</label>
+        <input type="text" id="gf-monto" name="amount" inputmode="decimal" required placeholder="1250.00">
+      </div>
+      <div>
+        <label for="gf-moneda">Moneda</label>
+        <select id="gf-moneda" name="currency">
+          {% for m in monedas %}<option value="{{ m }}" {% if m == moneda_base %}selected{% endif %}>{{ m }}</option>{% endfor %}
+        </select>
+      </div>
+      <div>
+        <label for="gf-pago">Forma de pago</label>
+        <input type="text" id="gf-pago" name="payment_method" maxlength="30" placeholder="Transferencia, efectivo…">
+      </div>
+    </div>
+
+    <label for="gf-cat">Categoría</label>
+    <select id="gf-cat" name="category_code" required>
+      {% for c in categorias %}<option value="{{ c.code }}">{{ c.label_es }}</option>{% endfor %}
+    </select>
+    <p class="hint">Cada categoría se traduce al concepto del SAT y a la línea del
+      Schedule E del IRS. El etiquetado es orientativo: confírmalo con tu contador.</p>
+
+    <div class="checkbox-field">
+      <label><input type="checkbox" name="is_capital" value="1"> Es una mejora capitalizable</label>
+      <p class="hint">Marca esto si aumenta el valor del inmueble o alarga su vida.
+        No se deduce en el año: se deprecia.</p>
+    </div>
+
+    <div class="form-grid">
+      <div>
+        <label for="gf-prov">Proveedor</label>
+        <select id="gf-prov" name="provider_id">
+          <option value="">— Ninguno o no está dado de alta —</option>
+          {% for p in proveedores %}<option value="{{ p.id }}">{{ p.name }}</option>{% endfor %}
+        </select>
+      </div>
+      <div>
+        <label for="gf-provname">…o escribe su nombre</label>
+        <input type="text" id="gf-provname" name="provider_name" maxlength="160">
+      </div>
+    </div>
+
+    <label for="gf-doc">Folio del comprobante</label>
+    <input type="text" id="gf-doc" name="tax_doc_ref" maxlength="64"
+           placeholder="UUID del CFDI o número de factura">
+    <p class="hint">Se teclea. La plataforma no lee el XML del CFDI.</p>
+
+    <label for="gf-nota">Nota</label>
+    <textarea id="gf-nota" name="note" maxlength="2000"></textarea>
+
+    <label for="gf-file">Comprobante (opcional)</label>
+    <input type="file" id="gf-file" name="comprobante" accept=".pdf,.xml,.jpg,.jpeg,.png">
+    <p class="hint">PDF, XML, JPG o PNG. Hasta 5 MB.</p>
+
+    <button type="submit" class="btn btn-primary">Guardar gasto</button>
+  </form>
+</section>
+{% endblock %}

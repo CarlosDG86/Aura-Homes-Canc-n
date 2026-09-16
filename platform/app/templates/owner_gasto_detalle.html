@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% block title %}Gasto — Aura Homes Cancún{% endblock %}
+{% block content %}
+<h1 class="page-title">{{ cat.etiqueta(gasto.category_code) }}</h1>
+<p class="muted">{{ prop.title if prop else "—" }} · {{ gasto.expense_date }}</p>
+
+{% if flash %}
+<div class="alert alert-{{ 'error' if flash.kind == 'error' else 'success' }}">{{ flash.message }}</div>
+{% endif %}
+
+{% if gasto.voided_at %}
+<div class="alert alert-error">
+  Gasto anulado el {{ gasto.voided_at.strftime('%d/%m/%Y') }}.
+  Motivo: {{ gasto.voided_reason }}. Se conserva en el historial a propósito.
+</div>
+{% endif %}
+
+{% if cerrado %}
+<div class="alert alert-warning">
+  El año {{ gasto.tax_year }} está cerrado. Para corregir algo, reábrelo
+  explicando por qué o registra un asiento de ajuste.
+</div>
+{% endif %}
+
+<section class="card">
+  <table>
+    <tbody>
+      <tr><th>Importe</th><td>{{ gasto.amount }} {{ gasto.currency }}</td></tr>
+      <tr>
+        <th>Convertido</th>
+        <td>
+          {% if gasto.amount_base is not none %}
+            {{ gasto.amount_base }} {{ gasto.base_currency }}
+            <span class="meta">tasa {{ gasto.fx_rate }} · {{ gasto.fx_source }}</span>
+          {% else %}
+            <span class="meta">Sin tipo de cambio para {{ gasto.currency }} → {{ gasto.base_currency }}.
+            Este gasto NO suma en los totales hasta que cargues una tasa.</span>
+            <div><a href="/owner/fiscal/tipos-de-cambio">Cargar una tasa</a></div>
+          {% endif %}
+        </td>
+      </tr>
+      <tr><th>{{ columna }}</th><td>{{ mapeo }}</td></tr>
+      <tr><th>Capitalizable</th><td>{{ "Sí, se deprecia" if gasto.is_capital else "No, gasto corriente" }}</td></tr>
+      <tr><th>Proveedor</th><td>{{ gasto.provider_name_snapshot or "—" }}</td></tr>
+      <tr><th>Comprobante fiscal</th><td>{{ gasto.tax_doc_ref or "—" }}</td></tr>
+      <tr><th>Forma de pago</th><td>{{ gasto.payment_method or "—" }}</td></tr>
+      <tr><th>Año fiscal</th><td>{{ gasto.tax_year }}</td></tr>
+      {% if gasto.ticket_id %}
+      <tr><th>Reporte</th><td><a href="/owner/tickets/{{ gasto.ticket_id }}">Ver el reporte #{{ gasto.ticket_id }}</a></td></tr>
+      {% endif %}
+      <tr><th>Nota</th><td>{{ gasto.note or "—" }}</td></tr>
+    </tbody>
+  </table>
+  <p class="hint">{{ descargo }}</p>
+</section>
+
+<section class="card">
+  <h2>Comprobantes</h2>
+  {% if comprobantes %}
+  <table>
+    <thead><tr><th>Archivo</th><th></th></tr></thead>
+    <tbody>
+      {% for doc in comprobantes %}
+      <tr>
+        <td><a href="/owner/gastos/{{ gasto.id }}/comprobante/{{ doc.id }}">{{ doc.file_name }}</a></td>
+        <td>
+          <form method="post" action="/owner/gastos/{{ gasto.id }}/actualizar"
+                class="inline-form" data-confirm="¿Retirar este comprobante?">
+            {{ csrf_input(request) }}
+            <input type="hidden" name="accion" value="quitar_comprobante">
+            <input type="hidden" name="documento_id" value="{{ doc.id }}">
+            <button type="submit" class="btn-danger-inline">Retirar</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="muted">Sin comprobantes. Un gasto sin respaldo es el que un auditor pregunta primero.</p>
+  {% endif %}
+
+  <form method="post" action="/owner/gastos/{{ gasto.id }}/actualizar" enctype="multipart/form-data">
+    {{ csrf_input(request) }}
+    <input type="hidden" name="accion" value="adjuntar">
+    <label for="gd-file">Adjuntar comprobante</label>
+    <input type="file" id="gd-file" name="comprobante" accept=".pdf,.xml,.jpg,.jpeg,.png" required>
+    <button type="submit" class="btn btn-primary">Adjuntar</button>
+  </form>
+</section>
+
+{% if not gasto.voided_at and not cerrado %}
+<section class="card">
+  <h2>Anular</h2>
+  <p class="muted">
+    Un gasto no se borra: se anula con un motivo y se queda en el historial.
+    Borrar la fila destruiría la constancia de que existió.
+  </p>
+  <form method="post" action="/owner/gastos/{{ gasto.id }}/actualizar">
+    {{ csrf_input(request) }}
+    <input type="hidden" name="accion" value="anular">
+    <label for="gd-motivo">Por qué</label>
+    <input type="text" id="gd-motivo" name="motivo" maxlength="200" required
+           placeholder="Duplicado, importe equivocado…">
+    <button type="submit" class="btn-danger-inline">Anular gasto</button>
+  </form>
+</section>
+{% endif %}
+{% endblock %}

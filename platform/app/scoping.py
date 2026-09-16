@@ -289,13 +289,26 @@ def scoped_documents(db: Session, user: User) -> Query:
     if _role_of(user) == "tenant":
         return db.query(Document).filter(Document.id.is_(None))
 
-    ids = [t.id for t in scoped_tickets(db, user).all()]
-    if not ids:
+    # Dos caminos, no uno. Un comprobante puede colgar de un ticket (el trabajo
+    # de mantenimiento) o directamente de una propiedad a través de un gasto
+    # que no nació de ninguna avería —el predial, el seguro—. Resolviendo solo
+    # por ticket, esos segundos quedaban invisibles para su propio dueño.
+    ids_tickets = [t.id for t in scoped_tickets(db, user).all()]
+    ids_props = [p.id for p in owned_properties(db, user).all()]
+    if not ids_tickets and not ids_props:
         # Consulta que no devuelve nada, en vez de `None`: quien llama sigue
         # pudiendo encadenar `.filter()` sin comprobaciones extra.
         return db.query(Document).filter(Document.id.is_(None))
+
+    criterios = []
+    if ids_tickets:
+        criterios.append(Document.ticket_id.in_(ids_tickets))
+    if ids_props:
+        criterios.append(Document.property_id.in_(ids_props))
+    from sqlalchemy import or_
+
     return (db.query(Document)
-            .filter(Document.ticket_id.in_(ids), Document.deleted_at.is_(None)))
+            .filter(or_(*criterios), Document.deleted_at.is_(None)))
 
 
 def get_scoped_document_or_404(db: Session, user: User, document_id: int):
@@ -305,3 +318,37 @@ def get_scoped_document_or_404(db: Session, user: User, document_id: int):
     if doc is None:
         raise HTTPException(status_code=404, detail="Documento no encontrado")
     return doc
+
+
+# --- Gastos (E13) ------------------------------------------------------------
+
+
+def scoped_expenses(db: Session, user: User) -> Query:
+    """Gastos de las propiedades del usuario.
+
+    Se acota por `property_id` dentro de `owned_properties` y no por
+    `account_id` del gasto: la propiedad es el objeto cuyo dueño ya se sabe
+    resolver, y usar dos criterios distintos para lo mismo es pedir que un día
+    diverjan.
+
+    **El inquilino no ve ningún gasto.** Ni el importe, ni a quién se le pagó.
+    Igual que con los comprobantes, se corta aquí y no en cada ruta.
+    """
+    from .models import Expense
+
+    if _role_of(user) == "tenant":
+        return db.query(Expense).filter(Expense.id.is_(None))
+
+    ids = [p.id for p in owned_properties(db, user).all()]
+    if not ids:
+        return db.query(Expense).filter(Expense.id.is_(None))
+    return db.query(Expense).filter(Expense.property_id.in_(ids))
+
+
+def get_scoped_expense_or_404(db: Session, user: User, expense_id: int):
+    from .models import Expense
+
+    gasto = scoped_expenses(db, user).filter(Expense.id == expense_id).first()
+    if gasto is None:
+        raise HTTPException(status_code=404, detail="Gasto no encontrado")
+    return gasto

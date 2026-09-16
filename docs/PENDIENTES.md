@@ -93,9 +93,26 @@ global, así que dos administradoras no podrían registrar al mismo plomero.
 **El inquilino no ve ningún comprobante**, ni de su propia vivienda. Ve las fotos del
 trabajo terminado; lo que costó y a quién se le pagó es asunto del propietario.
 
-### 1.1f Siguiente: E13 — gastos desglosados y libro fiscal
+### 1.1f ~~E13 — gastos desglosados y libro fiscal~~ ✅ HECHA (2026-09-16)
 
-Puntos 2.3 y 2.4 del CEO. 8 días, la etapa más larga. Depende de E9 y E12, las dos hechas.
+Catálogo de 15 categorías con doble mapeo SAT / IRS Schedule E, libro de gastos por
+propiedad y por ticket, tipos de cambio manuales, cierre y reapertura de año fiscal, y
+reporte CSV.
+
+**Regla que gobierna todo:** sin tipo de cambio, el importe convertido queda **vacío y no
+suma**. No se inventa una conversión. Un reporte visiblemente incompleto es mejor que uno
+silenciosamente falso, porque el segundo se entrega sin que nadie lo revise.
+
+Un gasto **no se borra: se anula con motivo**. Borrar la fila destruiría la constancia de
+que existió, que es justo lo que un auditor viene a revisar.
+
+**Pendiente de D-027:** el texto del descargo legal está escrito y en pantalla, pero espera
+la aprobación del CEO y la revisión de su abogado.
+
+### 1.1g Siguiente: E14 — exportación para auditoría y planes con efecto
+
+D-015 y punto 7.2. 4 días. **Sin la máquina de aprobación de cotizaciones**: el CEO pidió
+omitir D-017 por ahora.
 
 ### 1.2 El sitio público enlaza a un host caído
 

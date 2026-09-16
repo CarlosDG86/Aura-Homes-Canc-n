@@ -116,6 +116,10 @@ def _ensure_columnas_e12(engine) -> None:
             "fiscal_year": "ALTER TABLE documents ADD COLUMN fiscal_year INTEGER",
             "deleted_at": "ALTER TABLE documents ADD COLUMN deleted_at DATETIME",
         },
+        "properties": {
+            # E13. NULL hereda de la cuenta; no hay UPDATE masivo a propósito.
+            "tax_jurisdiction": "ALTER TABLE properties ADD COLUMN tax_jurisdiction VARCHAR",
+        },
         "ai_usage": {
             # El tope de gasto del agente es hoy mensual y GLOBAL: con varias
             # cuentas, la primera que use cotización automática dejaría sin

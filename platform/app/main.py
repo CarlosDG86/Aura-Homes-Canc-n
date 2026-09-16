@@ -16,8 +16,8 @@ from .auth import hash_password
 from .auth import router as auth_router
 from .db import Base, SessionLocal, engine
 from .routers import (
-    acceso, admin, owner, owner_dashboard, owner_portal, pages, payments,
-    proveedores, site_content, tenant,
+    acceso, admin, fiscal, owner, owner_dashboard, owner_portal, pages,
+    payments, proveedores, site_content, tenant,
 )
 from .mockmode import is_mock, require_legal_clearance_for_live
 from .security import (
@@ -153,6 +153,8 @@ app.include_router(owner_dashboard.router)
 # E12 · proveedores y adjuntos del ticket. Va después de owner_portal
 # porque importa de allí `_require_owner`, `_ctx` y `_nav_badges`.
 app.include_router(proveedores.router)
+# E13 · libro de gastos y panel fiscal.
+app.include_router(fiscal.router)
 
 
 @app.get("/")

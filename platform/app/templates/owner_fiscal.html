@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+{% block title %}Año fiscal {{ anio }} — Aura Homes Cancún{% endblock %}
+{% block content %}
+<div class="section-head">
+  <div>
+    <h1 class="page-title">Año fiscal {{ anio }}</h1>
+    <p class="muted">Tus gastos organizados para {{ "el SAT" if jurisdiccion == "MX" else ("el IRS" if jurisdiccion == "US" else "el SAT y el IRS") }}.</p>
+  </div>
+  <a class="btn btn-primary" href="/owner/fiscal/reporte?anio={{ anio }}">Descargar CSV</a>
+</div>
+
+{% if flash %}
+<div class="alert alert-{{ 'error' if flash.kind == 'error' else 'success' }}">{{ flash.message }}</div>
+{% endif %}
+
+<form method="get" action="/owner/fiscal" class="filters">
+  <div>
+    <label for="f-anio">Año</label>
+    <select id="f-anio" name="anio">
+      {% for a in anios %}<option value="{{ a }}" {% if a == anio %}selected{% endif %}>{{ a }}</option>{% endfor %}
+    </select>
+  </div>
+  <div class="filtros-botones">
+    <button type="submit" class="btn btn-primary">Ver</button>
+    <a class="btn btn-ghost" href="/owner/fiscal/tipos-de-cambio">Tipos de cambio</a>
+  </div>
+</form>
+
+{# El hueco va ANTES de los totales. Quien abre esto tiene que ver lo que
+   falta antes que la cifra, no después. #}
+{% if totales.sin_conversion %}
+<div class="alert alert-warning">
+  <strong>{{ totales.sin_conversion }} gasto(s) sin tipo de cambio.</strong>
+  Su importe convertido va vacío y <strong>no suma</strong> en los totales de
+  abajo. No se inventa una conversión: un reporte visiblemente incompleto es
+  mejor que uno silenciosamente falso.
+  <a href="/owner/fiscal/tipos-de-cambio">Cargar la tasa que falta</a>.
+</div>
+{% endif %}
+
+{% if cerrado %}
+<div class="alert alert-success">
+  Año {{ anio }} cerrado. Los gastos de este año ya no se pueden crear ni
+  modificar. Sigue siendo un control de la aplicación, no un candado
+  criptográfico.
+</div>
+{% endif %}
+
+<div class="metrics">
+  <div class="metric">
+    <div class="metric-label">Gastos registrados</div>
+    <div class="metric-value">{{ totales.n }}</div>
+    <div class="metric-def">Confirmados y no anulados.</div>
+  </div>
+  <div class="metric">
+    <div class="metric-label">Total del año</div>
+    <div class="metric-value">{{ totales.total }}</div>
+    <div class="metric-def">Solo lo que tiene conversión.</div>
+  </div>
+  <div class="metric">
+    <div class="metric-label">Gasto corriente</div>
+    <div class="metric-value">{{ totales.corriente }}</div>
+    <div class="metric-def">Lo que normalmente se deduce en el año.</div>
+  </div>
+  <div class="metric">
+    <div class="metric-label">Capitalizable</div>
+    <div class="metric-value">{{ totales.capital }}</div>
+    <div class="metric-def">Mejoras: se deprecian, no se deducen de golpe.</div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>Por categoría</h2>
+  <table>
+    <thead>
+      <tr><th>Categoría</th><th>{{ columna }}</th><th>Gastos</th><th>Total</th></tr>
+    </thead>
+    <tbody>
+      {% for r in resumen %}
+      <tr>
+        <td>
+          {{ r.etiqueta }}
+          {% if r.is_capital %}<span class="badge badge-admin">capitalizable</span>{% endif %}
+          {% if r.sin_conversion %}
+          <div class="meta">{{ r.sin_conversion }} sin convertir, fuera del total</div>
+          {% endif %}
+        </td>
+        <td>{{ r.mapeo }}</td>
+        <td>{{ r.n }}</td>
+        <td>{{ r.total }}</td>
+      </tr>
+      {% else %}
+      <tr class="empty-row"><td colspan="4">Sin gastos registrados en {{ anio }}.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <p class="hint">{{ descargo }} · Catálogo versión {{ version_catalogo }}.</p>
+</div>
+
+<section class="card">
+  <h2>Cerrar el año</h2>
+  {% if cerrado %}
+  <p class="muted">Reabrir queda registrado con tu nombre y el motivo.</p>
+  <form method="post" action="/owner/fiscal/cierre">
+    {{ csrf_input(request) }}
+    <input type="hidden" name="accion" value="reabrir">
+    <input type="hidden" name="anio" value="{{ anio }}">
+    <label for="fc-motivo">Por qué lo reabres</label>
+    <input type="text" id="fc-motivo" name="motivo" maxlength="300" required
+           placeholder="Faltó capturar una factura de diciembre…">
+    <button type="submit" class="btn btn-ghost">Reabrir {{ anio }}</button>
+  </form>
+  {% else %}
+  <p class="muted">
+    Al cerrarlo, los gastos de {{ anio }} dejan de poder crearse o modificarse.
+    Puedes reabrirlo después explicando por qué.
+  </p>
+  <form method="post" action="/owner/fiscal/cierre"
+        data-confirm="¿Cerrar el año {{ anio }}? Después habrá que reabrirlo con un motivo para poder cambiar algo.">
+    {{ csrf_input(request) }}
+    <input type="hidden" name="accion" value="cerrar">
+    <input type="hidden" name="anio" value="{{ anio }}">
+    <button type="submit" class="btn btn-primary">Cerrar {{ anio }}</button>
+  </form>
+  {% endif %}
+</section>
+{% endblock %}

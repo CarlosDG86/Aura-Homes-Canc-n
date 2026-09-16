@@ -243,6 +243,10 @@ class Property(Base):
     # escritor único, el verificador de integridad del arranque y una prueba
     # con deriva inyectada a propósito.
     account_id = Column(Integer, ForeignKey("accounts.id"), nullable=True, index=True)
+    #: Jurisdicción fiscal de ESTA casa (E13). NULL hereda la de la cuenta y,
+    #: si tampoco la hay, 'MX'. Va por propiedad y no solo por cuenta porque
+    #: una misma administradora puede tener casas a los dos lados.
+    tax_jurisdiction = Column(String, nullable=True)
     # Link to the public showcase property (data/properties.json "id", e.g.
     # "AUR-001"). NULL for properties created only inside the platform. The
     # site JSON stays the source of truth for public content; this row is a
@@ -411,6 +415,165 @@ class Provider(Base):
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
 
     __table_args__ = (Index("ix_providers_account", "account_id", "is_active"),)
+
+
+class Expense(Base):
+    """Un gasto de una propiedad (E13 · puntos 2.3 y 2.4 del CEO).
+
+    ## Lo que se captura y lo que se deriva
+
+    `amount` + `currency` es **lo que se pagó** y no se sobrescribe jamás.
+    `amount_base` es derivado y **congelado en la fila** junto con la tasa, su
+    fecha y su origen: un total que cambia de cifra entre marzo y abril no
+    sirve como evidencia ante nadie.
+
+    Si no hay tasa disponible, `amount_base` queda **NULL** y la pantalla lo
+    cuenta como hueco antes de los totales. En ninguna salida aparece un
+    importe convertido sin origen: **un reporte visiblemente incompleto es
+    infinitamente mejor que uno silenciosamente falso.**
+
+    ## No hay DELETE
+
+    Un gasto se **anula**, no se borra: `voided_at` más el motivo. Borrar la
+    fila destruiría la constancia de que existió, que es justo lo que un
+    auditor viene a revisar.
+
+    ## No lleva columna `locked`
+
+    El bloqueo por cierre de año se **deriva** consultando `fiscal_year_closures`
+    al escribir. Una bandera denormalizada puede quedar desincronizada del
+    cierre real; una consulta pequeña en un POST no cuesta nada.
+    """
+
+    __tablename__ = "expenses"
+
+    id = Column(Integer, primary_key=True)
+    account_id = Column(Integer, nullable=True, index=True)
+    property_id = Column(Integer, ForeignKey("properties.id"), nullable=False, index=True)
+    # Punto 2.4: un ticket puede tener varios gastos; un gasto puede no tener
+    # ticket (el predial no nace de una avería).
+    ticket_id = Column(Integer, ForeignKey("maintenance_tickets.id"), nullable=True, index=True)
+
+    expense_date = Column(Date, nullable=False)
+    #: Se deriva de `expense_date` al escribir, no se pide en el formulario.
+    #: Materializado para que el índice compuesto sirva de verdad.
+    tax_year = Column(Integer, nullable=False, index=True)
+
+    #: VARCHAR contra `fiscal_catalog`, JAMÁS un Enum: los Enum se persisten
+    #: con el nombre del miembro y un valor desconocido rompe la lectura del
+    #: ORM. Un catálogo fiscal está condenado a crecer.
+    category_code = Column(String(40), nullable=False)
+
+    provider_id = Column(Integer, nullable=True)
+    #: Instantánea de texto: sobrevive al borrado del proveedor y permite
+    #: capturar sin haberlo dado de alta antes.
+    provider_name_snapshot = Column(String(160), nullable=True)
+    #: UUID del CFDI en México o número de factura en EE. UU. Una columna
+    #: sirve a las dos. **Se teclea; no se extrae de ningún XML.**
+    tax_doc_ref = Column(String(64), nullable=True)
+
+    amount = Column(Numeric(14, 2), nullable=False)
+    currency = Column(String(3), nullable=False, default="MXN", server_default="MXN")
+    base_currency = Column(String(3), nullable=False, default="MXN", server_default="MXN")
+    amount_base = Column(Numeric(14, 2), nullable=True)
+    fx_rate = Column(Numeric(18, 8), nullable=True)
+    fx_rate_date = Column(Date, nullable=True)
+    fx_source = Column(String(40), nullable=True)
+
+    #: Mejora capitalizable frente a gasto corriente: la única distinción que
+    #: las dos jurisdicciones tratan igual de distinto.
+    is_capital = Column(Boolean, nullable=False, default=False, server_default="0")
+    payment_method = Column(String(30), nullable=True)
+    note = Column(Text, nullable=True)
+    #: `confirmado` | `borrador`. Todo lo que genere la automatización nacerá
+    #: en borrador, para que nadie reporte una cifra que no revisó.
+    status = Column(String(16), nullable=False, default="confirmado",
+                    server_default="confirmado")
+    #: Asiento de ajuste sobre un gasto de un año ya cerrado. Es lo que hace un
+    #: contador cuando encuentra algo después de entregar.
+    adjusts_expense_id = Column(Integer, nullable=True)
+    #: Sello del modo en que nació la fila. Permite purgar con exactitud los
+    #: datos de la época de pruebas al pasar a real.
+    data_mode = Column(String(8), nullable=False, default="mock", server_default="mock")
+
+    voided_at = Column(DateTime, nullable=True)
+    voided_by_user_id = Column(Integer, nullable=True)
+    voided_reason = Column(String(200), nullable=True)
+
+    created_by_user_id = Column(Integer, nullable=True)
+    created_at = Column(DateTime, server_default=func.now())
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
+
+    __table_args__ = (
+        Index("ix_expenses_account_year", "account_id", "tax_year"),
+        Index("ix_expenses_property_year", "property_id", "tax_year"),
+    )
+
+
+class FxRate(Base):
+    """Tipos de cambio que el propietario carga a mano.
+
+    **No hay consulta automática.** La objeción no es la dependencia técnica:
+    es que una llamada saliente produce una cifra cuyo origen no se podría
+    justificar ante un auditor, y añade un punto de fallo a algo que tiene que
+    funcionar en marzo. El propietario elige la tasa y declara su fuente, y esa
+    fuente se imprime en cada línea del reporte.
+
+    `source` es NOT NULL a propósito: toda tasa debe poder responder «de dónde
+    salió esto».
+    """
+
+    __tablename__ = "fx_rates"
+
+    id = Column(Integer, primary_key=True)
+    account_id = Column(Integer, nullable=True)
+    currency_from = Column(String(3), nullable=False)
+    currency_to = Column(String(3), nullable=False)
+    rate_date = Column(Date, nullable=False)
+    rate = Column(Numeric(18, 8), nullable=False)
+    kind = Column(String(16), nullable=False, default="diario")  # diario | promedio_anual
+    tax_year = Column(Integer, nullable=True)
+    source = Column(String(40), nullable=False)
+    note = Column(String(200), nullable=True)
+    entered_by_user_id = Column(Integer, nullable=True)
+    created_at = Column(DateTime, server_default=func.now())
+
+    __table_args__ = (
+        Index("ux_fx_rates", "account_id", "currency_from", "currency_to",
+              "rate_date", "kind", unique=True),
+    )
+
+
+class FiscalYearClosure(Base):
+    """Años fiscales cerrados.
+
+    **Honestidad obligatoria:** esto es un control de la aplicación, no
+    inmutabilidad criptográfica. Quien tenga el archivo de la base puede
+    alterar cualquier fila. Lo que sí permite es demostrar que el paquete que
+    recibió el contador no cambió, mediante su suma de verificación.
+
+    Reabrir exige motivo escrito. La reversibilidad con huella es preferible a
+    la irreversibilidad, que empuja a la gente a falsear datos.
+    """
+
+    __tablename__ = "fiscal_year_closures"
+
+    id = Column(Integer, primary_key=True)
+    account_id = Column(Integer, nullable=True)
+    #: NULL = el cierre aplica a toda la cuenta.
+    property_id = Column(Integer, nullable=True)
+    tax_year = Column(Integer, nullable=False)
+    closed_at = Column(DateTime, nullable=False, server_default=func.now())
+    closed_by_user_id = Column(Integer, nullable=True)
+    reopened_at = Column(DateTime, nullable=True)
+    reopened_by_user_id = Column(Integer, nullable=True)
+    reopen_reason = Column(String(300), nullable=True)
+    export_sha256 = Column(String(64), nullable=True)
+
+    __table_args__ = (
+        Index("ux_fiscal_closures", "account_id", "property_id", "tax_year",
+              unique=True),
+    )
 
 
 class OutboxEmail(Base):
