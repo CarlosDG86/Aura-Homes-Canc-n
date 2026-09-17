@@ -7,9 +7,10 @@
 """
 from typing import List
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
 
+from .. import cuentas
 from ..auth import hash_password, require_role
 from ..db import get_db
 from ..models import Property, RoleEnum, User
@@ -31,7 +32,7 @@ def list_properties(db: Session = Depends(get_db)):
 
 
 @router.post("/properties", response_model=PropertyOut, status_code=status.HTTP_201_CREATED)
-def create_property(payload: PropertyAdminIn, db: Session = Depends(get_db)):
+def create_property(payload: PropertyAdminIn, request: Request, db: Session = Depends(get_db)):
     owner = db.query(User).filter(User.id == payload.owner_id, User.role == RoleEnum.owner).first()
     if not owner:
         raise HTTPException(status_code=400, detail="owner_id must reference an existing user with role=owner")
@@ -40,7 +41,13 @@ def create_property(payload: PropertyAdminIn, db: Session = Depends(get_db)):
     # aquí del dueño y nunca del cliente: dejar que la API acepte `account_id`
     # sería dejar que quien llama elija en qué cliente aterriza el dato.
     prop.account_id = owner.account_id
+    # El límite se calcula sobre la cuenta del DUEÑO, no sobre la de quien
+    # hace la petición: el administrador no tiene cupo propio que consumir.
+    cuenta = cuentas.cuenta_de(db, owner)
+    cuentas.exigir_cupo_de_propiedad(db, request, cuenta)
     db.add(prop)
+    db.flush()
+    cuentas.arrancar_prueba_si_toca(db, cuenta, prop)
     db.commit()
     db.refresh(prop)
     return prop

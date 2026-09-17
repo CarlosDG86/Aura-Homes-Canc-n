@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}Cuentas — Aura Homes Cancún{% endblock %}
+{% block content %}
+<h1>Cuentas</h1>
+<p class="muted">
+  Plan, estado y uso de cada cliente. Cambiar un plan exige una nota: es la
+  referencia del acuerdo y queda en el historial de la cuenta.
+</p>
+
+{% if flash %}
+<div class="alert alert-{{ 'error' if flash.kind == 'error' else 'success' }}">{{ flash.message }}</div>
+{% endif %}
+
+{% for f in filas %}
+<section class="card cuenta-card{% if f.est.plan_sin_asignar %} cuenta-sin-plan{% endif %}">
+  <div class="section-head">
+    <div>
+      <h2>{{ f.nombre }}
+        {% if f.operadora %}<span class="badge badge-admin">operadora</span>{% endif %}
+        {% if f.est.plan_sin_asignar %}<span class="badge badge-aviso">plan sin asignar</span>{% endif %}
+      </h2>
+      <p class="meta">
+        #{{ f.id }} · {{ f.est.etiqueta_plan }} · {{ f.est.estado }} ·
+        {{ f.usuarios }} usuario(s) ·
+        {{ f.est.usadas }}{% if f.est.limite is not none %} / {{ f.est.limite }}{% endif %} casa(s)
+        {% if f.est.dias_restantes is not none %} · {{ f.est.dias_restantes }} día(s) de prueba{% endif %}
+      </p>
+      {% if f.est.motivo %}<p class="meta">{{ f.est.motivo }}</p>{% endif %}
+    </div>
+  </div>
+  <form method="post" action="/admin/cuentas/{{ f.id }}/plan">
+    {{ csrf_input(request) }}
+    <div class="form-grid form-grid-2">
+      <div>
+        <label for="c{{ f.id }}-plan">Plan</label>
+        <select id="c{{ f.id }}-plan" name="plan">
+          {% for k, etiqueta in planes %}<option value="{{ k }}" {% if k == f.est.plan %}selected{% endif %}>{{ etiqueta }}</option>{% endfor %}
+        </select>
+      </div>
+      <div>
+        <label for="c{{ f.id }}-estado">Estado</label>
+        <select id="c{{ f.id }}-estado" name="estado">
+          {% for e in estados %}<option value="{{ e }}" {% if e == f.est.estado %}selected{% endif %}>{{ e }}</option>{% endfor %}
+        </select>
+      </div>
+      <div>
+        <label for="c{{ f.id }}-lim">Tope de casas (vacío = el del plan, «-» = quitar excepción)</label>
+        <input type="text" id="c{{ f.id }}-lim" name="limite" placeholder="{{ f.override if f.override is not none else '' }}">
+      </div>
+      <div>
+        <label for="c{{ f.id }}-dias">Extender prueba (días, máx. {{ dias_max }} en total)</label>
+        <input type="text" id="c{{ f.id }}-dias" name="extender_dias" inputmode="numeric">
+      </div>
+    </div>
+    <label for="c{{ f.id }}-nota">Nota (obligatoria)</label>
+    <input type="text" id="c{{ f.id }}-nota" name="nota" maxlength="500" required
+           placeholder="{{ f.nota or 'Contrato, correo o acuerdo que respalda el cambio' }}">
+    <button class="btn btn-primary" type="submit">Guardar</button>
+  </form>
+</section>
+{% else %}
+<div class="card"><p class="muted">No hay cuentas.</p></div>
+{% endfor %}
+{% endblock %}

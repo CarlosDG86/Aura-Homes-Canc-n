@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Paquetes fiscales — Aura Homes Cancún{% endblock %}
+{% block content %}
+<div class="section-head">
+  <div>
+    <h1 class="page-title">Paquetes fiscales</h1>
+    <p class="muted">Todo lo que ha salido de la plataforma para tu contador.</p>
+  </div>
+  <a class="btn btn-primary" href="/owner/fiscal/exportar">Nuevo paquete</a>
+</div>
+
+{% if flash %}
+<div class="alert alert-{{ 'error' if flash.kind == 'error' else 'success' }}">{{ flash.message }}</div>
+{% endif %}
+
+<div class="card">
+  <table>
+    <thead>
+      <tr><th>Generado</th><th>Año</th><th>Alcance</th><th>Gastos</th><th>Comprobantes</th><th>Fotos</th><th></th></tr>
+    </thead>
+    <tbody>
+      {% for f in filas %}
+      <tr>
+        <td>{{ f.created_at.strftime("%Y-%m-%d %H:%M") if f.created_at else "—" }}
+          {% if f.data_mode != "live" %}<span class="badge badge-admin">prueba</span>{% endif %}</td>
+        <td>{{ f.tax_year }}</td>
+        <td>{{ nombres.get(f.property_id, "Casa #" ~ f.property_id) if f.property_id else "Todas" }}</td>
+        <td>{{ f.expense_count }}{% if f.missing_fx_count %} <span class="meta">({{ f.missing_fx_count }} sin tasa)</span>{% endif %}</td>
+        <td>{{ f.receipt_count }}</td>
+        <td>{{ "Sí" if f.includes_ticket_photos else "No" }}</td>
+        <td>
+          {% if existe[f.id] %}
+          <a class="btn btn-ghost btn-sm" href="/owner/fiscal/exportaciones/{{ f.id }}/descargar">Descargar</a>
+          {% else %}<span class="meta">archivo retirado</span>{% endif %}
+        </td>
+      </tr>
+      {% else %}
+      <tr class="empty-row"><td colspan="7">Todavía no has generado ningún paquete.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+{% block title %}Paquete para tu contador — Aura Homes Cancún{% endblock %}
+{% block content %}
+<div class="section-head">
+  <div>
+    <h1 class="page-title">Paquete para tu contador</h1>
+    <p class="muted">Revisa qué va a salir antes de generarlo.</p>
+  </div>
+  <a class="btn btn-ghost" href="/owner/fiscal/exportaciones">Paquetes anteriores</a>
+</div>
+
+{% if flash %}
+<div class="alert alert-{{ 'error' if flash.kind == 'error' else 'success' }}">{{ flash.message }}</div>
+{% endif %}
+
+{% if datos_de_prueba %}
+<div class="alert alert-warning">
+  <strong>Modo pruebas.</strong> El paquete saldrá marcado como
+  <strong>DATOS-DE-PRUEBA</strong> y no debe entregarse a ninguna autoridad.
+</div>
+{% endif %}
+
+<form method="get" action="/owner/fiscal/exportar" class="filters">
+  <div>
+    <label for="x-anio">Año</label>
+    <select id="x-anio" name="anio">
+      {% for a in anios %}<option value="{{ a }}" {% if a == anio %}selected{% endif %}>{{ a }}</option>{% endfor %}
+    </select>
+  </div>
+  <div>
+    <label for="x-prop">Casa</label>
+    <select id="x-prop" name="propiedad">
+      <option value="">Todas mis casas</option>
+      {% for p in propiedades %}<option value="{{ p.id }}" {% if unica and unica.id == p.id %}selected{% endif %}>{{ p.title }}</option>{% endfor %}
+    </select>
+  </div>
+  <div class="filtros-botones">
+    <button type="submit" class="btn btn-ghost">Revisar</button>
+  </div>
+</form>
+
+{% if vista.sin_conversion %}
+<div class="alert alert-warning">
+  <strong>{{ vista.sin_conversion }} gasto(s) sin tipo de cambio.</strong>
+  Saldrán con el importe convertido vacío y sin sumar. Puedes
+  <a href="/owner/fiscal/tipos-de-cambio">cargar la tasa</a> antes de generar.
+</div>
+{% endif %}
+{% if vista.excluidos_otro_modo %}
+<div class="alert alert-warning">
+  {{ vista.excluidos_otro_modo }} gasto(s) se capturaron en otro modo de datos y
+  <strong>no entran</strong> en el paquete.
+</div>
+{% endif %}
+
+<div class="metrics">
+  <div class="metric">
+    <div class="metric-label">Gastos</div>
+    <div class="metric-value">{{ vista.gastos|length }}</div>
+    <div class="metric-def">Confirmados y no anulados de {{ anio }}.</div>
+  </div>
+  <div class="metric">
+    <div class="metric-label">Comprobantes</div>
+    <div class="metric-value">{{ vista.comprobantes|length }}</div>
+    <div class="metric-def">Archivos originales, tal como se subieron.</div>
+  </div>
+  <div class="metric">
+    <div class="metric-label">Reportes</div>
+    <div class="metric-value">{{ vista.tickets|length }}</div>
+    <div class="metric-def">Inquilinos como «Inquilino #contrato».</div>
+  </div>
+  <div class="metric">
+    <div class="metric-label">Fotos disponibles</div>
+    <div class="metric-value">{{ vista.fotos|length }}</div>
+    <div class="metric-def">No salen salvo que lo marques abajo.</div>
+  </div>
+</div>
+
+<section class="card">
+  <h2>Generar</h2>
+  <p class="muted">
+    {{ "Casa «" ~ unica.title ~ "»" if unica else "Todas tus casas" }} · año {{ anio }}.
+    Lleva un CSV de gastos, un resumen por categoría con SAT e IRS, los
+    reportes de mantenimiento y los comprobantes. Nombre, correo y teléfono
+    de tus inquilinos <strong>no salen</strong>.
+  </p>
+  <form method="post" action="/owner/fiscal/exportar">
+    {{ csrf_input(request) }}
+    <input type="hidden" name="anio" value="{{ anio }}">
+    <input type="hidden" name="propiedad" value="{{ unica.id if unica else '' }}">
+    <input type="hidden" name="confirmado" value="si">
+    {% if vista.fotos %}
+    <div class="alert alert-warning export-fotos">
+      <div class="checkbox-field">
+        <label><input type="checkbox" name="incluir_fotos" value="si"> Incluir las {{ vista.fotos|length }} foto(s) de los reportes</label>
+      </div>
+      <p class="hint">
+        Muestran el interior de la vivienda de tus inquilinos. Normalmente el
+        contador no las necesita. Si las incluyes, queda registrado.
+      </p>
+    </div>
+    {% endif %}
+    <button type="submit" class="btn btn-primary">Generar paquete</button>
+    <p class="hint">Tope: {{ tope_mb }} MB. Si no cabe, expórtalo casa por casa.</p>
+  </form>
+</section>
+{% endblock %}

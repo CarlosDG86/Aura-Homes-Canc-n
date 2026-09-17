@@ -1,7 +1,7 @@
 # Pendientes — prioridades para la próxima sesión
 
-**Actualizado:** 2026-09-08
-**Estado general:** desarrollo local. La Fase 2.1 está **diseñada y sin construir**.
+**Actualizado:** 2026-09-16
+**Estado general:** desarrollo local. La Fase 2.1 está **construida (E8–E14)** en la rama `work/feedback-usuarios`, sin publicar.
 
 ---
 
@@ -109,10 +109,55 @@ que existió, que es justo lo que un auditor viene a revisar.
 **Pendiente de D-027:** el texto del descargo legal está escrito y en pantalla, pero espera
 la aprobación del CEO y la revisión de su abogado.
 
-### 1.1g Siguiente: E14 — exportación para auditoría y planes con efecto
+### 1.1g ~~E14 — paquete para el contador, cotizaciones y planes con efecto~~ ✅ HECHA (2026-09-16)
 
-D-015 y punto 7.2. 4 días. **Sin la máquina de aprobación de cotizaciones**: el CEO pidió
-omitir D-017 por ahora.
+**Paquete fiscal (D-015, la «Auditors View»).** Un ZIP por año y por casa o por cuenta con
+`gastos.csv`, `resumen_por_categoria.csv` (SAT e IRS lado a lado), `tickets.csv`, los
+comprobantes originales, `MANIFIESTO.json`, `LEEME.txt` y `SHA256SUMS.txt`. Se escribe a
+disco (`data/exports-mock/` o `data/exports/`), nunca se arma en memoria, y tiene tope de
+tamaño (`EXPORT_MAX_BYTES`, 200 MB).
+
+- **Pantalla intermedia obligatoria**: un POST sin confirmar vuelve a ella.
+- **Fotos del interior fuera por omisión.** La casilla nace desmarcada y, si se marca, queda
+  en `fiscal_exports.includes_ticket_photos` y con registro propio en la bitácora.
+- **El inquilino sale como «Inquilino #contrato».** La prueba busca su nombre, correo y
+  teléfono en todos los archivos de texto del ZIP. Tampoco sale la descripción del ticket:
+  es texto libre y ahí aparece de todo.
+- En modo pruebas el nombre del ZIP y el `LEEME` dicen `DATOS-DE-PRUEBA`, y las filas
+  nacidas en otro modo se excluyen y se cuentan.
+
+**Cotizaciones manuales** en la ficha del ticket: registrar, aprobar, rechazar. Aprobar solo
+sella el estado — ver D-017 en el registro de decisiones. La automática responde 403 sin
+plan Enterprise+ y 501 con él.
+
+**Planes con efecto** (D-018):
+
+| Situación | Qué se bloquea | Qué NO se bloquea nunca |
+|---|---|---|
+| Casas por encima del límite | Dar de alta otra casa (409), en las tres puertas | Leer, reportes, tickets |
+| Prueba vencida o cuenta suspendida | Altas de casa, inquilino, proveedor, gasto y cotización (403) | Leer, resolver tickets, descargar y generar el paquete fiscal, **que un inquilino reporte una avería** |
+
+- El reloj de 90 días arranca al dar de alta la **primera casa**, no al crear la cuenta.
+- `PLAN_LIMITS_ENFORCED=false` apaga los bloqueos comerciales (nunca el aislamiento) y deja
+  una fila en la bitácora por cada alta que habría bloqueado.
+- **«Plan y cuenta»** (`/owner/cuenta`): plan, uso frente al límite, días de prueba y qué
+  pasa al terminar. Sin precios.
+- **«Cuentas y planes»** (`/admin/cuentas`): único escritor de `accounts.plan`, con nota
+  obligatoria y evento en el historial. Extender la prueba solo hacia adelante y hasta 180 días.
+
+> ⚠️ **Un propietario dado de alta desde ahora nace en prueba, con una sola casa.** Para darle
+> más, hay que asignarle plan en «Cuentas y planes». Los propietarios que ya existían quedaron
+> en `enterprise_plus` sin reloj (D-020) y no notan nada.
+
+**Lo que quedó fuera de E14**, del diseño del área A: alta de cuentas vacías, mover usuarios
+entre cuentas, transferir casas entre cuentas desde pantalla, «solicitar cambio de plan» y la
+banda de aviso en todas las páginas.
+
+`tests/test_e14.py`: 139 comprobaciones. Suite completa: **712 en 17 suites**. Ensayo de
+migración contra la base real: pasa, idempotente, hash del original sin cambios.
+
+**Con E14 termina la construcción de la Fase 2.1.** Lo que queda son decisiones del CEO
+(D-017, D-025 a D-030) y dependencias externas (correo, Legal).
 
 ### 1.2 El sitio público enlaza a un host caído
 

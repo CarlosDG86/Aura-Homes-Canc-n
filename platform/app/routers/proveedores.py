@@ -34,6 +34,7 @@ from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 
 from .. import docstore
+from .. import cuentas
 from ..db import get_db
 from ..mockmode import (is_mock, reject_real_contact_in_text, reject_tax_id_in_mock,
                         template_context, validate_mock_optional_email,
@@ -140,6 +141,7 @@ def proveedores_submit(request: Request, db: Session = Depends(get_db),
         reject_real_contact_in_text(notes, "la nota del proveedor")
 
         if accion == "crear":
+            cuentas.exigir_escritura(db, request, user)
             p = Provider(account_id=cuenta, created_by_user_id=user.id)
             db.add(p)
         else:

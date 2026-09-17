@@ -6,7 +6,10 @@
     <h1 class="page-title">Año fiscal {{ anio }}</h1>
     <p class="muted">Tus gastos organizados para {{ "el SAT" if jurisdiccion == "MX" else ("el IRS" if jurisdiccion == "US" else "el SAT y el IRS") }}.</p>
   </div>
-  <a class="btn btn-primary" href="/owner/fiscal/reporte?anio={{ anio }}">Descargar CSV</a>
+  <div class="acciones-cabecera">
+    <a class="btn btn-ghost" href="/owner/fiscal/reporte?anio={{ anio }}">Descargar CSV</a>
+    <a class="btn btn-primary" href="/owner/fiscal/exportar?anio={{ anio }}">Paquete para el contador</a>
+  </div>
 </div>
 
 {% if flash %}

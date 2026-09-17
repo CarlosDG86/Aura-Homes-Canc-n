@@ -933,3 +933,27 @@ tbody tr:hover td { background: var(--surface-soft); }
 .photo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: .6rem; margin-bottom: 1rem; }
 .photo-grid img { width: 100%; border-radius: 12px; border: 1px solid var(--border); display: block; }
 input[type="file"] { background: var(--white); padding: .55rem; }
+
+/* --- Exportación, cotizaciones y planes (E14) ---------------------------- */
+.acciones-cabecera { display: flex; gap: .5rem; flex-wrap: wrap; }
+.acciones-fila { white-space: nowrap; }
+.acciones-fila .inline-form + .inline-form { margin-left: .35rem; }
+.btn-sm { min-height: 34px; padding: .3rem .8rem; font-size: .82rem; }
+.export-fotos { margin: 1rem 0; }
+.export-fotos .checkbox-field { margin: 0 0 .2rem; }
+.badge-aviso { background: var(--warn-bg); color: var(--warn-fg); }
+.badge-cotizacion-registrada { background: var(--sand-deep); color: var(--ink); }
+.badge-cotizacion-aprobada { background: var(--teal-tint); color: var(--teal); }
+.badge-cotizacion-rechazada { background: var(--surface-soft); color: var(--text-muted); text-decoration: line-through; }
+.lista-plan { list-style: none; margin: .4rem 0 0; padding: 0; }
+.lista-plan li { padding: .45rem 0 .45rem 1.6rem; border-bottom: 1px solid var(--border); position: relative; }
+.lista-plan li:last-child { border-bottom: none; }
+.lista-plan li.si::before { content: "✓"; position: absolute; left: .2rem; color: var(--teal); font-weight: 700; }
+.lista-plan li.no { color: var(--text-muted); }
+.lista-plan li.no::before { content: "–"; position: absolute; left: .3rem; }
+.cuenta-sin-plan { border-color: #EFDCB8; }
+@media (max-width: 860px) {
+  .acciones-cabecera { width: 100%; }
+  .acciones-cabecera .btn { flex: 1; }
+  .acciones-fila { white-space: normal; }
+}

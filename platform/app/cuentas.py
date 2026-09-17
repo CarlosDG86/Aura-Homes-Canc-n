@@ -159,3 +159,164 @@ def sincronizar_cuenta_con_duenio(db, prop) -> bool:
         prop.account_id = destino
         return True
     return False
+
+
+# --- Planes con efecto (E14 · D-018, AREA_A §4.6–4.8) ------------------------
+#
+# Regla en una línea: los límites se aplican al CREAR, nunca al LEER. Ninguna
+# función de aquí oculta, archiva ni borra nada; lo peor que hacen es negarse
+# a que la cartera crezca.
+
+
+def limites_activos() -> bool:
+    """`PLAN_LIMITS_ENFORCED`, encendida por omisión.
+
+    Solo puede volver el sistema **más permisivo en lo comercial**. Nunca toca
+    el aislamiento: apagarla no hace que nadie vea nada ajeno. Existe para que
+    un fallo en esta lógica no deje al CEO sin poder dar de alta una casa.
+    """
+    import os
+
+    return os.environ.get("PLAN_LIMITS_ENFORCED", "true").strip().lower() \
+        not in {"0", "false", "no"}
+
+
+def _ahora():
+    from datetime import datetime, timezone
+
+    # Ingenua en UTC: así vuelve SQLite y así se compara sin sorpresas.
+    return datetime.now(timezone.utc).replace(tzinfo=None)
+
+
+def _ingenua(valor):
+    return valor.replace(tzinfo=None) if valor is not None and valor.tzinfo else valor
+
+
+def propiedades_usadas(db, cuenta_id) -> int:
+    from .models import Property
+
+    if cuenta_id is None:
+        return 0
+    return db.query(Property).filter(Property.account_id == cuenta_id).count()
+
+
+def estado_cuenta(db, cuenta) -> dict:
+    """Todo lo que la pantalla «Mi cuenta» y los bloqueos necesitan saber.
+
+    Devuelve un diccionario plano, nunca el objeto del ORM, para que una
+    plantilla no pueda tocar columnas que no debe.
+    """
+    from . import plans
+
+    if cuenta is None:
+        return {"tiene_cuenta": False, "plan": None, "etiqueta_plan": "Sin cuenta",
+                "estado": None, "usadas": 0, "limite": None, "puede_crecer": True,
+                "prueba_vencida": False, "dias_restantes": None,
+                "puede_escribir": True, "motivo": "", "plan_sin_asignar": False}
+
+    plan = plans.normalizar_plan(cuenta.plan)
+    estado = plans.normalizar_estado(cuenta.status)
+    usadas = propiedades_usadas(db, cuenta.id)
+    limite = plans.propiedades_max(cuenta)
+
+    fin = _ingenua(cuenta.trial_ends_at)
+    vencida = plan == plans.PLAN_TRIAL and fin is not None and _ahora() >= fin
+    dias = None
+    if plan == plans.PLAN_TRIAL and fin is not None:
+        dias = max(0, (fin - _ahora()).days)
+
+    motivo = ""
+    puede_escribir = True
+    if estado != plans.ESTADO_ACTIVA:
+        puede_escribir = False
+        motivo = (f"La cuenta está {estado}. Puedes consultar todo y descargar tu "
+                  f"exportación fiscal, pero no dar de alta nada nuevo.")
+    elif vencida:
+        puede_escribir = False
+        motivo = ("Tu prueba de 90 días terminó. Todo sigue visible y descargable, "
+                  "y tus inquilinos pueden seguir reportando averías; para dar de "
+                  "alta algo nuevo hace falta elegir un plan.")
+
+    puede_crecer = puede_escribir and (limite is None or usadas < limite)
+    if puede_escribir and not puede_crecer:
+        motivo = (f"Tienes {usadas} propiedad(es) y tu plan permite {limite}. "
+                  f"No puedes añadir más; nada de lo que ya tienes se oculta.")
+
+    return {"tiene_cuenta": True, "plan": plan, "etiqueta_plan": plans.etiqueta(plan),
+            "estado": estado, "usadas": usadas, "limite": limite,
+            "puede_crecer": puede_crecer, "prueba_vencida": vencida,
+            "dias_restantes": dias, "puede_escribir": puede_escribir,
+            "motivo": motivo, "plan_sin_asignar": cuenta.plan_assigned_at is None}
+
+
+def _omitir_o_bloquear(db, request, actor, codigo: int, motivo: str,
+                       accion: str, cuenta_id) -> None:
+    from fastapi import HTTPException
+
+    if not limites_activos():
+        # La excepción no es invisible ni gratuita: queda una fila por cada
+        # alta que se habría bloqueado.
+        audit(db, request, "plan.limite_omitido", actor=actor,
+              object_type="account", object_id=cuenta_id, meta=accion)
+        return
+    raise HTTPException(status_code=codigo, detail=motivo)
+
+
+def exigir_cupo_de_propiedad(db, request, cuenta, actor=None) -> None:
+    """409 si la cuenta no puede sumar una casa más.
+
+    Se llama en las TRES puertas de alta. Un límite que cubre una sola puerta
+    no es un límite. Va después de `OWNER_PROPERTY_MANAGE_ENABLED`: al revés,
+    el mensaje no correspondería.
+    """
+    if cuenta is None:
+        return
+    est = estado_cuenta(db, cuenta)
+    if est["puede_crecer"]:
+        return
+    _omitir_o_bloquear(db, request, actor, 409 if est["puede_escribir"] else 403,
+                       est["motivo"], "alta_propiedad", cuenta.id)
+
+
+def exigir_escritura(db, request, user) -> None:
+    """403 si la cuenta está suspendida, cerrada o con la prueba vencida.
+
+    Para las altas del día 91: inquilino, proveedor, gasto, cotización. **No**
+    se llama al leer, al resolver un ticket, al descargar documentos ni al
+    exportar, y jamás en la ruta con la que un inquilino reporta una avería:
+    una fuga de agua no sabe nada de suscripciones.
+    """
+    cuenta = cuenta_de(db, user)
+    if cuenta is None:
+        return
+    est = estado_cuenta(db, cuenta)
+    if est["puede_escribir"]:
+        return
+    _omitir_o_bloquear(db, request, user, 403, est["motivo"], "escritura", cuenta.id)
+
+
+def arrancar_prueba_si_toca(db, cuenta, prop) -> bool:
+    """Arranca el reloj de 90 días al pasar de 0 a 1 propiedad. Devuelve si arrancó.
+
+    El reloj está atado a la casa, no al alta de la cuenta: una cuenta vacía no
+    tiene nada que caducar. Las tres columnas se escriben juntas y
+    `trial_ends_at` se **materializa**, para que cambiar la constante mañana no
+    mueva la fecha de nadie.
+    """
+    from datetime import timedelta
+
+    from . import plans
+
+    if cuenta is None or prop is None:
+        return False
+    if plans.normalizar_plan(cuenta.plan) != plans.PLAN_TRIAL:
+        return False
+    if cuenta.trial_started_at is not None:
+        return False
+    ahora = _ahora()
+    dias = min(int(cuenta.trial_days or plans.TRIAL_DIAS_POR_OMISION),
+               plans.TRIAL_DIAS_MAXIMO)
+    cuenta.trial_started_at = ahora
+    cuenta.trial_ends_at = ahora + timedelta(days=dias)
+    cuenta.trial_property_id = prop.id
+    return True

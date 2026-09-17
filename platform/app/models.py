@@ -576,6 +576,92 @@ class FiscalYearClosure(Base):
     )
 
 
+class TicketQuote(Base):
+    """Cotización de un proveedor para un ticket (E14 · punto 7.4 del CEO).
+
+    Hoy se **registra a mano**: el propietario teclea lo que le pasaron por
+    teléfono o WhatsApp. Eso no es infraestructura especulativa — comparar dos
+    precios antes de aprobar es lo que un propietario con veinte casas hace el
+    lunes, exista o no un agente de IA detrás.
+
+    **Aprobar no notifica al proveedor, no agenda visita, no cambia el estado
+    del ticket y no crea ningún pagadero.** El texto del CEO se corta
+    exactamente ahí («Si el owner aprueba…») y no se inventa el final.
+
+    Por eso `status` es VARCHAR y no un Enum: cuando el CEO cierre la frase,
+    ampliar la máquina de estados no exigirá tocar la base ni arriesgará la
+    lectura del ORM.
+    """
+
+    __tablename__ = "ticket_quotes"
+
+    id = Column(Integer, primary_key=True)
+    account_id = Column(Integer, nullable=False, index=True)
+    ticket_id = Column(Integer, ForeignKey("maintenance_tickets.id"),
+                       nullable=False, index=True)
+    provider_id = Column(Integer, nullable=True)
+    #: Instantánea del nombre: la cotización tiene que poder decir de quién era
+    #: aunque el proveedor se borre después.
+    provider_name_snapshot = Column(String(160), nullable=False)
+    status = Column(String(20), nullable=False, default="registrada",
+                    server_default="registrada")
+    #: `manual` hoy. `agente` el día que exista el flujo del 7.4.
+    source = Column(String(20), nullable=False, default="manual",
+                    server_default="manual")
+    amount = Column(Numeric(14, 2), nullable=True)
+    currency = Column(String(3), nullable=True, default="MXN")
+    valid_until = Column(Date, nullable=True)
+    scope_notes = Column(Text, nullable=True)
+    attachment_id = Column(Integer, nullable=True)
+    requested_at = Column(DateTime, nullable=True)
+    responded_at = Column(DateTime, nullable=True)
+    decided_at = Column(DateTime, nullable=True)
+    requested_by_user_id = Column(Integer, nullable=True)
+    decided_by_user_id = Column(Integer, nullable=True)
+    created_at = Column(DateTime, server_default=func.now())
+
+    __table_args__ = (Index("ix_ticket_quotes_ticket", "ticket_id"),)
+
+
+class FiscalExport(Base):
+    """Un paquete de exportación generado (E14 · D-015).
+
+    «Auditors View» es **esto**: un archivo que el propietario descarga y le
+    entrega a su contador. No hay rol de auditor ni acceso de terceros — eso
+    abriría una superficie nueva sobre datos de inquilinos y obligaría a
+    rehacer las comprobaciones de aislamiento.
+
+    `sha256` es lo que permite al contador demostrar que **lo que él recibió**
+    no cambió. Es la única garantía real que se puede dar: el cierre de año es
+    un control de la aplicación, no inmutabilidad criptográfica.
+    """
+
+    __tablename__ = "fiscal_exports"
+
+    id = Column(Integer, primary_key=True)
+    account_id = Column(Integer, nullable=True, index=True)
+    owner_user_id = Column(Integer, nullable=False, index=True)
+    tax_year = Column(Integer, nullable=False)
+    #: NULL = el paquete cubre toda la cartera.
+    property_id = Column(Integer, nullable=True)
+    stored_path = Column(String, nullable=False)
+    bytes = Column(Integer, nullable=False)
+    sha256 = Column(String(64), nullable=False)
+    #: Nace en False siempre. Marcarlo exige una pantalla intermedia y queda
+    #: en la bitácora: son fotos del interior de la vivienda de un inquilino.
+    includes_ticket_photos = Column(Boolean, nullable=False, default=False,
+                                    server_default="0")
+    expense_count = Column(Integer, nullable=True)
+    receipt_count = Column(Integer, nullable=True)
+    missing_fx_count = Column(Integer, nullable=True)
+    excluded_other_mode_count = Column(Integer, nullable=True)
+    catalog_version = Column(String(16), nullable=True)
+    data_mode = Column(String(8), nullable=False, default="mock",
+                       server_default="mock")
+    created_by_user_id = Column(Integer, nullable=True)
+    created_at = Column(DateTime, server_default=func.now())
+
+
 class OutboxEmail(Base):
     """Todo correo que la plataforma intenta enviar.
 

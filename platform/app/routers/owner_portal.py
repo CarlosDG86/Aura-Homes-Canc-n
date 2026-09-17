@@ -20,7 +20,7 @@ import csv
 import io
 import os
 import secrets
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from typing import List, Optional
 
 from fastapi import APIRouter, Depends, Form, HTTPException, Request
@@ -29,6 +29,7 @@ from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 
 from ..auth import hash_password
+from .. import cuentas
 from ..db import get_db
 from ..email_utils import send_temp_password_email
 from ..mockmode import (
@@ -238,11 +239,19 @@ def ticket_detail(ticket_id: int, request: Request, db: Session = Depends(get_db
         Document.ticket_id == ticket.id).order_by(Document.id).all()
     reporter = db.query(User).filter(User.id == ticket.reported_by_user_id).first()
     prop = db.query(Property).filter(Property.id == ticket.property_id).first()
+    from .. import plans
+    from ..models import TicketQuote
+    cotizaciones = (db.query(TicketQuote).filter(TicketQuote.ticket_id == ticket.id)
+                    .order_by(TicketQuote.id).all())
+    # Solo cosmético: decide si se pinta el botón. El control real está en la
+    # ruta, que vuelve a comprobar el plan.
+    feat = plans.derechos_de(cuentas.cuenta_de(db, user))
     return templates.TemplateResponse(
         request=request, name="owner_ticket_detail.html",
         context=_ctx(user, request, active='tickets', **_nav_badges(db, user), ticket=ticket, events=events, photos=photos,
                      fotos_propietario=fotos_propietario, proveedores=proveedores,
                      proveedor=proveedor, documentos=documentos,
+                     cotizaciones=cotizaciones, feat=feat, hoy=date.today().isoformat(),
                      reporter=reporter, prop=prop, statuses=list(TicketStatusEnum),
                      assignables=[u for u in scoped_users(db, user).all()],
                      assigned=db.query(User).filter(
@@ -383,6 +392,9 @@ def create_tenant(request: Request, db: Session = Depends(get_db),
     # Control clave (DESIGN.md §11): la propiedad debe ser suya. Si viniera
     # manipulada en el formulario, esto lanza 404 antes de crear nada.
     prop = assert_can_assign_property(db, user, property_id)
+    # Día 91 o cuenta suspendida: dar de alta inquilinos es crecer. Va después
+    # del aislamiento, para que un 403 no confirme que existe una casa ajena.
+    cuentas.exigir_escritura(db, request, user)
 
     addr = (email or "").strip().lower()
     validate_mock_email(addr)   # en modo pruebas, solo dominios de prueba
@@ -404,7 +416,6 @@ def create_tenant(request: Request, db: Session = Depends(get_db),
     db.flush()
     # El inquilino entra en la cuenta de su casero, que es la de la casa donde
     # va a vivir. Nunca estrena una propia.
-    from .. import cuentas
     cuentas.asegurar_cuenta_de_usuario(db, tenant, creado_por=user)
     db.commit()
     db.refresh(tenant)

@@ -39,6 +39,7 @@
           <div class="nav-group-title">Personas</div>
           <a class="nav-item{% if active == 'owners' %} is-active{% endif %}" href="/admin#owners">Propietarios</a>
           <a class="nav-item{% if active == 'users' %} is-active{% endif %}" href="/admin#users">Usuarios</a>
+          <a class="nav-item{% if active == 'cuentas' %} is-active{% endif %}" href="/admin/cuentas">Cuentas y planes</a>
         </div>
         <div class="nav-group">
           <div class="nav-group-title">Pagos</div>
@@ -64,6 +65,7 @@
           <div class="nav-group-title">Dinero</div>
           <a class="nav-item{% if active == 'gastos' %} is-active{% endif %}" href="/owner/gastos">Gastos</a>
           <a class="nav-item{% if active == 'fiscal' %} is-active{% endif %}" href="/owner/fiscal">Año fiscal</a>
+          <a class="nav-item{% if active == 'exportar' %} is-active{% endif %}" href="/owner/fiscal/exportaciones">Paquetes fiscales</a>
         </div>
         <div class="nav-group">
           <div class="nav-group-title">Inquilinos</div>
@@ -99,6 +101,7 @@
           <a class="nav-item{% if active == 'profile' %} is-active{% endif %}" href="/inquilino/perfil">Mis datos</a>
         {% elif role == 'owner' %}
           <a class="nav-item{% if active == 'profile' %} is-active{% endif %}" href="/owner/perfil">Mis datos</a>
+          <a class="nav-item{% if active == 'cuenta' %} is-active{% endif %}" href="/owner/cuenta">Plan y cuenta</a>
         {% endif %}
         <a class="nav-item{% if active == 'sessions' %} is-active{% endif %}" href="/sesiones">Sesiones activas</a>
         <a class="nav-item nav-item-quiet" href="/logout">Cerrar sesión</a>

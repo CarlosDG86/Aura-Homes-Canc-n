@@ -109,6 +109,89 @@
   <p class="hint">Asignarlo es una anotación tuya: no le llega nada ni entra a la plataforma.</p>
 </section>
 
+{# --- Cotizaciones (punto 7.4, andamiaje). Aprobar solo deja constancia:
+     no avisa al proveedor ni cambia el reporte (D-017 omitida por el CEO). --- #}
+<section class="card" id="cotizaciones">
+  <h2>Cotizaciones</h2>
+  {% if cotizaciones %}
+  <table>
+    <thead><tr><th>Proveedor</th><th>Importe</th><th>Vigencia</th><th>Estado</th><th></th></tr></thead>
+    <tbody>
+      {% for q in cotizaciones %}
+      <tr>
+        <td>{{ q.provider_name_snapshot }}
+          {% if q.scope_notes %}<div class="meta">{{ q.scope_notes }}</div>{% endif %}</td>
+        <td>{{ q.amount if q.amount is not none else "—" }} {{ q.currency or "" }}</td>
+        <td>{{ q.valid_until.strftime('%d/%m/%Y') if q.valid_until else "—" }}</td>
+        <td><span class="badge badge-cotizacion-{{ q.status }}">{{ q.status }}</span></td>
+        <td class="acciones-fila">
+          {% if q.status == 'registrada' %}
+          <form method="post" action="/owner/tickets/{{ ticket.id }}/cotizaciones" class="inline-form">
+            {{ csrf_input(request) }}
+            <input type="hidden" name="cotizacion_id" value="{{ q.id }}">
+            <button class="btn btn-primary btn-sm" name="accion" value="aprobar" type="submit">Aprobar</button>
+          </form>
+          {% endif %}
+          {% if q.status != 'rechazada' %}
+          <form method="post" action="/owner/tickets/{{ ticket.id }}/cotizaciones" class="inline-form">
+            {{ csrf_input(request) }}
+            <input type="hidden" name="cotizacion_id" value="{{ q.id }}">
+            <button class="btn-ghost-inline" name="accion" value="rechazar" type="submit">Rechazar</button>
+          </form>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="muted">Registra aquí los precios que te pasen para compararlos antes de decidir.</p>
+  {% endif %}
+
+  <form method="post" action="/owner/tickets/{{ ticket.id }}/cotizaciones">
+    {{ csrf_input(request) }}
+    <input type="hidden" name="accion" value="registrar">
+    <div class="form-grid form-grid-2">
+      <div>
+        <label for="cq-prov">Proveedor</label>
+        <select id="cq-prov" name="proveedor_id">
+          <option value="">— Otro (escribe el nombre) —</option>
+          {% for p in proveedores %}<option value="{{ p.id }}">{{ p.name }}</option>{% endfor %}
+        </select>
+      </div>
+      <div>
+        <label for="cq-nombre">Nombre, si no está en la lista</label>
+        <input type="text" id="cq-nombre" name="proveedor_nombre" maxlength="160">
+      </div>
+      <div>
+        <label for="cq-monto">Importe</label>
+        <input type="text" id="cq-monto" name="monto" inputmode="decimal" required placeholder="4200.00">
+      </div>
+      <div>
+        <label for="cq-moneda">Moneda</label>
+        <select id="cq-moneda" name="moneda"><option>MXN</option><option>USD</option></select>
+      </div>
+      <div>
+        <label for="cq-vig">Válida hasta</label>
+        <input type="date" id="cq-vig" name="vigencia" min="{{ hoy }}">
+      </div>
+      <div>
+        <label for="cq-alc">Qué incluye</label>
+        <input type="text" id="cq-alc" name="alcance" maxlength="2000" placeholder="Material y mano de obra">
+      </div>
+    </div>
+    <button class="btn btn-primary" type="submit">Registrar cotización</button>
+  </form>
+
+  {% if feat.cotizacion_automatica %}
+  <form method="post" action="/owner/tickets/{{ ticket.id }}/cotizaciones/solicitar" class="inline-form">
+    {{ csrf_input(request) }}
+    <button class="btn btn-ghost" type="submit">Pedir cotizaciones automáticamente</button>
+  </form>
+  {% endif %}
+  <p class="hint">Aprobar deja constancia en el historial. No le avisa al proveedor ni cambia el estado del reporte.</p>
+</section>
+
 {# --- Evidencia del trabajo (puntos 6.1 y 6.2) --- #}
 <section class="card">
   <h2>Fotos del trabajo</h2>

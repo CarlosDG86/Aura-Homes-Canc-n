@@ -12,9 +12,10 @@ admin**: la capacidad de admin de verlo todo vive en `admin.py`, no aquí.
 """
 from typing import List
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
 
+from .. import cuentas
 from ..auth import require_role
 from ..db import get_db
 from ..mockmode import owner_property_manage_enabled
@@ -52,7 +53,8 @@ def list_my_properties(db: Session = Depends(get_db), current_user: User = Depen
 
 @router.post("/properties", response_model=PropertyOut, status_code=status.HTTP_201_CREATED)
 def create_my_property(
-    payload: PropertyIn, db: Session = Depends(get_db), current_user: User = Depends(_owner_or_admin)
+    payload: PropertyIn, request: Request, db: Session = Depends(get_db),
+    current_user: User = Depends(_owner_or_admin)
 ):
     _require_manage_enabled(current_user)
     # owner_id sale de la sesión, nunca del payload (DESIGN.md §11): si viniera
@@ -61,8 +63,14 @@ def create_my_property(
     data.pop("owner_id", None)
     # La cuenta sale de la sesión por el mismo motivo que el dueño: es la
     # frontera entre clientes y no puede venir del cliente.
+    # Límite del plan DESPUÉS de la bandera del CEO (AREA_A §4.6): al revés,
+    # quien no puede dar de alta casas leería un mensaje sobre su plan.
+    cuenta = cuentas.cuenta_de(db, current_user)
+    cuentas.exigir_cupo_de_propiedad(db, request, cuenta, actor=current_user)
     prop = Property(owner_id=current_user.id, account_id=current_user.account_id, **data)
     db.add(prop)
+    db.flush()
+    cuentas.arrancar_prueba_si_toca(db, cuenta, prop)
     db.commit()
     db.refresh(prop)
     return prop

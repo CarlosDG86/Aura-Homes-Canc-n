@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}Mi cuenta — Aura Homes Cancún{% endblock %}
+{% block content %}
+<div class="section-head">
+  <div>
+    <h1 class="page-title">Mi cuenta</h1>
+    <p class="muted">{{ cuenta_nombre or "Tu cuenta" }} · plan {{ est.etiqueta_plan }}</p>
+  </div>
+</div>
+
+{% if flash %}
+<div class="alert alert-{{ 'error' if flash.kind == 'error' else 'success' }}">{{ flash.message }}</div>
+{% endif %}
+
+{% if est.motivo %}
+<div class="alert alert-warning">{{ est.motivo }}</div>
+{% endif %}
+
+<div class="metrics">
+  <div class="metric">
+    <div class="metric-label">Plan</div>
+    <div class="metric-value">{{ est.etiqueta_plan }}</div>
+    <div class="metric-def">Estado: {{ est.estado or "—" }}.</div>
+  </div>
+  <div class="metric">
+    <div class="metric-label">Propiedades</div>
+    <div class="metric-value">{{ est.usadas }}{% if est.limite is not none %} / {{ est.limite }}{% endif %}</div>
+    <div class="metric-def">{{ "Sin tope." if est.limite is none else "Usadas frente al límite del plan." }}</div>
+  </div>
+  {% if est.plan == "trial" %}
+  <div class="metric">
+    <div class="metric-label">Prueba</div>
+    <div class="metric-value">{{ est.dias_restantes if est.dias_restantes is not none else "90" }} días</div>
+    <div class="metric-def">
+      {% if fin_prueba %}Termina el {{ fin_prueba.strftime('%d/%m/%Y') }}.
+      {% else %}Empieza al dar de alta tu primera casa.{% endif %}
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+<div class="card">
+  <h2>Qué incluye</h2>
+  <ul class="lista-plan">
+    {% for x in incluidos %}<li class="si">{{ x }}</li>{% endfor %}
+    {% for etiqueta, tiene in derechos %}
+    <li class="{{ 'si' if tiene else 'no' }}">{{ etiqueta }}{% if not tiene %} <span class="meta">— no incluido</span>{% endif %}</li>
+    {% endfor %}
+  </ul>
+</div>
+
+<div class="card">
+  <h2>Qué pasa al terminar la prueba o superar el límite</h2>
+  <p>
+    Nada se borra ni se oculta. Sigues viendo y descargando todo, tus
+    inquilinos pueden seguir reportando averías y puedes resolverlas. Lo único
+    que se detiene es dar de alta cosas nuevas: casas, inquilinos, proveedores,
+    gastos y cotizaciones.
+  </p>
+  <p class="hint">Para cambiar de plan, escríbele a tu contacto de Aura.</p>
+</div>
+{% endblock %}

@@ -624,6 +624,13 @@ def sync_site_properties(
     reassigned = 0
     skipped = 0
     bloqueadas = 0
+    sin_cupo = 0
+    est = cuentas.estado_cuenta(db, cuenta_destino)
+    usadas = est["usadas"]
+    # `None` = sin tope, o límites apagados por `PLAN_LIMITS_ENFORCED`.
+    cupo = est["limite"] if cuentas.limites_activos() else None
+    if cupo is not None and not est["puede_escribir"]:
+        cupo = 0
     for ref in selected:
         entry = by_id.get(ref)
         if not entry:
@@ -647,17 +654,33 @@ def sync_site_properties(
             else:
                 updated += 1
         else:
-            db.add(Property(site_ref=ref, owner_id=owner.id,
-                            account_id=owner.account_id, **fields))
+            # Límite del plan fila por fila: nunca se aborta a medias. Se
+            # cuenta en local porque la sesión no hace autoflush y una consulta
+            # no vería las filas añadidas en esta misma vuelta.
+            if cupo is not None and usadas >= cupo:
+                sin_cupo += 1
+                continue
+            nueva = Property(site_ref=ref, owner_id=owner.id,
+                             account_id=owner.account_id, **fields)
+            db.add(nueva)
+            db.flush()
+            cuentas.arrancar_prueba_si_toca(db, cuenta_destino, nueva)
+            usadas += 1
             created += 1
     db.commit()
+    if sin_cupo:
+        audit(db, request, "plan.limite_sync", actor=actor, object_type="account",
+              object_id=cuenta_destino.id, meta=f"sin_cupo={sin_cupo}")
 
     parts = [f"{created} creada(s)", f"{updated} actualizada(s)", f"{reassigned} reasignada(s)"]
     if skipped:
         parts.append(f"{skipped} sin coincidencia en el sitio")
     if bloqueadas:
         parts.append(f"{bloqueadas} ya espejada(s) en otra cuenta, sin tocar")
-    _flash(request, "error" if bloqueadas else "success",
+    if sin_cupo:
+        parts.append(f"{sin_cupo} sin sincronizar: la cuenta «{cuenta_destino.name}» "
+                     f"está en su límite de propiedades")
+    _flash(request, "error" if (bloqueadas or sin_cupo) else "success",
            f"Sincronización con «{owner.name}»: " + ", ".join(parts) + ".")
     return RedirectResponse(url="/admin", status_code=302)
 

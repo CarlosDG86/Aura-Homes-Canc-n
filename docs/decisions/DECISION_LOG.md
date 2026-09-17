@@ -254,6 +254,27 @@ El resto de D-030 (los otros trece valores por defecto) sigue abierto.
 
 ---
 
+## D-017 · Pospuesta: E14 se construye sin la máquina de aprobación
+
+**Fecha:** 2026-09-16 · **Estado:** pospuesta por el CEO («omite el D-017 por ahora»)
+
+El texto del punto 7.4 se corta en *«If owner approves»*. En lugar de inventar el
+final, E14 entrega las cotizaciones **manuales** y deja que aprobar o rechazar
+**solo selle el estado** y escriba una línea en el historial del ticket.
+
+Aprobar **no** avisa al proveedor, **no** agenda visita, **no** cambia el estado
+del ticket, **no** asigna proveedor y **no** crea ningún pagadero. El diseño del
+área C proponía asignar el proveedor si el ticket no tenía uno; **no se hizo**,
+porque era justo la clase de efecto que D-017 tiene que decidir. `status` es texto
+y no Enum: cerrar la frase mañana no exige tocar la base.
+
+La cotización automática existe como ruta con cuatro cerrojos (plan Enterprise+,
+`QUOTES_AGENT_ENABLED`, agente con llave y presupuesto, `DATA_MODE=live` con
+autorización legal) y **en esta fase responde 501 aunque los cuatro estén
+abiertos**: no hay nada construido detrás y no se hace ninguna llamada saliente.
+
+---
+
 ## D-017 y D-025 a D-030 · Abiertas
 
 Quedan **siete** decisiones esperando al CEO, con opciones y recomendación en
@@ -263,7 +284,7 @@ Quedan **siete** decisiones esperando al CEO, con opciones y recomendación en
 
 | # | Qué falta | Bloquea |
 |---|---|---|
-| D-017 | Cómo termina el punto 7.4 («Si el owner aprueba…») | E14, la última etapa |
+| D-017 | Cómo termina el punto 7.4 («Si el owner aprueba…») | Ya no bloquea: E14 se construyó sin ella por decisión del CEO |
 
 Las otras seis (D-025 a D-030) no frenan la construcción: condicionan el paso a datos
 reales de inquilinos y proveedores, o son valores por defecto ya fijados que solo

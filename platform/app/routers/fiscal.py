@@ -37,7 +37,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 
-from .. import docstore, fiscal, fiscal_catalog
+from .. import cuentas, docstore, fiscal, fiscal_catalog
 from ..db import get_db
 from ..filtros_owner import escapar_csv
 from ..mockmode import is_mock, reject_real_contact_in_text, template_context
@@ -158,6 +158,7 @@ def gasto_nuevo(request: Request, db: Session = Depends(get_db)):
 def _crear_gasto(db, request, user, datos, archivo=None) -> Expense:
     """Alta común al formulario propio y al que cuelga de un ticket."""
     prop = get_owned_property_or_404(db, user, int(datos["property_id"]))
+    cuentas.exigir_escritura(db, request, user)
     cuenta = _cuenta_de(db, user)
 
     fecha = _fecha(datos.get("expense_date"), "la fecha del gasto")
