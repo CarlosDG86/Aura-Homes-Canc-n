@@ -10,6 +10,34 @@ Fecha de verificación del código: 2026-08-02
 
 ---
 
+## ⚠️ Segundo aviso de vigencia — 2026-10-04
+
+La Fase 2.1 **se construyó completa** (etapas E8 a E14) entre el 2026-09-08 y el 2026-10-04,
+en la rama `work/feedback-usuarios` y **sin publicar nada**. Lo que sigue describe el estado
+del 2026-08-02; el aviso de abajo corrige hasta el 2026-09-08. Lo que cambió después:
+
+| Dice o daba por hecho | Realidad al 2026-10-04 |
+|---|---|
+| Las tres rutas de `/api/auth/*` funcionan | **Retiradas** (E8). Devuelven 404 salvo que se encienda una bandera heredada. La sesión se resuelve en una sola función, `security.resolve_session_user` |
+| La frontera entre clientes es `Property.owner_id` | Es la **cuenta** (`accounts`), raíz de aislamiento desde E9 (D-013). `cuentas.py` es el único escritor de `account_id` |
+| 20 tablas en `models.py` | **31 tablas.** Nuevas: `accounts`, `account_plan_events`, `password_reset_tokens`, `outbox_emails`, `providers`, `expenses`, `fx_rates`, `fiscal_year_closures`, `ticket_quotes`, `fiscal_exports` |
+| `documents` es forma sin uso | En uso: comprobantes de ticket y de gasto, con `stored_path`, `sha256`, `expense_id` y borrado lógico |
+| El propietario no tiene panel propio | Tiene panel con ocho indicadores, filtros, libro de gastos, año fiscal, proveedores, paquete fiscal y pantalla de plan |
+| No hay planes | Hay cinco planes con efecto (E14): el límite de casas se aplica al **crear**, nunca al leer |
+| La suite tiene 10 archivos | **17 suites, 722 comprobaciones**, todas en verde |
+
+**Módulos nuevos de la aplicación**, por si hay que ubicarse rápido: `cuentas.py` (cuentas,
+límites y prueba), `plans.py` (matriz de planes, sin estado), `migrate.py` (migración
+idempotente y ensayo en seco), `fiscal.py` + `fiscal_catalog.py` (dinero y catálogo SAT/IRS),
+`exportacion.py` (paquete para el contador), `docstore.py` (comprobantes), `filtros_owner.py`
+(filtros y CSV), `strings/` (cadenas en español, D-014).
+
+**Dónde está escrito el detalle:** [`docs/PENDIENTES.md`](PENDIENTES.md) lleva el estado etapa
+por etapa, y [`docs/decisions/DECISION_LOG.md`](decisions/DECISION_LOG.md) el por qué de cada
+regla. Los reportes por departamento del 2026-10-04 están en [`docs/reports/`](reports/).
+
+---
+
 ## ⚠️ Aviso de vigencia — 2026-09-08
 
 **Este documento quedó desfasado y varias de sus afirmaciones ya no son ciertas.** Se conserva
