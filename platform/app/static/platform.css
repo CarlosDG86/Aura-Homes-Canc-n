@@ -618,7 +618,6 @@ code {
   font: inherit; font-size: 13px; font-weight: 600;
   color: var(--teal); cursor: pointer; border-radius: 8px;
 }
-.pw-toggle:hover { background: #eef4f0; }
 .pw-toggle:focus { outline: 2px solid var(--teal); outline-offset: 2px; }
 
 
@@ -881,7 +880,9 @@ tbody tr:hover td { background: var(--surface-soft); }
   background-size: 21px 21px;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235A625F' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M1.8 12S5.7 5 12 5s10.2 7 10.2 7-3.9 7-10.2 7S1.8 12 1.8 12z'/%3E%3Ccircle cx='12' cy='12' r='3'/%3E%3C/svg%3E");
 }
-.pw-toggle:hover { background-color: var(--sand-deep); }
+/* Sin reacción al pasar el cursor: el fondo que aparecía al rozarlo parecía
+   un botón a punto de hacer algo y distraía de escribir la contraseña. El
+   foco de teclado sí se marca — ahí es imprescindible saber dónde estás. */
 .pw-toggle:focus-visible { outline: 2px solid var(--turquoise); outline-offset: 1px; }
 /* Pulsado = la contraseña está a la vista: ojo tachado, en teal. */
 .pw-toggle[aria-pressed="true"] {

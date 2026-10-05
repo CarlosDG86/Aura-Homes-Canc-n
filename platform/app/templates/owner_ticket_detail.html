@@ -67,12 +67,25 @@
       <textarea name="body" rows="3" maxlength="2000"
         placeholder="Para resolver es obligatorio explicar qué se hizo."></textarea>
     </label>
+    {# El botón del estado que el reporte YA tiene no se pinta: pulsarlo no
+       haría nada y el servidor lo rechaza de todos modos. #}
+    {% set estado = ticket.status.value if ticket.status else 'open' %}
     <div class="actions">
       <button class="btn" name="accion" value="comentar" type="submit">Comentar</button>
+      {% if estado != 'in_progress' %}
       <button class="btn" name="accion" value="en_proceso" type="submit">Marcar en proceso</button>
+      {% endif %}
+      {% if estado != 'resolved' %}
       <button class="btn btn-primary" name="accion" value="resolver" type="submit">Resolver</button>
+      {% endif %}
+      {% if estado != 'open' %}
       <button class="btn" name="accion" value="reabrir" type="submit">Reabrir</button>
+      {% endif %}
     </div>
+    <p class="hint">
+      Estado actual: <strong>{{ estado }}</strong>.
+      {% if estado == 'in_progress' %}Ya está en proceso; cuando termines, resuélvelo con la nota de qué se hizo.{% endif %}
+    </p>
   </form>
 </section>
 

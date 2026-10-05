@@ -68,6 +68,39 @@ with TestClient(app) as c:
     check("detalle ajeno -> 404", ca.get(f"/owner/tickets/{TKB}").status_code == 404,
           f"({ca.get(f'/owner/tickets/{TKB}').status_code})")
 
+    print("\n== 1b. Un estado no se repite (observacion del CEO) ==")
+    t = tok(ca, f"/owner/tickets/{TKA}")
+    r = ca.post(f"/owner/tickets/{TKA}/actualizar",
+                data={"accion": "en_proceso", "body": "", "csrf_token": t},
+                follow_redirects=False)
+    check("marcar en proceso la primera vez -> 302", r.status_code == 302, f"({r.status_code})")
+    _d = SessionLocal()
+    _n = _d.query(TicketEvent).filter(TicketEvent.ticket_id == TKA).count()
+    _d.close()
+    t = tok(ca, f"/owner/tickets/{TKA}")
+    r = ca.post(f"/owner/tickets/{TKA}/actualizar",
+                data={"accion": "en_proceso", "body": "otra vez", "csrf_token": t},
+                follow_redirects=False)
+    check("repetirlo vuelve a la ficha", r.status_code == 302, f"({r.status_code})")
+    _d = SessionLocal()
+    check("y NO anade otra linea al historial",
+          _d.query(TicketEvent).filter(TicketEvent.ticket_id == TKA).count() == _n)
+    _d.close()
+    cuerpo = ca.get(f"/owner/tickets/{TKA}").text
+    check("avisa de que ya esta en proceso", "ya está en proceso" in cuerpo)
+    check("y dice que la nota no se guardo", "no se guardó" in cuerpo)
+    check("el boton de ese estado ya no se pinta", 'value="en_proceso"' not in cuerpo)
+    t = tok(ca, f"/owner/tickets/{TKA}")
+    ca.post(f"/owner/tickets/{TKA}/actualizar",
+            data={"accion": "reabrir", "body": "", "csrf_token": t}, follow_redirects=False)
+    _d = SessionLocal()
+    check("volver a abierto si se acepta",
+          _d.query(MaintenanceTicket).filter(
+              MaintenanceTicket.id == TKA).first().status == TicketStatusEnum.open)
+    _d.close()
+    check("y entonces desaparece el boton de reabrir",
+          'value="reabrir"' not in ca.get(f"/owner/tickets/{TKA}").text)
+
     print("\n== 2. Resolver exige nota ==")
     t = tok(ca, f"/owner/tickets/{TKA}")
     r = ca.post(f"/owner/tickets/{TKA}/actualizar",
@@ -98,6 +131,15 @@ with TestClient(app) as c:
     check("nota guardada", tt.resolution_notes == "Se cambio el empaque")
     check("evento en historial",
           db.query(TicketEvent).filter(TicketEvent.ticket_id == TKA).count() >= 1)
+    r = ca.post(f"/owner/tickets/{TKA}/actualizar",
+                data={"accion": "resolver", "body": "de nuevo",
+                      "csrf_token": tok(ca, f"/owner/tickets/{TKA}")}, follow_redirects=False)
+    db2 = SessionLocal()
+    t2 = db2.query(MaintenanceTicket).filter(MaintenanceTicket.id == TKA).first()
+    check("resolver un ticket ya resuelto no reescribe la nota",
+          t2.resolution_notes == "Se cambio el empaque")
+    db2.close()
+    check("y lo avisa", "ya está resuelto" in ca.get(f"/owner/tickets/{TKA}").text)
     db.close()
 
     print("\n== 3. No se puede tocar un ticket ajeno ==")

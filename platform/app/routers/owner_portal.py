@@ -275,6 +275,22 @@ def ticket_update(ticket_id: int, request: Request, db: Session = Depends(get_db
     text = (body or "").strip()[:2000]
     prev = ticket.status.value if ticket.status else None
 
+    # Un cambio de estado al estado que ya tiene no es un cambio: se avisa y no
+    # se escribe nada. Antes se podía pulsar «Marcar en proceso» diez veces y
+    # el historial acumulaba diez líneas idénticas, que es justo lo que vuelve
+    # inútil un historial cuando hay que leerlo en una disputa.
+    YA_ESTA = {
+        "en_proceso": (TicketStatusEnum.in_progress, "ya está en proceso"),
+        "resolver": (TicketStatusEnum.resolved, "ya está resuelto"),
+        "reabrir": (TicketStatusEnum.open, "ya está abierto"),
+    }
+    if accion in YA_ESTA and ticket.status == YA_ESTA[accion][0]:
+        aviso = f"Este reporte {YA_ESTA[accion][1]}, no hacía falta volver a marcarlo."
+        if text:
+            aviso += " La nota que escribiste no se guardó: para añadirla al historial usa «Comentar»."
+        request.session["owner_flash"] = {"kind": "error", "message": aviso}
+        return RedirectResponse(url=f"/owner/tickets/{ticket_id}", status_code=302)
+
     if accion == "comentar":
         if text:
             db.add(TicketEvent(ticket_id=ticket.id, actor_user_id=user.id,
