@@ -1,6 +1,6 @@
 # Pendientes — prioridades para la próxima sesión
 
-**Actualizado:** 2026-09-16
+**Actualizado:** 2026-10-14
 **Estado general:** desarrollo local. La Fase 2.1 está **construida (E8–E14)** en la rama `work/feedback-usuarios`, sin publicar.
 
 ---
@@ -9,16 +9,41 @@
 
 | | Estado |
 |---|---|
-| Sitio público (Cloudflare Worker `aura-homes-cancun`) | 🟢 Arriba — verificado HTTP 200 el 2026-09-08 |
-| Plataforma (Fly `aura-homes-plataforma`) | 🔴 **No responde** — verificado HTTP 000 el 2026-09-08 |
+| Sitio público (Cloudflare Worker `aura-homes-cancun`) | 🟢 Arriba — verificado HTTP 200 el 2026-10-10 |
+| Plataforma (Fly `aura-homes-plataforma`) | 🔴 **No responde** — verificado HTTP 000 el 2026-10-10 |
+| Plataforma en local | 🟢 `http://127.0.0.1:8010`, base de simulación |
 | Respaldos automáticos | ⚫ Cancelados por el CEO |
-| Rama de trabajo | `work/feedback-usuarios`, creada desde `main` |
+| Suite de pruebas | 🟢 753 comprobaciones en 17 suites |
+| Rama de trabajo | `work/feedback-usuarios`, creada desde `main`, **sin publicar** |
 
 > ⚠️ Un `push` a `main` **republica el sitio público**: Cloudflare está conectado al
 > repositorio. Para trabajar sin publicar, usar una rama.
 
 > ⚠️ La rama `docs/architecture-and-phase2` está **9 commits atrasada y no contiene la suite de
 > pruebas**. No trabajar ahí.
+
+---
+
+## 0b. Pendientes de tu parte (CEO)
+
+Todo lo de esta tabla está **bloqueado esperándote a ti**, no a Desarrollo. Ordenado por
+cuánto desbloquea por unidad de esfuerzo tuyo.
+
+| # | Qué necesito de ti | Qué desbloquea | Esfuerzo tuyo |
+|---|---|---|---|
+| 1 | **Contratos de arrendamiento reales** (D-024): quién vive en cada casa, desde cuándo y renta mensual | Hoy el panel dice «Ocupación 0 %» porque hay 3 casas y 0 contratos. Es el indicador que pediste en el punto 2.1 | Una lista, 10 minutos |
+| 2 | **Registrar el dominio** `aurahomescancun.com` | El correo del sitio, el enlace de «olvidé mi contraseña» y la URL de la plataforma. Un solo trámite resuelve tres bloqueos | Un trámite con tarjeta |
+| 3 | **Buzón de correo de producción** con SPF y DKIM (D-023) | Recuperación de contraseña y alta de inquilinos. Es la única dependencia externa cuyo plazo no controlamos | Depende del punto 2 |
+| 4 | **Revisión de abogado** del descargo fiscal (D-027) y del aviso de privacidad | El paso a datos reales de inquilinos y proveedores. Mientras tanto todo vive en modo pruebas | Una consulta |
+| 5 | **Precio de cada plan** (D-019) | La página de precios y el documento comercial. La plataforma no guarda importes a propósito | Una decisión |
+| 6 | **Cómo termina el punto 7.4** (D-017): qué pasa cuando apruebas una cotización | Hoy aprobar solo deja constancia. Lo pospusiste; cuando lo cierres, ampliar la máquina de estados no exige tocar la base | Una frase |
+| 7 | **¿Se reactiva Fly?** | Es lo único que separa «pruebo yo en mi máquina» de «lo prueba alguien más». Hoy nadie fuera de tu computadora puede entrar | Una decisión |
+| 8 | **Qué hacemos con «Ingresar»** en el sitio público | 22 páginas llevan hoy a un error de navegador. El cambio está preparado y sin publicar | Una decisión + aprobar el push |
+| 9 | **D-011** nombre de la matriz y **D-012** dónde vive el demo | Material comercial | Dos decisiones |
+| 10 | **D-025 a D-030** (menos D-030a, ya cerrada) | Valores por defecto ya fijados que solo esperan tu visto bueno; ninguno frena la construcción | Revisión de una sentada |
+
+> **Nada de esto lo puede decidir Desarrollo por ti.** Donde hay una recomendación, está escrita
+> en el reporte del departamento correspondiente ([`docs/reports/`](reports/), 2026-10-14).
 
 ---
 
@@ -166,6 +191,10 @@ a la plataforma de Fly, que no responde. Quien pulse recibe un error del navegad
 
 Arreglo: cambiar `data/site.json` y reconstruir. **Requiere aprobación: republica el sitio.**
 
+Estado 2026-10-14: el CEO pidió **dejarlo preparado sin publicar**. Falta que elija entre
+apuntar a una página de «acceso por invitación» o quitar el menú hasta que la plataforma
+vuelva.
+
 ### 1.3 Cinco decisiones del CEO bloquean cuatro etapas
 
 [`docs/phase2.1/DECISIONES_PENDIENTES.md`](phase2.1/DECISIONES_PENDIENTES.md).
@@ -191,13 +220,21 @@ resuelve las dos cosas.
 Se puede enviar una contraseña **en claro** a una dirección real. Lo único que lo detiene hoy es
 que `SMTP_PASSWORD` está vacío. **Se activa al construir el punto 3.2.** Se corrige en E10.
 
-### 2.2 CI: las pruebas no corren solas
+### 2.2 ~~CI: las pruebas no corren solas~~ ✅ ARREGLADO (2026-10-14)
 
-El paso «Suite completa» se retiró del flujo de despliegue, y `test_migrate.py` conserva rutas
-absolutas de Windows que revientan en Linux. Además esa suite no imprime la línea `RESULTADO:`,
-así que sus 7 comprobaciones no suman al total.
+`test_migrate.py` ya no copia la base real desde una ruta absoluta de Windows: **fabrica una
+base vieja desde cero**, con el esquema anterior a E1 y filas dentro, y comprueba que arrancar
+encima no pierde ni una. Corre en cualquier máquina, imprime su línea `RESULTADO:` y sus **31
+comprobaciones** ya suman al total.
 
-A mano: `cd platform && python tests/run_all.py`
+Que una prueba automática abriera la base de producción era, además, un error de tecleo de
+distancia del desastre. El ensayo contra la base real sigue existiendo donde debe: como algo
+que una persona lanza a mano antes de arrancar en real (`python -m app.migrate --simular`).
+
+Y el trabajo «Sitio público» del flujo de publicación **ahora depende de las pruebas**. Antes
+corrían en paralelo: una suite en rojo no impedía nada y el sitio salía igual.
+
+Total hoy: **753 comprobaciones en 17 suites.** A mano: `cd platform && python tests/run_all.py`
 
 ### 2.3 Seis de siete fichas no son inventario real
 

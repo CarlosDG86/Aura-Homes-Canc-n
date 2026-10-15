@@ -21,6 +21,10 @@ concurrency:
 jobs:
   sitio:
     name: Sitio público
+    # El sitio NO se publica si la suite falla. Antes este trabajo corría en
+    # paralelo con las pruebas, así que una suite en rojo no impedía nada: el
+    # sitio salía igual y el único efecto era una marca roja que nadie miraba.
+    needs: pruebas
     runs-on: ubuntu-latest
     environment:
       name: github-pages
@@ -68,10 +72,12 @@ jobs:
         run: python -c "import app.main; print('La aplicación importa correctamente')"
 
       - name: Suite completa
-        # Las diez suites (261 comprobaciones): aislamiento entre propietarios,
-        # CSRF, sesiones, segundo factor, SSO, portal del inquilino y del
-        # propietario. Cada una levanta su propia base desechable, así que no
-        # tocan ningún dato real. Si algo falla, el despliegue no ocurre.
+        # 17 suites, 753 comprobaciones: aislamiento por cuenta, CSRF, sesiones,
+        # segundo factor, SSO, portal del inquilino y del propietario, proveedores,
+        # libro fiscal, paquete para el contador, cotizaciones y límites de plan.
+        # Cada suite levanta su propia base desechable y su propio directorio de
+        # archivos, así que no tocan ningún dato real. Si algo falla, no se
+        # publica ni el sitio ni la plataforma.
         working-directory: platform
         env:
           APP_ENV: dev
