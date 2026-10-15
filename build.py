@@ -7,7 +7,7 @@ DIST = os.path.join(ROOT, "dist")
 site = json.load(open(os.path.join(ROOT, "data/site.json"), encoding="utf-8"))
 props = json.load(open(os.path.join(ROOT, "data/properties.json"), encoding="utf-8"))
 B = site["brand"]
-ASSET_VER = "20260811"  # bump when dist/assets/css or js changes, to bust browser cache
+ASSET_VER = "20261014"  # bump when dist/assets/css or js changes, to bust browser cache
 LIVE = [p for p in props if not p.get("placeholder")]  # only real inventory renders on the live site
 LEGAL = site["legalPages"]  # placeholder privacy/terms pages — real copy swaps in here once Legal delivers it
 
@@ -69,20 +69,19 @@ def topbar(lang, page, prop=None, legal=None):
              f'<a data-nav="demo" href="{droot}demo.html" target="_blank" rel="noopener">DEMO</a></nav>')
     lang_tog = (f'<span class="lang"><a href="{es_url}" class="{"on" if lang=="es" else ""}">ES</a>'
                 f'<a href="{en_url}" class="{"on" if lang=="en" else ""}">EN</a></span>')
-    # Desplegable "Ingresar": dos accesos separados, propietario e inquilino.
-    # Sustituye al enlace directo de "Administración", que ya no aparece en el
-    # sitio público — el acceso de admin vive en una URL no enlazada
-    # (DESIGN.md §3). Se usa <details>/<summary> para que funcione con teclado
-    # y sin JavaScript.
-    plat = B["platformUrl"].rstrip("/").removesuffix("/login")
-    login_menu = (
-        f'<details class="login-menu"><summary>{t["login_menu"]}</summary>'
-        f'<div class="login-menu-items">'
-        f'<a href="{plat}/acceso/propietarios">{t["login_owner"]}</a>'
-        f'<a href="{plat}/acceso/inquilinos">{t["login_tenant"]}</a>'
-        f'</div></details>'
-    )
-    admin_link = login_menu
+    # "Ingresar" apunta a una página del propio sitio, no a la plataforma.
+    #
+    # Antes era un desplegable con dos enlaces —propietario e inquilino— que
+    # iban directos a `platformUrl`. Esa URL es la de Fly, que está suspendida:
+    # quien pulsaba recibía un error del navegador, en las 22 páginas. Un error
+    # de navegador no explica nada y no deja forma de contactar.
+    #
+    # La página de acceso sí: dice que la plataforma es por invitación, explica
+    # qué hacer según seas propietario o inquilino, y ofrece WhatsApp y correo.
+    # Cuando la plataforma vuelva a estar en línea, esa página pasa a enlazarla
+    # y el encabezado no se vuelve a tocar.
+    acceso_href = home + LEGAL["access"]["slug"][lang] + ".html"
+    admin_link = f'<a class="login-link" href="{acceso_href}">{t["login_menu"]}</a>'
     # WhatsApp button removed from the top bar per CEO request. The WhatsApp
     # contact channel still lives in the footer and the contact section /
     # sticky mobile bar — only the header button (next to the admin login) is

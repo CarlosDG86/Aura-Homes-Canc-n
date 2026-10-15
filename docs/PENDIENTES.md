@@ -38,7 +38,7 @@ cuánto desbloquea por unidad de esfuerzo tuyo.
 | 5 | **Precio de cada plan** (D-019) | La página de precios y el documento comercial. La plataforma no guarda importes a propósito | Una decisión |
 | 6 | **Cómo termina el punto 7.4** (D-017): qué pasa cuando apruebas una cotización | Hoy aprobar solo deja constancia. Lo pospusiste; cuando lo cierres, ampliar la máquina de estados no exige tocar la base | Una frase |
 | 7 | **¿Se reactiva Fly?** | Es lo único que separa «pruebo yo en mi máquina» de «lo prueba alguien más». Hoy nadie fuera de tu computadora puede entrar | Una decisión |
-| 8 | **Qué hacemos con «Ingresar»** en el sitio público | 22 páginas llevan hoy a un error de navegador. El cambio está preparado y sin publicar | Una decisión + aprobar el push |
+| 8 | **Aprobar el push** que publica el arreglo de «Ingresar» | Ya está preparado: el menú lleva a una página de «acceso por invitación» en vez de a un error. Solo falta publicarlo | Aprobar una orden |
 | 9 | **D-011** nombre de la matriz y **D-012** dónde vive el demo | Material comercial | Dos decisiones |
 | 10 | **D-025 a D-030** (menos D-030a, ya cerrada) | Valores por defecto ya fijados que solo esperan tu visto bueno; ninguno frena la construcción | Revisión de una sentada |
 
@@ -184,17 +184,24 @@ migración contra la base real: pasa, idempotente, hash del original sin cambios
 **Con E14 termina la construcción de la Fase 2.1.** Lo que queda son decisiones del CEO
 (D-017, D-025 a D-030) y dependencias externas (correo, Legal).
 
-### 1.2 El sitio público enlaza a un host caído
+### 1.2 El sitio público enlaza a un host caído — ⏸️ PREPARADO, SIN PUBLICAR (2026-10-14)
 
-El menú «Ingresar» ofrece «Soy Propietario» y «Soy Inquilino» en **22 páginas**, y ambos apuntan
-a la plataforma de Fly, que no responde. Quien pulse recibe un error del navegador.
+El menú «Ingresar» ofrecía «Soy Propietario» y «Soy Inquilino» en **22 páginas**, y ambos
+apuntaban a la plataforma de Fly, que no responde: quien pulsaba recibía un error del
+navegador, que no explica nada y no deja forma de contactar.
 
-Arreglo: cambiar `data/site.json` y reconstruir. **Requiere aprobación: republica el sitio.**
+**Ya está arreglado en la rama, sin publicar.** «Ingresar» es ahora un enlace a una página
+del propio sitio —`/es/acceso.html` y `/en/access.html`— que dice que la plataforma es por
+invitación, explica qué hacer según seas propietario o inquilino, y ofrece WhatsApp y correo.
+Un error de navegador se convierte en un contacto.
 
-Estado 2026-10-14: el CEO pidió **dejarlo preparado sin publicar**. Falta que elija entre
-apuntar a una página de «acceso por invitación» o quitar el menú hasta que la plataforma
-vuelva.
+Cuando la plataforma vuelva a estar en línea, esa página pasa a enlazarla y **el encabezado
+no se vuelve a tocar**.
 
+> ⚠️ **Falta tu aprobación para publicarlo**, porque un `push` a `main` republica el sitio:
+> ```
+> git checkout main && git merge work/feedback-usuarios && git push
+> ```
 ### 1.3 Cinco decisiones del CEO bloquean cuatro etapas
 
 [`docs/phase2.1/DECISIONES_PENDIENTES.md`](phase2.1/DECISIONES_PENDIENTES.md).

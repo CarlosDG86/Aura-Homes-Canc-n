@@ -115,7 +115,8 @@
       "specs_pets": "Mascotas OK",
       "login_menu": "Ingresar",
       "login_owner": "Soy Propietario",
-      "login_tenant": "Soy Inquilino"
+      "login_tenant": "Soy Inquilino",
+      "access": "Acceso a la plataforma"
     },
     "en": {
       "lang": "en",
@@ -221,10 +222,32 @@
       "specs_pets": "Pets OK",
       "login_menu": "Log in",
       "login_owner": "I'm an Owner",
-      "login_tenant": "I'm a Tenant"
+      "login_tenant": "I'm a Tenant",
+      "access": "Platform access"
     }
   },
   "legalPages": {
+    "access": {
+      "navKey": "access",
+      "slug": {
+        "es": "acceso",
+        "en": "access"
+      },
+      "body": {
+        "es": [
+          "La plataforma de Aura Homes es el espacio privado donde los propietarios administran sus casas y los inquilinos reportan lo que necesitan arreglar. <strong>El acceso es por invitación</strong>: no hay registro abierto.",
+          "Si eres <strong>propietario</strong> y quieres que administremos tus casas, escríbenos y te explicamos cómo funciona.",
+          "Si eres <strong>inquilino</strong> de una casa de Aura, tu acceso lo crea tu arrendador. Si todavía no lo tienes, o no puedes entrar, escríbenos y lo resolvemos.",
+          "Escríbenos por WhatsApp o por correo; respondemos el mismo día."
+        ],
+        "en": [
+          "The Aura Homes platform is the private space where owners manage their houses and tenants report what needs fixing. <strong>Access is by invitation</strong> — there is no open sign-up.",
+          "If you are an <strong>owner</strong> and would like us to manage your properties, get in touch and we will walk you through it.",
+          "If you are a <strong>tenant</strong> of an Aura home, your landlord creates your access. If you do not have it yet, or cannot get in, message us and we will sort it out.",
+          "Reach us on WhatsApp or by email; we reply the same day."
+        ]
+      }
+    },
     "privacy": {
       "navKey": "privacy",
       "slug": {

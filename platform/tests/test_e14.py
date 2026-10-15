@@ -591,5 +591,55 @@ with TestClient(app) as boot:
     check("un propietario no se sube de plan solo", d.get(Account, cuenta_o).plan == plans.PLAN_TRIAL)
     d.close()
 
+    print("\n== 14. Retencion de paquetes: se borran bytes, nunca el registro ==")
+    d = SessionLocal()
+    a = d.get(Account, cuenta_d)
+    a.plan, a.status, a.trial_ends_at = plans.PLAN_STANDARD, plans.ESTADO_ACTIVA, None
+    d.commit()
+    previos = (d.query(FiscalExport)
+               .filter(FiscalExport.account_id == cuenta_d, FiscalExport.tax_year == ANIO)
+               .order_by(FiscalExport.id).all())
+    ids_previos = [f.id for f in previos]
+    rutas_previas = {f.id: f.stored_path for f in previos}
+    d.close()
+    check("ya hay varios paquetes del mismo anio", len(ids_previos) >= 3,
+          f"-> {len(ids_previos)}")
+
+    r = c.post("/owner/fiscal/exportar",
+               data={"anio": ANIO, "confirmado": "si",
+                     "csrf_token": csrf(c, "/owner/fiscal/exportar")}, follow_redirects=False)
+    check("genera uno nuevo", r.status_code == 302, f"-> {r.status_code}")
+    d = SessionLocal()
+    todos = (d.query(FiscalExport)
+             .filter(FiscalExport.account_id == cuenta_d, FiscalExport.tax_year == ANIO)
+             .order_by(FiscalExport.id).all())
+    nuevo_id = todos[-1].id
+    d.close()
+    base_exp = os.environ["EXPORT_DIR"]
+    vivos = [f.id for f in todos if os.path.isfile(os.path.join(base_exp, f.stored_path))]
+    check("solo quedan 2 archivos de ese anio", len(vivos) == 2, f"-> {len(vivos)}")
+    check("y son los dos mas recientes", nuevo_id in vivos and max(ids_previos) in vivos)
+    check("NINGUNA fila se borro", len(todos) == len(ids_previos) + 1,
+          f"-> {len(todos)} vs {len(ids_previos) + 1}")
+    viejo = ids_previos[0]
+    check("el archivo del mas viejo desaparecio",
+          not os.path.isfile(os.path.join(base_exp, rutas_previas[viejo])))
+    d = SessionLocal()
+    fila_vieja = d.get(FiscalExport, viejo)
+    check("pero su registro conserva lo que llevaba dentro",
+          fila_vieja is not None and fila_vieja.expense_count is not None
+          and fila_vieja.sha256)
+    d.close()
+    lista = c.get("/owner/fiscal/exportaciones").text
+    check("la lista lo muestra como archivo retirado", "archivo retirado" in lista)
+    check("y ya no ofrece descargarlo",
+          f"/owner/fiscal/exportaciones/{viejo}/descargar" not in lista)
+    r = c.get(f"/owner/fiscal/exportaciones/{viejo}/descargar")
+    check("pedirlo a mano da 404, no un archivo roto", r.status_code == 404,
+          f"-> {r.status_code}")
+    check("la purga queda en la bitacora", bool(auditado("fiscal.export_purgado")))
+    r = c.get(f"/owner/fiscal/exportaciones/{nuevo_id}/descargar")
+    check("el paquete nuevo sigue descargandose", r.status_code == 200, f"-> {r.status_code}")
+
 print(f"\nRESULTADO: {ok} pasaron, {fail} fallaron")
 sys.exit(1 if fail else 0)

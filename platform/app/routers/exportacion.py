@@ -116,7 +116,22 @@ def exportar_generar(request: Request, db: Session = Depends(get_db),
         audit(db, request, "fiscal.exportar_fotos_interior", actor=user,
               object_type="fiscal_export", object_id=fila.id,
               meta=f"anio={anio_i}")
-    _flash(request, "ok", "Paquete generado. Descárgalo de la lista.")
+    # Retención: el volumen es de 1 GB compartido con la base y las fotos, y
+    # cada paquete copia dentro los comprobantes. Se borran los BYTES de los
+    # más viejos de este año; las filas se quedan y la lista los muestra como
+    # «archivo retirado».
+    purgados = exportacion.purgar_viejos(db, cuenta_id=getattr(cuenta, "id", None),
+                                         tax_year=anio_i)
+    if purgados:
+        audit(db, request, "fiscal.export_purgado", actor=user,
+              object_type="account", object_id=getattr(cuenta, "id", None),
+              meta=f"anio={anio_i} retirados={len(purgados)} ids={purgados[:10]}")
+
+    aviso = "Paquete generado. Descárgalo de la lista."
+    if purgados:
+        aviso += (f" Se retiró el archivo de {len(purgados)} paquete(s) anterior(es) "
+                  f"de {anio_i} para no llenar el disco; su registro se conserva.")
+    _flash(request, "ok", aviso)
     return RedirectResponse(url="/owner/fiscal/exportaciones", status_code=302)
 
 

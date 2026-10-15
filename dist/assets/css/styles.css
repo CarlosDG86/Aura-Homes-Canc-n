@@ -272,7 +272,15 @@ h1,h2,h3{font-family:var(--f-head);font-weight:600;line-height:1.15;margin:0}
 }
 @media(min-width:900px){ .detail-contact{position:sticky;top:132px} }
 
-/* --- Desplegable "Ingresar" del encabezado --- */
+/* --- Enlace "Ingresar" del encabezado ---
+   Mismo aspecto de pastilla que tenia el desplegable al que sustituye, para
+   que el encabezado no cambie de forma. --- */
+.login-link{font-size:12px;font-weight:600;color:var(--muted);
+  padding:6px 10px;border:1px solid var(--border);border-radius:999px;white-space:nowrap}
+.login-link:hover{color:var(--teal);border-color:var(--teal)}
+
+/* --- Desplegable "Ingresar" del encabezado (en desuso: lo sustituyo el
+   enlace de arriba; las reglas se conservan por si vuelve) --- */
 .login-menu{position:relative;font-size:12px;font-weight:600}
 .login-menu summary{list-style:none;cursor:pointer;color:var(--muted);
   padding:6px 10px;border:1px solid var(--border);border-radius:999px;white-space:nowrap}

@@ -62,6 +62,11 @@ TOPE_FILAS = 5000
 #: puede llenar el disco y tumbar la plataforma entera.
 MAX_BYTES = int(os.environ.get("EXPORT_MAX_BYTES", str(200 * 1024 * 1024)))
 
+#: Cuántos paquetes de un mismo año y cuenta conservan sus bytes. Los más
+#: viejos pierden el archivo, nunca la fila: el registro de que se exportó y
+#: qué llevaba dentro es justo lo que un auditor viene a mirar.
+CONSERVAR_POR_ANIO = int(os.environ.get("EXPORT_KEEP_PER_YEAR", "2"))
+
 MARCA_PRUEBAS = "DATOS-DE-PRUEBA"
 
 
@@ -486,6 +491,45 @@ def generar(db, *, user, propiedades: list, anio: int, incluir_fotos: bool,
     db.flush()
     return fila
 
+
+def purgar_viejos(db, *, cuenta_id, tax_year, conservar: int = None) -> list:
+    """Borra los BYTES de los paquetes viejos de ese año y cuenta.
+
+    Devuelve los ids cuyos archivos desaparecieron. **La fila se conserva
+    siempre**: el historial sigue diciendo que el 4 de marzo salió un paquete
+    con 112 gastos y sin fotos, aunque el ZIP ya no esté. Borrar la fila
+    destruiría la constancia, que es lo contrario de lo que sirve en una
+    auditoría.
+
+    Se purga por **año y cuenta**, no por propiedad: el disco es de la cuenta.
+    Eso significa que un paquete de una casa concreta puede perder sus bytes
+    porque después se generaron dos de la cartera completa. Es regenerable en
+    un clic y el dato de origen sigue en la base.
+    """
+    if cuenta_id is None:
+        return []
+    tope = CONSERVAR_POR_ANIO if conservar is None else conservar
+    if tope <= 0:
+        return []
+    filas = (db.query(FiscalExport)
+             .filter(FiscalExport.account_id == cuenta_id,
+                     FiscalExport.tax_year == tax_year)
+             .order_by(FiscalExport.id.desc()).all())
+    purgados = []
+    for fila in filas[tope:]:
+        try:
+            ruta = ruta_absoluta(fila.stored_path)
+        except Exception:
+            continue
+        if os.path.isfile(ruta):
+            try:
+                os.remove(ruta)
+            except OSError:
+                # Un archivo bloqueado no puede tumbar la exportación que el
+                # propietario acaba de pedir. Se reintentará en la siguiente.
+                continue
+            purgados.append(fila.id)
+    return purgados
 
 def nombre_de_descarga(db, fila: FiscalExport) -> str:
     """`aura-fiscal-{propiedad-N|cuenta}-{anio}-{aaaammdd}[-DATOS-DE-PRUEBA].zip`."""
