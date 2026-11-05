@@ -22,3 +22,9 @@ platform/data/uploads/
 platform/.venv/
 __pycache__/
 *.pyc
+
+# Fotos sueltas de las fichas de demostración: el CEO las deja en dist/ para
+# mirarlas en local y no las usa ninguna página. `dist/` sí se versiona, así
+# que sin esta regla vuelven a colarse en el primer `git add` que las roce.
+dist/assets/img/aur-demo-*/front.PNG
+dist/assets/img/aur-demo-*/Front.PNG
