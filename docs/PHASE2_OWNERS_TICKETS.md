@@ -229,7 +229,7 @@ Pensado para el inquilino que aún no tiene cuenta (o que no quiere loguearse).
    extra (p. ej. número interior/depto, o los últimos 4 dígitos de un
    contrato) para reducir tickets falsos, o basta teléfono + propiedad?
 5. **Correo del CEO para copias:** ¿usar `brand.email` de `data/site.json`
-   (`hola@aurahomescancun.com`) o un correo interno distinto
+   (`hola@aurahomes.com.mx`) o un correo interno distinto
    (`CEO_NOTIFY_EMAIL`) que no sea el público de contacto?
 6. **Modelo de inquilino (depende de Legal):** ¿el inquilino tiene cuenta con
    login (rol `tenant`, vía logueada completa) o, para minimizar PII, se ofrece

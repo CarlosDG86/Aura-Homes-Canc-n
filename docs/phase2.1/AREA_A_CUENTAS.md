@@ -354,7 +354,7 @@ Verificado hoy sobre `platform/data/platform.db`: las **tres** propiedades reale
 - `site_ref` sigue siendo **único global**.
 - La sincronización sigue siendo **solo de admin y unidireccional JSON→SQLite** (`pages.py:597-655`).
 - Ninguna ruta de owner importa `site_content` ni escribe `site_ref` — hay prueba que lo verifica (§11, check 26).
-- **Lo nuevo:** `accounts.is_operator`. Solo las propiedades de cuentas operadoras pueden estar espejadas desde el sitio público. Así, «la casa de un cliente aparece en aurahomescancun.com» deja de ser un descuido posible y pasa a ser **imposible por estructura**.
+- **Lo nuevo:** `accounts.is_operator`. Solo las propiedades de cuentas operadoras pueden estar espejadas desde el sitio público. Así, «la casa de un cliente aparece en aurahomes.com.mx» deja de ser un descuido posible y pasa a ser **imposible por estructura**.
 - La bandera **no se adivina**: la migración la enciende en la cuenta interna de Aura y en toda cuenta que herede al menos una propiedad con `site_ref` no nulo — un dato ya espejado del sitio es, por definición, de Aura. Toda cuenta creada después nace con `is_operator = 0`.
 
 **Descartado:** guardar «qué cuenta publica» en `platform_settings`. Es clave/valor **global** de texto (`models.py:198-212`) y hoy solo lo usa `payments.py`; un ajuste global gobernando permisos por cliente significa que un error de tecleo afecta a todas las cuentas a la vez. Un booleano por cuenta es lo mismo, testeable y sin ese modo de fallo.

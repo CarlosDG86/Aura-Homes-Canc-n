@@ -355,9 +355,34 @@ planes: reportar una avería no depende de lo que haya contratado el casero.
 ### D-032 · La agenda de visitas es la página de citas de Google Calendar (2026-10-29)
 
 En lugar de Calendly. Afecta al sitio público y a la futura Fase B del agente, no a la
-plataforma. El dominio `aurahomescancun.com` queda aprobado (~10 USD/año, Cloudflare
-Registrar) y **AUR-001 es ficticia: se elimina**; la primera propiedad real es la casa
+plataforma. El dominio entonces aprobado era `aurahomescancun.com` (~10 USD/año, Cloudflare
+Registrar); **lo sustituyó D-033 el 2026-11-04**. **AUR-001 es ficticia: se elimina**; la primera propiedad real es la casa
 del CEO.
+
+---
+
+### D-033 · El dominio oficial es aurahomes.com.mx (2026-11-04) — COMPRADO
+
+**Sustituye a `aurahomescancun.com`**, que se había aprobado cinco días antes y nunca llegó
+a registrarse. Motivo del CEO: `aurahomes.com` ya está tomado; un `.mx` da confianza local y
+**no amarra la marca a Cancún**, de cara a otras ciudades.
+
+El CEO confirma que **ya lo compró** (2026-11-04). Es el primer dominio que la empresa tiene
+de verdad: hasta hoy el correo del pie de página rebotaba.
+
+**Hecho en el repositorio:** el correo del sitio es `hola@aurahomes.com.mx`, las 24 páginas
+están reconstruidas, los documentos de diseño apuntan a `app.aurahomes.com.mx` y `build.py`
+**se niega a compilar** si el dominio viejo reaparece en `dist/`. QA pidió «verificar que no
+quede ninguna referencia»; verificarlo a mano una vez no sirve, porque lo que falla es la vez
+número doce.
+
+Los reportes fechados **no se reescriben**: dicen lo que era cierto el día que se escribieron.
+
+**Pendiente, y no es de Desarrollo:** apuntar los nameservers a Cloudflare, conectar Pages,
+encender Email Routing hacia el Gmail del CEO y configurar «enviar como» con Brevo. Hasta que
+eso exista, el correo del pie sigue sin recibir nada, solo que ahora el dominio sí es nuestro.
+
+Dominio para EE. UU.: sin decidir.
 
 ---
 

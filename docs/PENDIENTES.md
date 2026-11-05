@@ -32,7 +32,7 @@ las habías decidido en Drive el 14 y el 29 de octubre; están registradas en
 
 | # | Qué necesito de ti | Qué desbloquea |
 |---|---|---|
-| 1 | **Registrar el dominio** `aurahomescancun.com` (ya aprobado: ~10 USD/año en Cloudflare Registrar) | El correo del sitio, Brevo, la recuperación de contraseña y la URL de la plataforma. Un trámite, cuatro bloqueos |
+| 1 | **Conectar el dominio que ya compraste** (`aurahomes.com.mx`, D-033): nameservers a Cloudflare, Email Routing a tu Gmail y «enviar como» con Brevo | El correo del sitio, la recuperación de contraseña y el aviso al proveedor de D-017. El dominio ya es tuyo; falta enchufarlo |
 | 2 | **¿Los propietarios de `platform.db` son ficticios o hay clientes reales?** D-020 dice ficticios; tu nota a Marketing habla de 2 clientes pequeños reales | Si son ficticios, puedo reasignarlos a plan estándar y dejar de tratar esa base como intocable |
 | 3 | **Llenar la ficha de captura** de tu casa (está en Drive) | Publicar la primera propiedad real y retirar AUR-001, que es ficticia |
 | 4 | **Conseguir abogado** y enviarle el paquete del 29-oct. Antes faltan dos datos tuyos: persona física o empresa, y domicilio en México | El paso a datos reales de inquilinos y proveedores, y el aviso de privacidad del sitio |
@@ -231,7 +231,9 @@ Las dos con más efecto por unidad de esfuerzo:
 
 ### 1.4 El correo del sitio no existe
 
-Sin cambios desde agosto. `hola@aurahomescancun.com` aparece en el pie de todas las páginas y el
+Actualizado el 2026-11-04: el dominio **ya está comprado** (`aurahomes.com.mx`, D-033) y el pie de todas las páginas dice ya `hola@aurahomes.com.mx`. Falta conectarlo: mientras no haya Email Routing, ese correo no recibe nada. El texto siguiente queda como registro de cómo estaba.
+
+Sin cambios desde agosto. `hola@aurahomescancun.com` aparecía en el pie de todas las páginas y el
 dominio no está registrado. Ahora bloquea además el punto 3.2 de la Fase 2.1: el mismo registro
 resuelve las dos cosas.
 

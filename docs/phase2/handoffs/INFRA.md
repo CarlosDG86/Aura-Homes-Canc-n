@@ -71,7 +71,7 @@ restaurarla, se purga y se vuelve a sembrar. Verificar que el proceso de respald
 - **Restauración probada mensualmente por QA.** Un respaldo sin restaurar no cuenta.
 
 ### 2.4 Dominio y TLS
-- Subdominio propuesto: `app.aurahomescancun.com` (aislado del sitio estático)
+- Subdominio propuesto: `app.aurahomes.com.mx` (aislado del sitio estático)
 - TLS automático, HSTS, redirección HTTP→HTTPS
 - Preparar los registros DNS exactos **para que el CEO los aplique**
 

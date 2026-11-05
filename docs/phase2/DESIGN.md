@@ -20,7 +20,7 @@ Dos superficies independientes, sin acoplamiento:
 | **Plataforma** | Gestión con login | FastAPI + SQLite + Jinja2 (`platform/`) | Todo lo demás |
 
 El sitio público **sigue siendo estático y sin base de datos**. La plataforma vive en otro origen
-(hoy `127.0.0.1:8010`; en producción un subdominio, p. ej. `app.aurahomescancun.com`). El único
+(hoy `127.0.0.1:8010`; en producción un subdominio, p. ej. `app.aurahomes.com.mx`). El único
 vínculo es un enlace en el encabezado.
 
 ```

@@ -347,6 +347,25 @@ for lang, seg in (("es","propiedades"), ("en","properties")):
     for key in LEGAL:
         w(os.path.join(DIST, lang, f'{LEGAL[key]["slug"][lang]}.html'), build_legal(key, lang))
 
+# El dominio viejo no puede volver a colarse (D-033). QA pidió "verificar que
+# no quede ninguna referencia a aurahomescancun.com": verificarlo a mano una
+# vez no sirve de nada, porque lo que falla es la vez número doce. Esto corre
+# en cada compilación, también en el flujo de publicación.
+DOMINIO_RETIRADO = "aurahomes" + "cancun.com"
+rastros = []
+for raiz, _, archivos in os.walk(DIST):
+    for nombre in archivos:
+        if not nombre.endswith((".html", ".xml", ".txt", ".json")):
+            continue
+        ruta = os.path.join(raiz, nombre)
+        with open(ruta, encoding="utf-8", errors="ignore") as fh:
+            if DOMINIO_RETIRADO in fh.read():
+                rastros.append(os.path.relpath(ruta, DIST))
+if rastros:
+    raise SystemExit(
+        f"El dominio retirado {DOMINIO_RETIRADO} sigue en {len(rastros)} archivo(s) "
+        f"de dist/: {rastros[:5]}. El dominio oficial es aurahomes.com.mx (D-033).")
+
 # root redirect to Spanish (default)
 w(os.path.join(DIST, "index.html"),
   '<!doctype html><meta charset="utf-8"><title>Aura Homes Cancún</title>'

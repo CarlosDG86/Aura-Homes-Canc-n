@@ -4,11 +4,11 @@
     "city": "CANCÚN",
     "whatsapp": "+527222454472",
     "whatsappDisplay": "+52 722 245 4472",
-    "email": "hola@aurahomescancun.com",
+    "email": "hola@aurahomes.com.mx",
     "fxRate": 18.15,
     "fxNote": "Tipo de cambio de referencia — Finanzas debe confirmar el valor real",
-    "platformUrl": "https://aura-homes-plataforma.fly.dev",
-    "platformUrlNote": "Local-only placeholder — Infra must set the real Phase 2 platform URL once it's deployed."
+    "platformUrl": "https://app.aurahomes.com.mx",
+    "platformUrlNote": "Subdominio previsto (D-033). NO está en linea: el menu Ingresar apunta a /acceso, no aqui. Infra lo conecta cuando la plataforma vuelva."
   },
   "ui": {
     "es": {
