@@ -385,10 +385,30 @@ for r,_,fs in os.walk(DIST):
 # directory listing instead and looks "broken." Use `python build.py --serve` to preview
 # the site the way it will actually behave once deployed.
 if "--serve" in sys.argv:
-    import http.server, socketserver, webbrowser, functools
+    import http.server, webbrowser, functools
     PORT = 8000
+
+    # ThreadingHTTPServer y no TCPServer: el de un solo hilo atiende UNA
+    # petición a la vez, y un navegador abre varias en paralelo por página —
+    # hoja de estilo, script y media docena de fotos. Las que llegaban mientras
+    # otra seguía en curso se quedaban esperando hasta agotar el tiempo, así
+    # que la vista previa parecía llena de enlaces rotos cuando lo que estaba
+    # roto era el servidor de pruebas. El sitio publicado nunca tuvo el fallo:
+    # lo sirve Cloudflare.
+    #
+    # `daemon_threads` evita que un hilo colgado impida cerrar con Ctrl+C, y
+    # `allow_reuse_address` que el puerto quede bloqueado un minuto tras parar.
+    class Preview(http.server.ThreadingHTTPServer):
+        daemon_threads = True
+        allow_reuse_address = True
+
     Handler = functools.partial(http.server.SimpleHTTPRequestHandler, directory=DIST)
-    with socketserver.TCPServer(("", PORT), Handler) as httpd:
+    try:
+        httpd = Preview(("127.0.0.1", PORT), Handler)
+    except OSError as e:
+        raise SystemExit(f"No se pudo abrir el puerto {PORT}: {e}. "
+                         f"Seguramente ya hay una vista previa corriendo.")
+    with httpd:
         url = f"http://localhost:{PORT}/"
         print(f"\nPreview running at {url} (Ctrl+C to stop)")
         webbrowser.open(url)
