@@ -212,7 +212,7 @@ def _seudonimo(db, ticket, cache: dict) -> str:
 
 def _gastos_csv(db, v: Vista, juris: dict, nombres: dict, docs_por_gasto: dict) -> bytes:
     filas = [["id_gasto", "fecha", "propiedad", "jurisdiccion", "categoria",
-              "codigo_categoria", "mapeo_fiscal", "capitalizable", "proveedor",
+              "codigo_categoria", "mapeo_fiscal", "capitalizable", "quien_paga", "proveedor",
               "comprobante_fiscal", "importe", "moneda", "importe_convertido",
               "moneda_base", "tasa", "fecha_tasa", "origen_tasa", "ticket",
               "archivos_comprobante", "nota"]]
@@ -225,6 +225,7 @@ def _gastos_csv(db, v: Vista, juris: dict, nombres: dict, docs_por_gasto: dict) 
             escapar_csv(g.category_code),
             escapar_csv(fiscal_catalog.mapeo(g.category_code, j, g.is_capital)),
             "si" if g.is_capital else "no",
+            "inquilino" if g.paid_by == "tenant" else "propietario",
             escapar_csv(g.provider_name_snapshot or ""),
             escapar_csv(g.tax_doc_ref or ""),
             _n(g.amount), g.currency,

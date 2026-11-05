@@ -13,7 +13,11 @@
 <div class="alert alert-{{ 'error' if flash.kind == 'error' else 'success' }}">{{ flash.message }}</div>
 {% endif %}
 
-<form method="get" action="/owner/gastos" class="filters">
+{# Listas de selección múltiple: se eligen varias casas o varias categorías con
+   Ctrl (Cmd en Mac) o arrastrando. Es el control nativo del navegador, sin
+   JavaScript, que es lo que permite la política de seguridad de la plataforma
+   y lo que funciona igual en el teléfono. #}
+<form method="get" action="/owner/gastos" class="filters filters-multi">
   <div>
     <label for="g-anio">Año</label>
     <select id="g-anio" name="anio">
@@ -22,17 +26,27 @@
     </select>
   </div>
   <div>
-    <label for="g-prop">Casa</label>
-    <select id="g-prop" name="propiedad">
-      <option value="">Todas</option>
-      {% for p in propiedades %}<option value="{{ p.id }}" {% if filtro_prop == p.id|string %}selected{% endif %}>{{ p.title }}</option>{% endfor %}
+    <label for="g-prop">Casas <span class="etiqueta-ayuda">varias con Ctrl</span></label>
+    <select id="g-prop" name="propiedad" multiple size="4">
+      {% for p in propiedades %}
+      <option value="{{ p.id }}" {% if p.id in props_sel %}selected{% endif %}>{{ p.title }}</option>
+      {% endfor %}
     </select>
   </div>
   <div>
-    <label for="g-cat">Categoría</label>
-    <select id="g-cat" name="categoria">
-      <option value="">Todas</option>
-      {% for c in categorias %}<option value="{{ c.code }}" {% if filtro_cat == c.code %}selected{% endif %}>{{ c.label_es }}</option>{% endfor %}
+    <label for="g-cat">Categorías <span class="etiqueta-ayuda">varias con Ctrl</span></label>
+    <select id="g-cat" name="categoria" multiple size="4">
+      {% for c in categorias %}
+      <option value="{{ c.code }}" {% if c.code in cats_sel %}selected{% endif %}>{{ c.label_es }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div>
+    <label for="g-paga">Quién paga</label>
+    <select id="g-paga" name="paga" multiple size="2">
+      {% for clave, texto in quien_paga.items() %}
+      <option value="{{ clave }}" {% if clave in paga_sel %}selected{% endif %}>{{ texto }}</option>
+      {% endfor %}
     </select>
   </div>
   <div class="filtros-botones">
@@ -41,10 +55,22 @@
   </div>
 </form>
 
+{% if props_sel or cats_sel or paga_sel %}
+<p class="hint">
+  Filtrando por
+  {% if props_sel %}<strong>{{ props_sel|length }}</strong> casa(s){% endif %}
+  {%- if props_sel and (cats_sel or paga_sel) %},{% endif %}
+  {% if cats_sel %}<strong>{{ cats_sel|length }}</strong> categoría(s){% endif %}
+  {%- if cats_sel and paga_sel %},{% endif %}
+  {% if paga_sel %}quién paga{% endif %}.
+  Suman <strong>{{ dinero(total_filtrado) }}</strong> en {{ gastos|length }} gasto(s).
+</p>
+{% endif %}
+
 <div class="card">
   <table>
     <thead>
-      <tr><th>Fecha</th><th>Casa</th><th>Categoría</th><th>Proveedor</th><th>Importe</th><th>Convertido</th></tr>
+      <tr><th>Fecha</th><th>Casa</th><th>Categoría</th><th>Paga</th><th>Proveedor</th><th>Importe</th><th>Convertido</th></tr>
     </thead>
     <tbody>
       {% for g in gastos %}
@@ -55,15 +81,22 @@
           {{ cat.etiqueta(g.category_code) }}
           {% if g.is_capital %}<span class="badge badge-admin">capitalizable</span>{% endif %}
         </td>
+        <td>
+          {% if g.paid_by == 'tenant' %}
+          <span class="chip chip-inquilino">Inquilino</span>
+          {% else %}
+          <span class="chip">Propietario</span>
+          {% endif %}
+        </td>
         <td>{{ g.provider_name_snapshot or "—" }}</td>
         <td>{{ g.amount }} {{ g.currency }}</td>
         <td>
-          {% if g.amount_base is not none %}{{ g.amount_base }} {{ g.base_currency }}
+          {% if g.amount_base is not none %}{{ dinero(g.amount_base) }} {{ g.base_currency }}
           {% else %}<span class="meta">sin tipo de cambio</span>{% endif %}
         </td>
       </tr>
       {% else %}
-      <tr class="empty-row"><td colspan="6">Todavía no has registrado ningún gasto.</td></tr>
+      <tr class="empty-row"><td colspan="7">No hay gastos con estos filtros.</td></tr>
       {% endfor %}
     </tbody>
   </table>

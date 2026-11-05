@@ -103,7 +103,8 @@ def footer(lang, page):
         <li><a href="{home}#zonas">{t["nav"]["zones"]}</a></li><li><a href="{home}#como">{t["nav"]["how"]}</a></li></ul></div>
       <div><h4>{t["footer_legal"]}</h4><ul><li><a href="{privacy_href}">{t["privacy"]}</a></li><li><a href="{terms_href}">{t["terms"]}</a></li></ul></div>
       <div><h4>{t["footer_contact"]}</h4><ul><li><a href="{wa_link()}">WhatsApp</a></li>
-        <li><a href="mailto:{B["email"]}">{B["email"]}</a></li></ul></div></div>
+        <li><a href="mailto:{B["email"]}">{B["email"]}</a></li>
+        <li><a href="mailto:{B.get("supportEmail", B["email"])}">{B.get("supportEmail", B["email"])}</a></li></ul></div></div>
       <div class="footer-bottom"><span>© 2026 {B["name"]} {B["city"].title()}</span><span>{t["made"]}</span></div>
     </div></footer>'''
 

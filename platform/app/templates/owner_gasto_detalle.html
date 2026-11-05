@@ -43,6 +43,7 @@
       <tr><th>Capitalizable</th><td>{{ "Sí, se deprecia" if gasto.is_capital else "No, gasto corriente" }}</td></tr>
       <tr><th>Proveedor</th><td>{{ gasto.provider_name_snapshot or "—" }}</td></tr>
       <tr><th>Comprobante fiscal</th><td>{{ gasto.tax_doc_ref or "—" }}</td></tr>
+      <tr><th>Quién paga</th><td>{% if gasto.paid_by == "tenant" %}<span class="chip chip-inquilino">El inquilino</span>{% else %}<span class="chip">El propietario</span>{% endif %}</td></tr>
       <tr><th>Forma de pago</th><td>{{ gasto.payment_method or "—" }}</td></tr>
       <tr><th>Año fiscal</th><td>{{ gasto.tax_year }}</td></tr>
       {% if gasto.ticket_id %}

@@ -38,6 +38,21 @@
       </div>
     </div>
 
+    {# Quién paga (CEO, 2026-11-05): de aquí cuelga el criterio del ticket.
+       Botones de opción y no un desplegable porque son dos y hay que verlos
+       los dos sin abrir nada: elegir mal cambia a quién se le cobra. #}
+    <fieldset class="opciones">
+      <legend>¿Quién paga este gasto?</legend>
+      {% for clave, texto in quien_paga.items() %}
+      <label class="opcion">
+        <input type="radio" name="paid_by" value="{{ clave }}"
+               {% if clave == "owner" %}checked{% endif %}> {{ texto }}
+      </label>
+      {% endfor %}
+      <p class="hint">Por desgaste normal paga el propietario; por mal uso, el
+        inquilino. Queda en el gasto y sale en el reporte y en el paquete fiscal.</p>
+    </fieldset>
+
     <label for="gf-cat">Categoría</label>
     <select id="gf-cat" name="category_code" required>
       {% for c in categorias %}<option value="{{ c.code }}">{{ c.label_es }}</option>{% endfor %}

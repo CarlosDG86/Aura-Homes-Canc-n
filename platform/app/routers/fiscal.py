@@ -60,6 +60,11 @@ templates.env.globals["cat"] = fiscal_catalog
 
 TOPE_FILAS_CSV = 5000
 
+#: Quién pone el dinero de un gasto (CEO, 2026-11-05). El criterio del ticket
+#: cuelga de aquí: una reparación por desgaste la paga el propietario y una
+#: por mal uso el inquilino.
+QUIEN_PAGA = {"owner": "El propietario", "tenant": "El inquilino"}
+
 
 def _modulo_activo() -> bool:
     return os.environ.get("FISCAL_MODULE_ENABLED", "true").strip().lower() \
@@ -106,10 +111,22 @@ def gastos_lista(request: Request, db: Session = Depends(get_db)):
     q = scoped_expenses(db, user)
     if anio and anio.isdigit():
         q = q.filter(Expense.tax_year == int(anio))
-    if params.get("propiedad", "").isdigit():
-        q = q.filter(Expense.property_id == int(params["propiedad"]))
-    if params.get("categoria"):
-        q = q.filter(Expense.category_code == params["categoria"])
+
+    # Filtros de varios valores (CEO, 2026-11-05). `getlist` recoge
+    # «?propiedad=4&propiedad=5»; sin seleccion no se filtra, que es lo mismo
+    # que «todas» y evita el caso absurdo de una lista vacia que no devuelve
+    # nada. Los ids ajenos no hace falta descartarlos: `scoped_expenses` ya
+    # acotó la consulta, así que filtrar de más solo quita filas propias.
+    props_sel = [int(v) for v in params.getlist("propiedad") if v.isdigit()]
+    if props_sel:
+        q = q.filter(Expense.property_id.in_(props_sel))
+    cats_sel = [v for v in params.getlist("categoria")
+                if v and fiscal_catalog.es_valido(v)]
+    if cats_sel:
+        q = q.filter(Expense.category_code.in_(cats_sel))
+    paga_sel = [v for v in params.getlist("paga") if v in QUIEN_PAGA]
+    if paga_sel:
+        q = q.filter(Expense.paid_by.in_(paga_sel))
 
     gastos = q.order_by(Expense.expense_date.desc(), Expense.id.desc()).limit(500).all()
     props = owned_properties(db, user).order_by(Property.id).all()
@@ -122,8 +139,10 @@ def gastos_lista(request: Request, db: Session = Depends(get_db)):
                      nombres={p.id: p.title for p in props},
                      categorias=fiscal_catalog.activas(),
                      anios=fiscal.anios_con_datos(db, ids),
-                     filtro_anio=anio, filtro_prop=params.get("propiedad", ""),
-                     filtro_cat=params.get("categoria", "")),
+                     filtro_anio=anio, props_sel=props_sel, cats_sel=cats_sel,
+                     paga_sel=paga_sel, quien_paga=QUIEN_PAGA,
+                     total_filtrado=sum((g.amount_base or 0) for g in gastos
+                                        if not g.voided_at)),
     )
 
 
@@ -149,7 +168,7 @@ def gasto_nuevo(request: Request, db: Session = Depends(get_db)):
                      categorias=fiscal_catalog.activas(),
                      monedas=fiscal.MONEDAS,
                      moneda_base=fiscal.moneda_base_de(db, cuenta),
-                     hoy=date.today().isoformat(),
+                     hoy=date.today().isoformat(), quien_paga=QUIEN_PAGA,
                      prop_sel=request.query_params.get("propiedad", ""),
                      ticket_sel=request.query_params.get("ticket", "")),
     )
@@ -218,6 +237,9 @@ def _crear_gasto(db, request, user, datos, archivo=None) -> Expense:
         base_currency=fiscal.moneda_base_de(db, cuenta),
         is_capital=str(datos.get("is_capital") or "").lower() in {"1", "true", "on", "si"},
         payment_method=(datos.get("payment_method") or "").strip()[:30] or None,
+        # Lo desconocido cae en «propietario», que es el caso normal y el que
+        # no genera un cobro al inquilino por error.
+        paid_by=(datos.get("paid_by") if datos.get("paid_by") in QUIEN_PAGA else "owner"),
         note=nota,
         status=fiscal.CONFIRMADO,
         data_mode="mock" if is_mock() else "live",
@@ -265,6 +287,7 @@ async def gasto_crear(request: Request, db: Session = Depends(get_db),
                       provider_name: str = Form(""), tax_doc_ref: str = Form(""),
                       payment_method: str = Form(""), note: str = Form(""),
                       is_capital: str = Form(""), ticket_id: str = Form(""),
+                      paid_by: str = Form("owner"),
                       comprobante: UploadFile = File(default=None),
                       csrf_token: str = Form("")):
     user, resp = _guardia(request, db)
@@ -282,6 +305,7 @@ async def gasto_desde_ticket(ticket_id: int, request: Request,
                              category_code: str = Form(...), amount: str = Form(...),
                              currency: str = Form("MXN"), tax_doc_ref: str = Form(""),
                              note: str = Form(""), is_capital: str = Form(""),
+                             paid_by: str = Form("owner"),
                              comprobante: UploadFile = File(default=None),
                              csrf_token: str = Form("")):
     """Punto 2.4: el gasto que cuelga de un reporte concreto.
@@ -300,7 +324,7 @@ async def gasto_desde_ticket(ticket_id: int, request: Request,
                  provider_id=tk.provider_id or "", expense_date=expense_date,
                  category_code=category_code, amount=amount, currency=currency,
                  tax_doc_ref=tax_doc_ref, note=note, is_capital=is_capital,
-                 provider_name="", payment_method="")
+                 provider_name="", payment_method="", paid_by=paid_by)
     _crear_gasto(db, request, user, datos, comprobante)
     _flash(request, "ok", "Gasto registrado y ligado a este reporte.")
     return RedirectResponse(url=f"/owner/tickets/{ticket_id}", status_code=302)
@@ -512,7 +536,7 @@ def reporte_fiscal(request: Request, db: Session = Depends(get_db)):
     w.writerow(["Descargo", fiscal_catalog.DESCARGO])
     w.writerow([])
     w.writerow(["Fecha", "Propiedad", "Categoría", fiscal_catalog.columna_de(juris),
-                "Capitalizable", "Proveedor", "Comprobante fiscal", "Importe",
+                "Capitalizable", "Quién paga", "Proveedor", "Comprobante fiscal", "Importe",
                 "Moneda", "Importe convertido", "Moneda base", "Tasa", "Origen tasa",
                 "Nota"])
     for g in gastos:
@@ -522,6 +546,7 @@ def reporte_fiscal(request: Request, db: Session = Depends(get_db)):
             escapar_csv(fiscal_catalog.etiqueta(g.category_code)),
             escapar_csv(fiscal_catalog.mapeo(g.category_code, juris, g.is_capital)),
             "sí" if g.is_capital else "no",
+            QUIEN_PAGA.get(g.paid_by, "El propietario"),
             escapar_csv(g.provider_name_snapshot or ""),
             escapar_csv(g.tax_doc_ref or ""),
             g.amount, g.currency,
@@ -533,9 +558,9 @@ def reporte_fiscal(request: Request, db: Session = Depends(get_db)):
             escapar_csv(g.note or ""),
         ])
     w.writerow([])
-    w.writerow(["TOTAL CONVERTIDO", "", "", "", "", "", "", "", "",
+    w.writerow(["TOTAL CONVERTIDO", "", "", "", "", "", "", "", "", "",
                 tot["total"], "", "", "", ""])
-    w.writerow(["  del cual capitalizable", "", "", "", "", "", "", "", "",
+    w.writerow(["  del cual capitalizable", "", "", "", "", "", "", "", "", "",
                 tot["capital"], "", "", "", ""])
 
     audit(db, request, "fiscal.report.export", actor=user, object_type="report",

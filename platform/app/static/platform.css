@@ -1088,3 +1088,59 @@ input[type="file"] { background: var(--white); padding: .55rem; }
   .kanban { grid-template-columns: 1fr; }
   .tabs { overflow-x: auto; flex-wrap: nowrap; }
 }
+
+/* ======================================================================
+   Peticiones del CEO del 2026-11-05
+   ====================================================================== */
+
+/* --- El menú lateral se pliega por grupos ------------------------------- */
+.sidebar-nav details.nav-group { margin-bottom: .35rem; }
+.sidebar-nav details.nav-group > summary.nav-group-title {
+  cursor: pointer; list-style: none;
+  display: flex; align-items: center; gap: .4rem;
+  padding: .45rem .9rem; border-radius: 8px;
+  user-select: none;
+}
+/* El triángulo propio del navegador se sustituye por uno que sigue la marca. */
+.sidebar-nav details.nav-group > summary::-webkit-details-marker { display: none; }
+.sidebar-nav details.nav-group > summary::after {
+  content: "›"; margin-left: auto; font-size: 1.1rem; line-height: 1;
+  transition: transform .15s ease; opacity: .7;
+}
+.sidebar-nav details.nav-group[open] > summary::after { transform: rotate(90deg); }
+.sidebar-nav details.nav-group > summary:hover { background: rgba(255,255,255,.07); }
+.sidebar-nav details.nav-group > summary:focus-visible {
+  outline: 2px solid var(--turquoise); outline-offset: -2px;
+}
+/* La cuenta de pendientes también se ve con el grupo cerrado: plegar no puede
+   esconder que hay cuatro reportes sin atender. */
+.sidebar-nav details.nav-group > summary .nav-badge { margin-left: .2rem; }
+.sidebar-nav details.nav-group[open] > summary .nav-badge { display: none; }
+
+/* --- Fondo blanco del área principal ------------------------------------ */
+.app-main { background: var(--white); }
+.app-main .container { background: var(--white); }
+
+/* --- Filtros de selección múltiple -------------------------------------- */
+.filters-multi { align-items: flex-start; }
+.filters-multi select[multiple] {
+  min-width: 190px; padding: .35rem; background: var(--white);
+  border-radius: 10px;
+}
+.filters-multi select[multiple] option { padding: .25rem .4rem; border-radius: 6px; }
+.etiqueta-ayuda {
+  font-weight: 400; font-size: .72rem; color: var(--text-muted);
+  margin-left: .25rem;
+}
+.chip-inquilino { background: #FAEEDA; color: #854F0B; }
+
+/* --- Botones de opción en formulario ------------------------------------ */
+fieldset.opciones {
+  border: 1px solid var(--border); border-radius: 12px;
+  padding: .7rem .9rem 1rem; margin: 1rem 0;
+}
+fieldset.opciones legend { font-weight: 600; font-size: .9rem; padding: 0 .35rem; }
+fieldset.opciones .opcion {
+  display: inline-flex; align-items: center; gap: .4rem;
+  margin-right: 1.2rem; font-weight: 500;
+}

@@ -12,9 +12,14 @@
 {% endif %}
 
 {% if user %}
-{# Menú lateral: cada opción es su propio elemento, agrupadas por tema.
-   Antes era una fila de enlaces con descripciones; con varias secciones por rol
-   esa fila crecía sin orden y no se veía dónde estabas. #}
+{# Menú lateral: cada tema es un grupo que se abre y se cierra.
+
+   Son <details>/<summary> y no JavaScript porque la política de seguridad de
+   la plataforma prohíbe el script en línea, y porque así funciona con teclado
+   y sin esperar a que cargue nada.
+
+   El grupo que contiene la página actual nace ABIERTO: plegar justo lo que la
+   persona está mirando sería esconderle dónde está. #}
 <div class="app-shell">
   <aside class="sidebar">
     <div class="sidebar-brand">
@@ -26,78 +31,78 @@
     <nav class="sidebar-nav" aria-label="Navegación principal">
 
       {% if role == 'admin' %}
-        <div class="nav-group">
-          <div class="nav-group-title">General</div>
+        <details class="nav-group"{% if active in ['admin'] %} open{% endif %}>
+          <summary class="nav-group-title">General</summary>
           <a class="nav-item{% if active == 'admin' %} is-active{% endif %}" href="/admin">Panel</a>
-        </div>
-        <div class="nav-group">
-          <div class="nav-group-title">Contenido del sitio</div>
+        </details>
+        <details class="nav-group"{% if active in ['site-props', 'site-settings'] %} open{% endif %}>
+          <summary class="nav-group-title">Contenido del sitio</summary>
           <a class="nav-item{% if active == 'site-props' %} is-active{% endif %}" href="/admin/properties">Propiedades</a>
           <a class="nav-item{% if active == 'site-settings' %} is-active{% endif %}" href="/admin/site-settings">Configuración del sitio</a>
-        </div>
-        <div class="nav-group">
-          <div class="nav-group-title">Personas</div>
+        </details>
+        <details class="nav-group"{% if active in ['owners', 'users', 'cuentas', 'reseteos'] %} open{% endif %}>
+          <summary class="nav-group-title">Personas</summary>
           <a class="nav-item{% if active == 'owners' %} is-active{% endif %}" href="/admin#owners">Propietarios</a>
           <a class="nav-item{% if active == 'users' %} is-active{% endif %}" href="/admin#users">Usuarios</a>
           <a class="nav-item{% if active == 'cuentas' %} is-active{% endif %}" href="/admin/cuentas">Cuentas y planes</a>
           <a class="nav-item{% if active == 'reseteos' %} is-active{% endif %}" href="/admin/reseteos">Reseteos de clave</a>
-        </div>
-        <div class="nav-group">
-          <div class="nav-group-title">Pagos</div>
+        </details>
+        <details class="nav-group"{% if active in ['pay-methods', 'pay-reqs'] %} open{% endif %}>
+          <summary class="nav-group-title">Pagos</summary>
           <a class="nav-item{% if active == 'pay-methods' %} is-active{% endif %}" href="/admin/pagos/metodos">Métodos de pago</a>
           <a class="nav-item{% if active == 'pay-reqs' %} is-active{% endif %}" href="/admin/pagos/requisitos">Requisitos</a>
-        </div>
+        </details>
 
       {% elif role == 'owner' %}
-        <div class="nav-group">
-          <div class="nav-group-title">General</div>
+        <details class="nav-group"{% if active in ['owner'] %} open{% endif %}>
+          <summary class="nav-group-title">General</summary>
           <a class="nav-item{% if active == 'owner' %} is-active{% endif %}" href="/owner">Mis propiedades</a>
-        </div>
-        <div class="nav-group">
-          <div class="nav-group-title">Mantenimiento</div>
+        </details>
+        <details class="nav-group"{% if active in ['tickets', 'report', 'proveedores'] %} open{% endif %}>
+          <summary class="nav-group-title">Mantenimiento{% if open_tickets %} <span class="nav-badge">{{ open_tickets }}</span>{% endif %}</summary>
           <a class="nav-item{% if active == 'tickets' %} is-active{% endif %}" href="/owner/tickets">
             Reportes
             {% if open_tickets %}<span class="nav-badge">{{ open_tickets }}</span>{% endif %}
           </a>
           <a class="nav-item{% if active == 'report' %} is-active{% endif %}" href="/owner/tickets/reporte">Reporte por unidad</a>
           <a class="nav-item{% if active == 'proveedores' %} is-active{% endif %}" href="/owner/proveedores">Proveedores</a>
-        </div>
-        <div class="nav-group">
-          <div class="nav-group-title">Dinero</div>
+        </details>
+        <details class="nav-group"{% if active in ['gastos', 'fiscal', 'exportar'] %} open{% endif %}>
+          <summary class="nav-group-title">Dinero</summary>
           <a class="nav-item{% if active == 'gastos' %} is-active{% endif %}" href="/owner/gastos">Gastos</a>
           <a class="nav-item{% if active == 'fiscal' %} is-active{% endif %}" href="/owner/fiscal">Año fiscal</a>
           <a class="nav-item{% if active == 'exportar' %} is-active{% endif %}" href="/owner/fiscal/exportaciones">Paquetes fiscales</a>
-        </div>
-        <div class="nav-group">
-          <div class="nav-group-title">Inquilinos</div>
+        </details>
+        <details class="nav-group"{% if active in ['tenants', 'announcements', 'messages'] %} open{% endif %}>
+          <summary class="nav-group-title">Inquilinos{% if unread_messages %} <span class="nav-badge">{{ unread_messages }}</span>{% endif %}</summary>
           <a class="nav-item{% if active == 'tenants' %} is-active{% endif %}" href="/owner/inquilinos">Mis inquilinos</a>
           <a class="nav-item{% if active == 'announcements' %} is-active{% endif %}" href="/owner/comunicados">Comunicados</a>
           <a class="nav-item{% if active == 'messages' %} is-active{% endif %}" href="/owner/mensajes">
             Mensajes
             {% if unread_messages %}<span class="nav-badge">{{ unread_messages }}</span>{% endif %}
           </a>
-        </div>
+        </details>
 
       {% elif role == 'tenant' %}
-        <div class="nav-group">
-          <div class="nav-group-title">General</div>
+        <details class="nav-group"{% if active in ['tenant'] %} open{% endif %}>
+          <summary class="nav-group-title">General</summary>
           <a class="nav-item{% if active == 'tenant' %} is-active{% endif %}" href="/inquilino">Mi vivienda</a>
-        </div>
-        <div class="nav-group">
-          <div class="nav-group-title">Mantenimiento</div>
+        </details>
+        <details class="nav-group"{% if active in ['new-ticket'] %} open{% endif %}>
+          <summary class="nav-group-title">Mantenimiento</summary>
           <a class="nav-item{% if active == 'new-ticket' %} is-active{% endif %}" href="/inquilino/tickets/nuevo">Reportar un problema</a>
-        </div>
-        <div class="nav-group">
-          <div class="nav-group-title">Comunicación</div>
+        </details>
+        <details class="nav-group"{% if active in ['inbox'] %} open{% endif %}>
+          <summary class="nav-group-title">Comunicación{% if unread_total %} <span class="nav-badge">{{ unread_total }}</span>{% endif %}</summary>
           <a class="nav-item{% if active == 'inbox' %} is-active{% endif %}" href="/inquilino/mensajes">
             Mi bandeja
             {% if unread_total %}<span class="nav-badge">{{ unread_total }}</span>{% endif %}
           </a>
-        </div>
+        </details>
       {% endif %}
 
-      <div class="nav-group">
-        <div class="nav-group-title">Mi cuenta</div>
+      <details class="nav-group"{% if active in ['profile', 'cuenta', 'sessions'] %} open{% endif %}>
+        <summary class="nav-group-title">Mi cuenta</summary>
         {% if role == 'tenant' %}
           <a class="nav-item{% if active == 'profile' %} is-active{% endif %}" href="/inquilino/perfil">Mis datos</a>
         {% elif role == 'owner' %}
@@ -106,7 +111,7 @@
         {% endif %}
         <a class="nav-item{% if active == 'sessions' %} is-active{% endif %}" href="/sesiones">Sesiones activas</a>
         <a class="nav-item nav-item-quiet" href="/logout">Cerrar sesión</a>
-      </div>
+      </details>
     </nav>
   </aside>
 

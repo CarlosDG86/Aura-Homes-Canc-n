@@ -120,6 +120,13 @@ def _ensure_columnas_e12(engine) -> None:
             # E13. NULL hereda de la cuenta; no hay UPDATE masivo a propósito.
             "tax_jurisdiction": "ALTER TABLE properties ADD COLUMN tax_jurisdiction VARCHAR",
         },
+        "expenses": {
+            # Quién paga (CEO, 2026-11-05). NOT NULL con DEFAULT constante,
+            # que SQLite sí admite en ADD COLUMN: lo ya capturado lo pagó el
+            # propietario, que es el valor por omisión, así que no hace falta
+            # ningún UPDATE de relleno.
+            "paid_by": "ALTER TABLE expenses ADD COLUMN paid_by VARCHAR(10) NOT NULL DEFAULT 'owner'",
+        },
         "ai_usage": {
             # El tope de gasto del agente es hoy mensual y GLOBAL: con varias
             # cuentas, la primera que use cotización automática dejaría sin

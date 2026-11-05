@@ -381,5 +381,44 @@ with TestClient(app) as boot:
     check("un mes sin gastos va en cero, no desaparece",
           any(m["n"] == 0 and m["total"] == 0 for m in por_mes))
 
+    print("\n== 22. Quién paga el gasto (CEO 2026-11-05) ==")
+    r = crear(amount="500", paid_by="tenant", expense_date=f"{ANIO}-05-02")
+    check("se registra un gasto que paga el inquilino", r.status_code == 302)
+    d = SessionLocal()
+    g = (d.query(Expense).filter(Expense.amount == 500)
+         .order_by(Expense.id.desc()).first())
+    check("queda guardado quién paga", g.paid_by == "tenant", f"-> {g.paid_by}")
+    gid_inq = g.id
+    otro = (d.query(Expense).filter(Expense.paid_by == "owner").first())
+    check("lo anterior sigue siendo del propietario", otro is not None)
+    d.close()
+    r = crear(amount="501", paid_by="el_vecino", expense_date=f"{ANIO}-05-03")
+    d = SessionLocal()
+    raro = d.query(Expense).filter(Expense.amount == 501).first()
+    d.close()
+    check("un valor inventado cae en «propietario», no revienta",
+          raro is not None and raro.paid_by == "owner", f"-> {raro and raro.paid_by}")
+    cuerpo = c.get(f"/owner/gastos/{gid_inq}").text
+    check("la ficha lo dice", "El inquilino" in cuerpo)
+    csv_anual = c.get(f"/owner/fiscal/reporte?anio={ANIO}").text
+    check("el CSV lleva la columna", "Quién paga" in csv_anual)
+    check("y el valor en la fila", "El inquilino" in csv_anual)
+
+    print("\n== 23. Filtros de varios valores ==")
+    lista = c.get("/owner/gastos").text
+    check("las casas se eligen en lista múltiple", 'name="propiedad" multiple' in lista)
+    check("las categorías también", 'name="categoria" multiple' in lista)
+    r = c.get(f"/owner/gastos?categoria=mantenimiento&categoria=predial")
+    check("dos categorías a la vez responden", r.status_code == 200)
+    check("y la pantalla dice cuántas", "2</strong> categoría(s)" in r.text
+          or "2</strong> categoria(s)" in r.text)
+    solo_inq = c.get("/owner/gastos?paga=tenant").text
+    check("se puede filtrar por quién paga", "Inquilino" in solo_inq)
+    check("sin filtros no se pierde nada",
+          c.get("/owner/gastos").status_code == 200)
+    r = c.get("/owner/gastos?propiedad=99999")
+    check("una casa ajena en el filtro no enseña nada ajeno",
+          r.status_code == 200 and "Casa ajena" not in r.text)
+
 print(f"\nRESULTADO: {ok} pasaron, {fail} fallaron")
 sys.exit(1 if fail else 0)

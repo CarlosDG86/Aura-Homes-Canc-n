@@ -488,6 +488,14 @@ class Expense(Base):
     #: las dos jurisdicciones tratan igual de distinto.
     is_capital = Column(Boolean, nullable=False, default=False, server_default="0")
     payment_method = Column(String(30), nullable=True)
+    #: Quién pone el dinero: `owner` o `tenant`. Lo pidió el CEO el
+    #: 2026-11-05 porque de ahí cuelga el criterio del ticket — una reparación
+    #: por desgaste la paga el propietario y una por mal uso el inquilino, y
+    #: eso cambia quién debe el importe y qué sale en el reporte fiscal.
+    #:
+    #: Texto validado, no Enum(): mañana puede haber «a medias» o «seguro», y
+    #: un Enum obligaría a tocar la base para admitirlo.
+    paid_by = Column(String(10), nullable=False, default="owner", server_default="owner")
     note = Column(Text, nullable=True)
     #: `confirmado` | `borrador`. Todo lo que genere la automatización nacerá
     #: en borrador, para que nadie reporte una cifra que no revisó.
