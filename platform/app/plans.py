@@ -13,14 +13,47 @@ Reglas del CEO (D-018), en una sola tabla para que no vuelvan a divergir:
   los registros fiscales de un cliente tras un muro de pago es frágil — captura
   datos once meses y en marzo, con la auditoría encima, descubre que no puede
   sacar nada.
-- Lo que se cobra es la **automatización**: agente de WhatsApp y correo,
-  cotización automática, paquete anual precalculado y gastos recurrentes.
+- Lo que se cobra es la **automatización**: agente de WhatsApp, cotización
+  automática, paquete anual precalculado y gastos recurrentes.
 - El sufijo **«+» significa siempre «agente»**. El nombre base significa
-  escala. Por eso `enterprise` incluye todo lo de `standard_plus`: tal como
-  estaba escrito el feedback, un cliente de 25 casas habría tenido menos
-  funciones que uno de 5.
-- **Límite: `standard` hasta 20 propiedades; `enterprise` a partir de 21.**
-  Superarlo bloquea el alta de casas nuevas, jamás la lectura ni los tickets.
+  escala.
+- Superar el límite bloquea el alta de casas nuevas, jamás la lectura ni los
+  tickets.
+
+## Tramos vigentes — orden del CEO del 2026-10-14
+
+| Plan | Casas |
+|---|---|
+| `trial` | 1, durante 90 días |
+| `standard` | hasta 3 |
+| `standard_plus` | de 4 a 7 |
+| `enterprise` | de 8 a 20 |
+| `enterprise_plus` | sin tope |
+
+**Solo se guarda el techo de cada tramo.** El piso (que `standard_plus`
+empiece en 4) es información comercial, no una regla que el servidor pueda
+aplicar: bloquear a un cliente de `standard_plus` por tener *pocas* casas
+sería negarle el alta por haber contratado de más.
+
+Estos tramos **sustituyen** a los de septiembre (`standard` hasta 20,
+`enterprise` sin tope). Son diez veces más estrechos, así que una cuenta que
+hoy esté dentro de su plan puede quedar por encima del nuevo límite: eso **no
+borra ni oculta nada**, solo impide crecer (ver `cuentas.estado_cuenta`).
+
+## El agente de WhatsApp es exclusivo de los planes «+»
+
+Decisión del CEO del 2026-10-29: el agente de IA sobre WhatsApp —responder,
+precalificar y agendar visitas— es de los planes con «+». Los demás se quedan
+con la automatización básica (mensajes automáticos de WhatsApp Business y la
+página de citas de Google Calendar), que no pasa por la plataforma.
+
+> ⚠️ **Tensión conocida, pendiente del CEO.** Hasta hoy `enterprise` heredaba
+> el agente de `standard_plus` justamente para que un cliente de 20 casas no
+> tuviera menos funciones que uno de 5. Aplicar la decisión del 29-oct al pie
+> de la letra reintroduce esa asimetría, que es lo que el propio encargo a
+> Finanzas pide revisar. Se aplica lo que está escrito y se deja la nota: si
+> el CEO prefiere que `enterprise` conserve el agente, es **una celda de esta
+> tabla**, sin migración ni cambios de esquema.
 """
 from __future__ import annotations
 
@@ -66,20 +99,21 @@ PLANES: dict[str, dict] = {
     },
     PLAN_STANDARD: {
         "etiqueta": "Standard",
-        "propiedades_max": 20,
+        "propiedades_max": 3,
         "derechos": frozenset(),
     },
     PLAN_STANDARD_PLUS: {
         "etiqueta": "Standard +",
-        "propiedades_max": 20,
+        "propiedades_max": 7,
         "derechos": frozenset({AGENTE_MENSAJERIA, FISCAL_AUTOMATIZADO, GASTOS_RECURRENTES}),
     },
     PLAN_ENTERPRISE: {
         "etiqueta": "Enterprise",
-        "propiedades_max": None,
-        # Hereda de standard_plus por decisión del CEO: el nombre base es
-        # escala, no menos funciones.
-        "derechos": frozenset({AGENTE_MENSAJERIA, FISCAL_AUTOMATIZADO, GASTOS_RECURRENTES}),
+        "propiedades_max": 20,
+        # Conserva la automatización fiscal —crecer no debe costar funciones—
+        # pero NO el agente de WhatsApp, que el CEO reservó a los planes «+»
+        # el 2026-10-29. Ver la advertencia del encabezado.
+        "derechos": frozenset({FISCAL_AUTOMATIZADO, GASTOS_RECURRENTES}),
     },
     PLAN_ENTERPRISE_PLUS: {
         "etiqueta": "Enterprise +",

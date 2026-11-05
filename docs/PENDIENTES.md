@@ -1,6 +1,6 @@
 # Pendientes — prioridades para la próxima sesión
 
-**Actualizado:** 2026-10-14
+**Actualizado:** 2026-11-04
 **Estado general:** desarrollo local. La Fase 2.1 está **construida (E8–E14)** en la rama `work/feedback-usuarios`, sin publicar.
 
 ---
@@ -26,24 +26,41 @@
 
 ## 0b. Pendientes de tu parte (CEO)
 
-Todo lo de esta tabla está **bloqueado esperándote a ti**, no a Desarrollo. Ordenado por
-cuánto desbloquea por unidad de esfuerzo tuyo.
+Revisado contra Google Drive el **2026-11-04**. Varias cosas que esta lista te pedía ya
+las habías decidido en Drive el 14 y el 29 de octubre; están registradas en
+[`docs/decisions/DECISION_LOG.md`](decisions/DECISION_LOG.md) y **salen de aquí**.
 
-| # | Qué necesito de ti | Qué desbloquea | Esfuerzo tuyo |
-|---|---|---|---|
-| 1 | **Contratos de arrendamiento reales** (D-024): quién vive en cada casa, desde cuándo y renta mensual | Hoy el panel dice «Ocupación 0 %» porque hay 3 casas y 0 contratos. Es el indicador que pediste en el punto 2.1 | Una lista, 10 minutos |
-| 2 | **Registrar el dominio** `aurahomescancun.com` | El correo del sitio, el enlace de «olvidé mi contraseña» y la URL de la plataforma. Un solo trámite resuelve tres bloqueos | Un trámite con tarjeta |
-| 3 | **Buzón de correo de producción** con SPF y DKIM (D-023) | Recuperación de contraseña y alta de inquilinos. Es la única dependencia externa cuyo plazo no controlamos | Depende del punto 2 |
-| 4 | **Revisión de abogado** del descargo fiscal (D-027) y del aviso de privacidad | El paso a datos reales de inquilinos y proveedores. Mientras tanto todo vive en modo pruebas | Una consulta |
-| 5 | **Precio de cada plan** (D-019) | La página de precios y el documento comercial. La plataforma no guarda importes a propósito | Una decisión |
-| 6 | **Cómo termina el punto 7.4** (D-017): qué pasa cuando apruebas una cotización | Hoy aprobar solo deja constancia. Lo pospusiste; cuando lo cierres, ampliar la máquina de estados no exige tocar la base | Una frase |
-| 7 | **¿Se reactiva Fly?** | Es lo único que separa «pruebo yo en mi máquina» de «lo prueba alguien más». Hoy nadie fuera de tu computadora puede entrar | Una decisión |
-| 8 | **Aprobar el push** que publica el arreglo de «Ingresar» | Ya está preparado: el menú lleva a una página de «acceso por invitación» en vez de a un error. Solo falta publicarlo | Aprobar una orden |
-| 9 | **D-011** nombre de la matriz y **D-012** dónde vive el demo | Material comercial | Dos decisiones |
-| 10 | **D-025 a D-030** (menos D-030a, ya cerrada) | Valores por defecto ya fijados que solo esperan tu visto bueno; ninguno frena la construcción | Revisión de una sentada |
+| # | Qué necesito de ti | Qué desbloquea |
+|---|---|---|
+| 1 | **Registrar el dominio** `aurahomescancun.com` (ya aprobado: ~10 USD/año en Cloudflare Registrar) | El correo del sitio, Brevo, la recuperación de contraseña y la URL de la plataforma. Un trámite, cuatro bloqueos |
+| 2 | **¿Los propietarios de `platform.db` son ficticios o hay clientes reales?** D-020 dice ficticios; tu nota a Marketing habla de 2 clientes pequeños reales | Si son ficticios, puedo reasignarlos a plan estándar y dejar de tratar esa base como intocable |
+| 3 | **Llenar la ficha de captura** de tu casa (está en Drive) | Publicar la primera propiedad real y retirar AUR-001, que es ficticia |
+| 4 | **Conseguir abogado** y enviarle el paquete del 29-oct. Antes faltan dos datos tuyos: persona física o empresa, y domicilio en México | El paso a datos reales de inquilinos y proveedores, y el aviso de privacidad del sitio |
+| 5 | **Confirmar el documento vigente de los planes.** Finanzas habla de «tres planes», tu orden del 14-oct lista cuatro, el código tiene cinco (con la prueba) | Que la matriz de planes y el material comercial digan lo mismo |
+| 6 | **¿`enterprise` conserva el agente?** D-031 lo reserva a los planes «+», lo que devuelve la asimetría que el encargo a Finanzas pide eliminar | Es una celda de `plans.py`; hoy está aplicado tal como lo escribiste |
+| 7 | **Aprobar el push** que publica el arreglo de «Ingresar» | 22 páginas del sitio siguen llevando a un error de navegador |
+| 8 | **¿Se reactiva Fly?** | Es lo único que separa «pruebo yo en mi máquina» de «lo prueba alguien más» |
+| 9 | **D-011** nombre de la matriz y **D-012** dónde vive el demo | Material comercial |
+| 10 | **D-025 a D-030** (menos D-030a) | Valores por defecto que solo esperan tu visto bueno; ninguno frena la construcción |
 
-> **Nada de esto lo puede decidir Desarrollo por ti.** Donde hay una recomendación, está escrita
-> en el reporte del departamento correspondiente ([`docs/reports/`](reports/), 2026-10-14).
+**Ya no te pido** contratos de arrendamiento (D-024: se trabaja con datos de prueba),
+ni el proveedor de correo (D-023: Brevo), ni cómo termina el punto 7.4 (D-017: aprobar
+notifica al proveedor y mueve el ticket).
+
+---
+
+## 0c. Trabajo que esas órdenes dejaron pendiente
+
+| Qué | De dónde sale | Estado |
+|---|---|---|
+| **Tramos de plan 3 / 7 / 20 / sin tope** | D-018 | ✅ Hecho (2026-11-04) |
+| **Agente de IA solo en planes «+»** | D-031 | ✅ Hecho (2026-11-04) |
+| **Panel por pestañas, tablero kanban y paleta** | Orden del 14-oct, §2 | 🔨 En curso |
+| **Aprobar cotización notifica al proveedor** | D-017 | ⏳ Bloqueado por el correo (dominio + Brevo) |
+| **Pantalla de reseteo forzado por el admin, con historial** | D-022 | ⏳ Sin construir |
+| **Validar con Finanzas la documentación fiscal del paquete** | D-021 | ⏳ Depende de Finanzas |
+| **Reasignar propietarios a cuenta estándar** | D-020 | ⛔ Detenido: ver el punto 2 de arriba |
+| **Agente de WhatsApp (Fase B)** | Especificación del 29-oct | ⏳ Sin empezar; Fase A no es trabajo de Desarrollo |
 
 ---
 

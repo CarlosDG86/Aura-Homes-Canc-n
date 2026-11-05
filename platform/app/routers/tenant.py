@@ -133,9 +133,28 @@ def new_ticket_form(request: Request, db: Session = Depends(get_db), modo: str =
             request=request, name="tenant_no_lease.html", context=_ctx(request, user)
         )
 
+    # El asistente de IA es de los planes «+» (decisión del CEO, 2026-10-29).
+    # Se comprueba sobre la cuenta de la CASA, no sobre el inquilino: quien
+    # contrata el plan es el propietario.
+    #
+    # Si el plan no lo incluye, el inquilino entra al formulario manual, que
+    # está en todos los planes y siempre lo estará: reportar una fuga de agua
+    # no puede depender de lo que su casero haya contratado.
+    from .. import cuentas, plans
+
+    con_plan = plans.tiene_derecho(cuentas.cuenta_de(db, user), plans.AGENTE_MENSAJERIA)
+
     # El asistente solo se ofrece si de verdad puede atender. Si no, se entra
     # directo al formulario manual en vez de mostrar un error.
-    agent_ready = modo != "formulario" and ai_agent.is_configured() and not ai_agent.budget_exhausted(db)
+    agent_ready = (modo != "formulario" and con_plan
+                   and ai_agent.is_configured() and not ai_agent.budget_exhausted(db))
+    if agent_ready:
+        razon = None
+    elif not con_plan:
+        razon = ("El asistente que redacta el reporte por ti es parte de los planes Plus. "
+                 "Este formulario funciona igual de bien y está en todos los planes.")
+    else:
+        razon = "El asistente no está disponible ahora mismo; usa el formulario."
     return templates.TemplateResponse(
         request=request,
         name="tenant_ticket_new.html",
@@ -143,7 +162,7 @@ def new_ticket_form(request: Request, db: Session = Depends(get_db), modo: str =
             request, user,
             lease=lease,
             agent_ready=agent_ready,
-            agent_reason=None if agent_ready else "El asistente no está disponible ahora mismo; usa el formulario.",
+            agent_reason=razon,
             categories=list(TicketCategoryEnum),
             priorities=[p for p in TicketPriorityEnum if p != TicketPriorityEnum.emergencia],
             max_photos=MAX_PHOTOS_PER_TICKET,

@@ -152,10 +152,16 @@ p = d.get(Property, ids["p1"]); u = d.get(User, p.owner_id)
 p.account_id = u.account_id; d.commit(); d.close()
 
 print("\n== 9. Matriz de planes (D-018) ==")
-check("Standard admite hasta 20 casas",
-      plans.PLANES[plans.PLAN_STANDARD]["propiedades_max"] == 20)
-check("Enterprise no tiene tope",
-      plans.PLANES[plans.PLAN_ENTERPRISE]["propiedades_max"] is None)
+# Tramos del 2026-10-14: 3 / 7 / 20 / sin tope. Sustituyen a los de
+# septiembre, que daban 20 a Standard y ninguno a Enterprise.
+check("Standard admite hasta 3 casas",
+      plans.PLANES[plans.PLAN_STANDARD]["propiedades_max"] == 3)
+check("Standard+ llega a 7",
+      plans.PLANES[plans.PLAN_STANDARD_PLUS]["propiedades_max"] == 7)
+check("Enterprise llega a 20",
+      plans.PLANES[plans.PLAN_ENTERPRISE]["propiedades_max"] == 20)
+check("solo Enterprise+ no tiene tope",
+      plans.PLANES[plans.PLAN_ENTERPRISE_PLUS]["propiedades_max"] is None)
 check("la prueba admite una sola casa (punto 7.1)",
       plans.PLANES[plans.PLAN_TRIAL]["propiedades_max"] == 1)
 check("la prueba dura 90 días (D-019)", plans.TRIAL_DIAS_POR_OMISION == 90)
@@ -166,10 +172,15 @@ class _C:
         self.plan, self.status, self.properties_max_override = plan, status, override
 
 
-check("Enterprise incluye el agente, igual que Standard+ (no pierde funciones al crecer)",
-      plans.tiene_derecho(_C(plans.PLAN_ENTERPRISE), plans.AGENTE_MENSAJERIA))
-check("Standard, sin el «+», no incluye el agente",
-      not plans.tiene_derecho(_C(plans.PLAN_STANDARD), plans.AGENTE_MENSAJERIA))
+# El agente de WhatsApp quedó reservado a los planes «+» el 2026-10-29.
+check("el agente es solo de los planes «+»",
+      plans.tiene_derecho(_C(plans.PLAN_STANDARD_PLUS), plans.AGENTE_MENSAJERIA)
+      and plans.tiene_derecho(_C(plans.PLAN_ENTERPRISE_PLUS), plans.AGENTE_MENSAJERIA))
+check("Standard y Enterprise, sin el «+», no incluyen el agente",
+      not plans.tiene_derecho(_C(plans.PLAN_STANDARD), plans.AGENTE_MENSAJERIA)
+      and not plans.tiene_derecho(_C(plans.PLAN_ENTERPRISE), plans.AGENTE_MENSAJERIA))
+check("pero Enterprise conserva la automatizacion fiscal: crecer no cuesta funciones",
+      plans.tiene_derecho(_C(plans.PLAN_ENTERPRISE), plans.FISCAL_AUTOMATIZADO))
 check("la cotización automática es solo de Enterprise+",
       plans.tiene_derecho(_C(plans.PLAN_ENTERPRISE_PLUS), plans.COTIZACION_AUTOMATICA)
       and not plans.tiene_derecho(_C(plans.PLAN_ENTERPRISE), plans.COTIZACION_AUTOMATICA))

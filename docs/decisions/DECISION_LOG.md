@@ -254,9 +254,117 @@ El resto de D-030 (los otros trece valores por defecto) sigue abierto.
 
 ---
 
-## D-017 · Pospuesta: E14 se construye sin la máquina de aprobación
+## Órdenes del CEO del 2026-10-14 y 2026-10-29 (vía Google Drive)
 
-**Fecha:** 2026-09-16 · **Estado:** pospuesta por el CEO («omite el D-017 por ahora»)
+Estas decisiones llegaron por Drive, no por el chat de Desarrollo, y durante tres
+semanas el repositorio no las conoció. **Lo que diga Drive manda**; lo que sigue es
+el espejo en git, con lo que cada una cambió del código ya construido.
+
+Fuentes: «2026-10-14 — Orden del CEO: decisiones D-017 a D-024 y rediseño del panel
+del propietario» y «2026-10-29 — Decisión del CEO: Agente de IA en WhatsApp solo en
+el plan Plus», ambas en `Aura/` en Drive.
+
+### D-017 · RESUELTA (2026-10-14) — aprobar una cotización sí tiene efectos
+
+El propietario aprueba con un clic; esa acción **notifica al proveedor** y el ticket
+pasa a «enviado a proveedor» / «en progreso».
+
+**Sustituye a la entrada de más abajo**, donde el CEO había pedido posponerla. Lo
+construido hoy solo sella el estado, así que esto es trabajo pendiente, y depende del
+buzón de correo: sin dominio y sin Brevo no hay forma de avisar a nadie.
+
+### D-018 · TRAMOS NUEVOS (2026-10-14) — diez veces más estrechos
+
+| Plan | Casas |
+|---|---|
+| Standard | hasta 3 |
+| Standard Plus | de 4 a 7 |
+| Enterprise | de 8 a 20 |
+| Enterprise Plus | sin tope |
+
+Sustituye a «standard hasta 20, enterprise sin tope» de septiembre. **Aplicado en
+`plans.py`.** Solo se guarda el techo de cada tramo: bloquear a un cliente por tener
+*pocas* casas sería negarle el alta por haber contratado de más.
+
+### D-019 · PRECIOS ORIENTATIVOS (2026-10-14)
+
+Prueba de 90 días confirmada. Standard desde ~$2,000 MXN/mes y Enterprise ~$10,000
+MXN/mes en Cancún, **sujetos a la cotización de mercado de Finanzas**; EE. UU. queda
+pendiente, por estado. Los importes **siguen fuera de la plataforma**: viven en el
+documento comercial.
+
+### D-020 · LOS PROPIETARIOS ACTUALES SON FICTICIOS (2026-10-14)
+
+El CEO declara que todos los propietarios del sistema son datos de prueba y que van a
+la cuenta estándar.
+
+> ⚠️ **Sin aplicar, a propósito.** La migración los dejó en `enterprise_plus` sin tope
+> (ver la entrada D-020 de septiembre) y la regla de trabajo vigente dice que
+> `platform.db` contiene propietarios reales del CEO. Además, la nota del 2026-10-14 a
+> Marketing habla de **dos clientes pequeños reales**. Mover filas de cuenta y de plan
+> sobre esa base sin resolver la contradicción es exactamente el tipo de cambio que no
+> se deshace. **Pendiente de confirmación del CEO.**
+
+### D-021 · CONFIRMADA Y AMPLIADA (2026-10-14)
+
+Adjuntar documentos al ticket era intencional, y se añade un requisito: **un paquete
+consolidado de tickets digitalizados** para el contador o una auditoría. El paquete
+fiscal de E14 ya lo entrega (`tickets.csv` + `comprobantes/`). Falta lo que pide la
+propia orden: **que Finanzas valide que esa documentación cumple requisitos fiscales**
+antes de darlo por bueno.
+
+### D-022 · CAMBIA DE FORMA (2026-10-14)
+
+La vía de emergencia es un **reseteo forzado por el administrador verificado** que
+genera credenciales nuevas —nunca un desbloqueo de la cuenta vieja—, con historial
+auditado de quién, cuándo y a quién, y el **teléfono** como segundo dato para validar
+identidad cuando se pierde el correo.
+
+Lo construido es un guión de consola (la entrada de septiembre). El guión sigue siendo
+válido como último recurso, pero falta la pantalla de administrador con su historial.
+
+### D-023 · RESUELTA (2026-10-14) — el correo es Brevo
+
+Plan gratuito, 300 correos al día, SPF y DKIM con dominio propio, interfaz en español,
+sin costo en esta fase. **Desbloquea la recuperación de contraseña**, que hoy no puede
+salir de la plataforma. Depende de registrar el dominio.
+
+### D-024 · RESUELTA (2026-10-14) — contratos ficticios por ahora
+
+Se trabaja con datos de prueba; el CEO cargará los contratos reales cuando haya
+propiedades reales arrendadas. **Deja de ser un pendiente del CEO**: el panel dirá
+«Ocupación 0 %» hasta que existan contratos, y eso es correcto.
+
+### D-031 · El agente de IA en WhatsApp es exclusivo de los planes «+» (2026-10-29)
+
+Responder, precalificar y agendar visitas con IA es función de los planes con «+». Los
+demás se quedan con la automatización básica: mensajes automáticos de WhatsApp Business
+y la página de citas de Google Calendar, que no pasan por la plataforma. Motivo del CEO:
+diferenciar el plan Plus como gancho comercial.
+
+**Aplicado en `plans.py`**: `enterprise` pierde `agente_mensajeria` y conserva la
+automatización fiscal. El asistente que redacta tickets —la única superficie de IA que
+existe hoy— queda detrás del mismo derecho, y el formulario manual sigue en todos los
+planes: reportar una avería no depende de lo que haya contratado el casero.
+
+> ⚠️ **Tensión que el CEO debe cerrar.** `enterprise` tenía el agente justamente para que
+> un cliente de 20 casas no tuviera menos funciones que uno de 5, y el encargo a Finanzas
+> pide revisar esa asimetría. Se aplicó lo que está escrito. Revertirlo es una celda de la
+> tabla de `plans.py`.
+
+### D-032 · La agenda de visitas es la página de citas de Google Calendar (2026-10-29)
+
+En lugar de Calendly. Afecta al sitio público y a la futura Fase B del agente, no a la
+plataforma. El dominio `aurahomescancun.com` queda aprobado (~10 USD/año, Cloudflare
+Registrar) y **AUR-001 es ficticia: se elimina**; la primera propiedad real es la casa
+del CEO.
+
+---
+
+## D-017 · Pospuesta — SUPERADA por la orden del 2026-10-14
+
+**Fecha:** 2026-09-16 · **Estado:** histórica. El CEO cerró D-017 el 2026-10-14 (arriba);
+esto describe por qué E14 se construyó sin ella y qué quedó preparado para cerrarla.
 
 El texto del punto 7.4 se corta en *«If owner approves»*. En lugar de inventar el
 final, E14 entrega las cotizaciones **manuales** y deja que aprobar o rechazar
