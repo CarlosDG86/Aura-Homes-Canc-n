@@ -57,7 +57,7 @@ notifica al proveedor y mueve el ticket).
 | **Agente de IA solo en planes «+»** | D-031 | ✅ Hecho (2026-11-04) |
 | **Panel por pestañas, tablero kanban y paleta** | Orden del 14-oct, §2 | ✅ Hecho (2026-11-04) |
 | **Aprobar cotización notifica al proveedor** | D-017 | ⏳ Bloqueado por el correo (dominio + Brevo) |
-| **Pantalla de reseteo forzado por el admin, con historial** | D-022 | ⏳ Sin construir |
+| **Pantalla de reseteo forzado por el admin, con historial** | D-022 | ✅ Hecho (2026-11-04) |
 | **Validar con Finanzas la documentación fiscal del paquete** | D-021 | ⏳ Depende de Finanzas |
 | **Reasignar propietarios a cuenta estándar** | D-020 | ⛔ Detenido: ver el punto 2 de arriba |
 | **Agente de WhatsApp (Fase B)** | Especificación del 29-oct | ⏳ Sin empezar; Fase A no es trabajo de Desarrollo |

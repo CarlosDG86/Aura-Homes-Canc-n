@@ -117,11 +117,15 @@ with TestClient(app) as c:
     cown = TestClient(app); login(cown)  # owner con sesion abierta
     check("owner dentro antes del cambio", cown.get("/owner").status_code == 200)
     t = tok(cadm, f"/admin/users/{UID}")
+    # D-022: la clave ya no la teclea el admin, la genera el servidor; y como
+    # este owner no tiene telefono en su ficha, hay que declarar que se
+    # restablece sin verificar identidad.
     r = cadm.post(f"/admin/users/{UID}/password",
-                  data={"new_password": "NuevaClave123", "csrf_token": t}, follow_redirects=False)
+                  data={"sin_telefono": "1", "motivo": "prueba de sesiones",
+                        "csrf_token": t}, follow_redirects=False)
     # Ojo: la ruta tambien devuelve 302 cuando rechaza la peticion (sin permiso,
-    # contrasena corta). El 302 por si solo NO prueba que restablecio; lo que lo
-    # prueba son las tres comprobaciones siguientes.
+    # sin motivo, telefono que no coincide). El 302 por si solo NO prueba que
+    # restablecio; lo que lo prueba son las tres comprobaciones siguientes.
     check("admin restablece -> 302", r.status_code == 302, f"({r.status_code})")
     check("owner EXPULSADO tras el cambio",
           cown.get("/owner", follow_redirects=False).status_code == 302)
@@ -135,8 +139,15 @@ with TestClient(app) as c:
     db.close()
 
     print("\n== 7. Caducidad por inactividad ==")
-    # La contrasena del owner cambio en el paso 6.
-    cidle = TestClient(app); login(cidle, password="NuevaClave123")
+    # El paso 6 dejo al owner con una clave generada por el servidor que nadie
+    # conoce (D-022). Esta seccion va de inactividad, no de claves, asi que se
+    # le pone una conocida directamente en la base.
+    db = SessionLocal()
+    u = db.get(User, UID)
+    u.password_hash = hash_password("Pass123456!")
+    u.must_change_password = False
+    db.commit(); db.close()
+    cidle = TestClient(app); login(cidle)
     db = SessionLocal()
     s = db.query(UserSession).filter(UserSession.user_id == UID,
                                      UserSession.revoked_at.is_(None)).first()

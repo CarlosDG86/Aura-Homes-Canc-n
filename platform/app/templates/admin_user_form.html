@@ -40,22 +40,39 @@
 
 <div class="card">
   <h3>Restablecer contraseña</h3>
+  <p class="muted">
+    No desbloquea la cuenta vieja: emite credenciales nuevas, cierra todas sus
+    sesiones y obliga a cambiarlas al entrar. Queda en el
+    <a href="/admin/reseteos">historial de reseteos</a>.
+  </p>
   <form method="post" action="/admin/users/{{ target.id }}/password">
     {{ csrf_input(request) }}
     <div class="form-grid">
       <div>
-        <label for="u-pass">Nueva contraseña temporal</label>
-        <input type="text" id="u-pass" name="new_password" placeholder="Mínimo 8 caracteres" required>
-        <p class="help">Se muestra en claro a propósito para que puedas comunicarla. El usuario debe cambiarla al entrar.</p>
+        {% if telefono_pista %}
+        <label for="u-tel">Últimos 4 dígitos de su teléfono ({{ telefono_pista }})</label>
+        <input type="text" id="u-tel" name="telefono_confirmacion" inputmode="numeric"
+               maxlength="6" autocomplete="off" required>
+        <p class="help">Pídeselos por teléfono. Es la forma de comprobar que hablas con quien dices, cuando ya no tiene acceso a su correo.</p>
+        {% else %}
+        <div class="checkbox-field">
+          <label><input type="checkbox" name="sin_telefono" value="1" required> Esta persona no tiene teléfono registrado; restablezco sin verificar su identidad</label>
+        </div>
+        <p class="help">Queda escrito en el historial que se hizo sin verificar.</p>
+        {% endif %}
+      </div>
+      <div>
+        <label for="u-motivo">Por qué</label>
+        <input type="text" id="u-motivo" name="motivo" maxlength="200" required
+               placeholder="Perdió el acceso a su correo; me llamó al celular">
       </div>
     </div>
     <div class="checkbox-field">
-      <label><input type="checkbox" name="send_email" value="1"> Enviar la nueva clave por correo a {{ target.email }}</label>
+      <label><input type="checkbox" name="send_email" value="1"> Enviar la clave nueva por correo a {{ target.email }}</label>
     </div>
-    <div class="form-actions"><button type="submit" class="btn-primary-inline">Restablecer contraseña</button></div>
+    <div class="form-actions"><button type="submit" class="btn-primary-inline">Emitir credenciales nuevas</button></div>
   </form>
 </div>
-
 <div class="card">
   <h3>Casas asignadas</h3>
   {% if owned %}

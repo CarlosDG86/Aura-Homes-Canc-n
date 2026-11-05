@@ -320,8 +320,22 @@ genera credenciales nuevas —nunca un desbloqueo de la cuenta vieja—, con his
 auditado de quién, cuándo y a quién, y el **teléfono** como segundo dato para validar
 identidad cuando se pierde el correo.
 
-Lo construido es un guión de consola (la entrada de septiembre). El guión sigue siendo
-válido como último recurso, pero falta la pantalla de administrador con su historial.
+**Construido el 2026-11-04.** El administrador emite credenciales nuevas desde la ficha del
+usuario: la clave la **genera el servidor** (antes la tecleaba el administrador, con un mínimo
+de ocho caracteres cuando el de la plataforma son doce — la puerta de servicio era más débil
+que la principal), hay que **confirmar los últimos cuatro dígitos del teléfono**, el motivo es
+obligatorio, se cierran todas las sesiones y la persona debe cambiarla al entrar.
+
+Si la ficha no tiene teléfono se puede seguir, pero marcándolo a mano, y el historial guarda
+`identidad=sin_telefono`. Un intento con dígitos que no coinciden **no cambia nada y queda
+registrado**: saber que alguien lo intentó es tan útil como saber que lo logró.
+
+`/admin/reseteos` es la **primera pantalla que lee `audit_log`** — hasta hoy la bitácora existía
+y nadie podía consultarla (D-029). Es de solo lectura y de tres acciones: volcarla entera sin
+filtro no es una respuesta, es un vertido.
+
+El guión de consola sigue siendo la salida cuando quien perdió el acceso es el propio
+administrador: esta pantalla exige un administrador dentro.
 
 ### D-023 · RESUELTA (2026-10-14) — el correo es Brevo
 

@@ -13,6 +13,7 @@ lives, instead of two copies that could drift apart.
 """
 import json
 import os
+import secrets
 from typing import List, Optional
 
 from fastapi import APIRouter, Depends, Form, Request
@@ -24,7 +25,8 @@ from .. import cuentas, google_sso, identity
 from ..auth import hash_password, verify_password
 from ..db import get_db
 from ..email_utils import send_temp_password_email
-from ..mockmode import validate_mock_email, validate_mock_phone
+from ..mockmode import (template_context, validate_mock_email,
+                        validate_mock_phone)
 from ..models import Property, PropertyStatusEnum, RoleEnum, User
 from ..security import (
     account_locked_until,
@@ -729,6 +731,10 @@ def user_edit_page(user_id: int, request: Request, db: Session = Depends(get_db)
             "target": target,
             "owned": owned,
             "others": others,
+            # Pista del teléfono, nunca el número entero: la pantalla no
+            # tiene por qué recordárselo a quien está al otro lado.
+            "telefono_pista": ("•" * 4 + _ultimos_digitos(target.phone)[-2:]
+                               if _ultimos_digitos(target.phone) else ""),
             "flash": _pop_flash(request),
         },
     )
@@ -782,47 +788,147 @@ def user_update_submit(
     return RedirectResponse(url=f"/admin/users/{user_id}", status_code=302)
 
 
+#: Cuántos dígitos del teléfono se piden para confirmar identidad. Cuatro es
+#: el estándar de la banca por teléfono: suficiente para que no acierte quien
+#: no tiene el dato, pocos para que la persona los diga sin apuro.
+DIGITOS_TELEFONO = 4
+
+
+def _ultimos_digitos(telefono) -> str:
+    solo = "".join(c for c in (telefono or "") if c.isdigit())
+    return solo[-DIGITOS_TELEFONO:] if len(solo) >= DIGITOS_TELEFONO else ""
+
+
 @router.post("/admin/users/{user_id}/password")
 def user_password_submit(
     user_id: int,
     request: Request,
     db: Session = Depends(get_db),
-    new_password: str = Form(...),
+    telefono_confirmacion: str = Form(""),
+    sin_telefono: Optional[str] = Form(None),
+    motivo: str = Form(""),
     send_email: Optional[str] = Form(None),
 ):
-    """Reset a user's password to a new temporary value, optionally emailing it."""
-    if not _require_admin(request, db):
+    """Reseteo forzado por el administrador (D-022, orden del CEO 2026-10-14).
+
+    Tres cambios respecto a lo que había, y los tres vienen de la orden:
+
+    1. **La contraseña la genera el servidor, no la teclea el administrador.**
+       Quien resetea veinte cuentas al mes acaba poniendo la misma en todas.
+       Además la versión anterior admitía ocho caracteres cuando el mínimo de
+       la plataforma son doce: la puerta de servicio era más débil que la
+       principal.
+    2. **Hay que confirmar la identidad con el teléfono.** El CEO lo fijó como
+       segundo dato para cuando la persona perdió el acceso a su correo. Si la
+       ficha no tiene teléfono se puede seguir, pero hay que marcarlo a mano y
+       queda escrito que se hizo sin verificar.
+    3. **No es un desbloqueo.** La cuenta vieja no se recupera: se emiten
+       credenciales nuevas, se cierran todas las sesiones y la persona está
+       obligada a cambiarlas al entrar.
+
+    El motivo es obligatorio. Sin él, el historial dice que alguien restableció
+    una cuenta pero no por qué, que es justo lo que hay que poder explicar.
+    """
+    admin = _require_admin(request, db)
+    if not admin:
         return RedirectResponse(url="/login", status_code=302)
     target = db.get(User, user_id)
     if not target:
         _flash(request, "error", f"Usuario #{user_id} no existe.")
         return RedirectResponse(url="/admin", status_code=302)
 
-    if len(new_password) < 8:
-        _flash(request, "error", "La nueva contraseña debe tener al menos 8 caracteres.")
-        return RedirectResponse(url=f"/admin/users/{user_id}", status_code=302)
+    destino = RedirectResponse(url=f"/admin/users/{user_id}", status_code=302)
 
-    target.password_hash = hash_password(new_password)
+    razon = (motivo or "").strip()
+    if not razon:
+        _flash(request, "error",
+               "Escribe por qué restableces la contraseña: queda en el historial.")
+        return destino
+
+    esperados = _ultimos_digitos(target.phone)
+    tecleados = "".join(c for c in telefono_confirmacion if c.isdigit())
+    if esperados:
+        if tecleados != esperados:
+            audit(db, request, "admin.reset_forzado_fallido", actor=admin,
+                  object_type="user", object_id=target.id,
+                  meta="los digitos del telefono no coinciden")
+            _flash(request, "error",
+                   f"Esos no son los últimos {DIGITOS_TELEFONO} dígitos del teléfono "
+                   f"registrado. No se restableció nada.")
+            return destino
+        verificado = "telefono"
+    elif sin_telefono:
+        verificado = "sin_telefono"
+    else:
+        _flash(request, "error",
+               "Esta persona no tiene teléfono en su ficha. Marca la casilla para dejar "
+               "constancia de que restableces sin verificar su identidad.")
+        return destino
+
+    # Credenciales nuevas, generadas aquí. `token_urlsafe(12)` da 16 caracteres,
+    # por encima del mínimo de la plataforma.
+    nueva = secrets.token_urlsafe(12)
+    target.password_hash = hash_password(nueva)
+    target.must_change_password = True
+    target.failed_login_count = 0
+    target.locked_until = None
     db.commit()
 
     # Una contraseña restablecida no puede seguir dando acceso donde ya había
-    # sesión abierta: si se restablece porque la anterior se comprometió,
-    # dejar vivas las sesiones existentes anula el propósito del cambio.
-    closed = revoke_all_sessions(db, target.id, "password_reset")
-    audit(db, request, "user.password_reset", actor=_current_user_or_none(request, db),
-          object_type="user", object_id=target.id, meta=f"sesiones_cerradas={closed}")
+    # sesión abierta: si se restablece porque la anterior se comprometió, dejar
+    # vivas las sesiones existentes anula el propósito del cambio.
+    cerradas = revoke_all_sessions(db, target.id, "password_reset")
+    audit(db, request, "admin.reset_forzado", actor=admin,
+          object_type="user", object_id=target.id,
+          meta=f"identidad={verificado} sesiones_cerradas={cerradas} motivo={razon[:150]}")
 
+    cola = f"; se cerraron {cerradas} sesión(es)" if cerradas else ""
+    aviso = (f"Credenciales nuevas para {target.name}: {nueva} — cópialas ahora, no se "
+             f"vuelven a mostrar. Tendrá que cambiarlas al entrar{cola}.")
     if send_email:
-        mail = send_temp_password_email(target.email, target.name, new_password)
+        mail = send_temp_password_email(target.email, target.name, nueva,
+                                        db=db, user_id=target.id)
         if mail.sent:
-            _flash(request, "success", f"Contraseña restablecida y enviada a {target.email}.")
+            aviso += f" Se envió también a {target.email}."
+        elif getattr(mail, "suppressed", False):
+            aviso += " (No se envió: el modo de pruebas no manda correo.)"
         elif not mail.configured:
-            _flash(request, "success", "Contraseña restablecida. (Correo NO enviado: SMTP no está configurado.)")
+            aviso += " (No se envió: el correo no está configurado todavía.)"
         else:
-            _flash(request, "error", f"Contraseña restablecida, pero el correo falló: {mail.error}")
-    else:
-        _flash(request, "success", "Contraseña restablecida.")
-    return RedirectResponse(url=f"/admin/users/{user_id}", status_code=302)
+            aviso += f" El correo falló: {mail.error}."
+    _flash(request, "success", aviso)
+    return destino
+
+
+@router.get("/admin/reseteos", response_class=HTMLResponse)
+def reseteos_historial(request: Request, db: Session = Depends(get_db)):
+    """Historial de reseteos forzados: quién, cuándo y a quién (D-022).
+
+    La bitácora existe desde E1 y **ninguna pantalla la leía** (D-029), así que
+    el historial que pide la orden no existía en la práctica. Esta es la
+    primera ventana a `audit_log`, y a propósito es de solo lectura y de unas
+    pocas acciones: una bitácora que la aplicación pueda editar no sirve como
+    evidencia, y volcarla entera sin filtro no es una respuesta, es un vertido.
+    """
+    admin = _require_admin(request, db)
+    if not admin:
+        return RedirectResponse(url="/login", status_code=302)
+    from ..models import AuditLog
+
+    filas = (db.query(AuditLog)
+             .filter(AuditLog.action.in_(("admin.reset_forzado",
+                                          "admin.reset_forzado_fallido",
+                                          "user.password_reset")))
+             .order_by(AuditLog.id.desc()).limit(200).all())
+    ids = {f.actor_user_id for f in filas} | {f.object_id for f in filas}
+    nombres = ({u.id: u.name for u in db.query(User).filter(User.id.in_(ids)).all()}
+               if ids else {})
+    return templates.TemplateResponse(
+        request=request, name="admin_reseteos.html",
+        context={"user": admin, "active": "reseteos", "filas": filas,
+                 "nombres": nombres, "flash": request.session.pop("flash", None),
+                 **template_context()},
+    )
 
 
 @router.post("/admin/users/{user_id}/properties")

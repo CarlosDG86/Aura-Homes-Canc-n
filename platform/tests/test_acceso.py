@@ -346,5 +346,114 @@ with TestClient(app) as boot:
     check("entra y navega sin interceptación",
           normal.get("/owner", follow_redirects=False).status_code == 200)
 
+    print("\n== 12. Reseteo forzado por el administrador (D-022) ==")
+    import pyotp
+
+    d = SessionLocal()
+    adm = d.query(User).filter(User.role == RoleEnum.admin).first()
+    secreto = pyotp.random_base32()
+    adm.totp_secret, adm.totp_enabled, adm.must_change_password = secreto, True, False
+    victima = User(name="Con Teléfono", email="contel@test.local", phone="+52 555 0100 4321",
+                   password_hash=hash_password("ClaveVieja12345"), role=RoleEnum.owner)
+    sintel = User(name="Sin Teléfono", email="sintel@test.local",
+                  password_hash=hash_password("ClaveVieja12345"), role=RoleEnum.owner)
+    d.add_all([victima, sintel]); d.commit()
+    vid, sid_u, adm_id = victima.id, sintel.id, adm.id
+    hash_viejo = victima.password_hash
+    d.close()
+
+    cadm = TestClient(app)
+    t = csrf(cadm)
+    cadm.post("/login", data={"email": "admin@test.local", "password": "TestPass123!",
+                              "csrf_token": t}, follow_redirects=False)
+    cadm.post("/2fa", data={"code": pyotp.TOTP(secreto).now(), "csrf_token": csrf(cadm, "/2fa")},
+              follow_redirects=False)
+    check("el administrador entra", cadm.get("/admin").status_code == 200)
+
+    ficha = cadm.get(f"/admin/users/{vid}").text
+    check("la ficha pide los últimos dígitos", 'name="telefono_confirmacion"' in ficha)
+    # La pista va enmascarada. El administrador puede ver el teléfono completo
+    # más arriba, en los datos del usuario —es su trabajo—, pero el bloque de
+    # reseteo no se lo recuerda: el dato lo tiene que decir la persona.
+    check("la pista del teléfono va enmascarada", "••••" in ficha)
+
+    # Sin motivo no se hace nada: el historial tiene que poder explicarse.
+    r = cadm.post(f"/admin/users/{vid}/password",
+                  data={"telefono_confirmacion": "4321", "motivo": "",
+                        "csrf_token": csrf(cadm, f"/admin/users/{vid}")},
+                  follow_redirects=False)
+    d = SessionLocal()
+    check("sin motivo no restablece", d.get(User, vid).password_hash == hash_viejo)
+    d.close()
+
+    # Dígitos que no coinciden: se rechaza y queda el intento.
+    r = cadm.post(f"/admin/users/{vid}/password",
+                  data={"telefono_confirmacion": "9999", "motivo": "llamó por teléfono",
+                        "csrf_token": csrf(cadm, f"/admin/users/{vid}")},
+                  follow_redirects=False)
+    d = SessionLocal()
+    check("con dígitos equivocados NO cambia la clave",
+          d.get(User, vid).password_hash == hash_viejo)
+    rechazos = d.query(AuditLog).filter(
+        AuditLog.action == "admin.reset_forzado_fallido").count()
+    d.close()
+    check("y el intento fallido queda registrado", rechazos == 1, f"-> {rechazos}")
+
+    # Con los dígitos correctos: credenciales nuevas.
+    r = cadm.post(f"/admin/users/{vid}/password",
+                  data={"telefono_confirmacion": "4321", "motivo": "perdió su correo",
+                        "csrf_token": csrf(cadm, f"/admin/users/{vid}")},
+                  follow_redirects=False)
+    check("se acepta", r.status_code == 302, f"-> {r.status_code}")
+    d = SessionLocal()
+    v = d.get(User, vid)
+    check("la clave cambió", v.password_hash != hash_viejo)
+    check("y obliga a cambiarla al entrar", v.must_change_password is True)
+    fila = (d.query(AuditLog).filter(AuditLog.action == "admin.reset_forzado")
+            .order_by(AuditLog.id.desc()).first())
+    d.close()
+    check("queda quién, a quién y por qué",
+          fila is not None and fila.actor_user_id == adm_id and fila.object_id == vid
+          and "perdió su correo" in (fila.meta or ""))
+    check("y con qué se verificó la identidad", "identidad=telefono" in (fila.meta or ""))
+
+    # La clave nueva se muestra UNA vez, en el aviso.
+    pantalla = cadm.get(f"/admin/users/{vid}").text
+    check("la clave nueva se enseña una sola vez", "Credenciales nuevas" in pantalla)
+    check("y al recargar ya no está",
+          "Credenciales nuevas" not in cadm.get(f"/admin/users/{vid}").text)
+
+    # Sin teléfono en la ficha: hay que declararlo.
+    r = cadm.post(f"/admin/users/{sid_u}/password",
+                  data={"motivo": "no tiene correo ni teléfono",
+                        "csrf_token": csrf(cadm, f"/admin/users/{sid_u}")},
+                  follow_redirects=False)
+    d = SessionLocal()
+    sin_marca = d.query(AuditLog).filter(AuditLog.action == "admin.reset_forzado",
+                                         AuditLog.object_id == sid_u).count()
+    d.close()
+    check("sin teléfono y sin declararlo, no se restablece", sin_marca == 0, f"-> {sin_marca}")
+    r = cadm.post(f"/admin/users/{sid_u}/password",
+                  data={"sin_telefono": "1", "motivo": "no tiene correo ni teléfono",
+                        "csrf_token": csrf(cadm, f"/admin/users/{sid_u}")},
+                  follow_redirects=False)
+    d = SessionLocal()
+    marca = (d.query(AuditLog).filter(AuditLog.action == "admin.reset_forzado",
+                                      AuditLog.object_id == sid_u)
+             .order_by(AuditLog.id.desc()).first())
+    d.close()
+    check("declarándolo sí restablece", marca is not None)
+    check("y deja escrito que fue sin verificar",
+          "identidad=sin_telefono" in (marca.meta or "") if marca else False)
+
+    print("\n== 13. El historial de reseteos se puede leer (D-029) ==")
+    r = cadm.get("/admin/reseteos")
+    check("el administrador lo abre", r.status_code == 200, f"-> {r.status_code}")
+    check("sale quién lo hizo y a quién", "Con Teléfono" in r.text and "Sin Teléfono" in r.text)
+    check("los intentos rechazados también", "rechazado" in r.text)
+    check("y el motivo", "perdió su correo" in r.text)
+    r = normal.get("/admin/reseteos", follow_redirects=False)
+    check("un propietario no entra", r.status_code in (302, 303, 403, 404), f"-> {r.status_code}")
+
 print(f"\nRESULTADO: {ok} pasaron, {fail} fallaron")
 sys.exit(1 if fail else 0)

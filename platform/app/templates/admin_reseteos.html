@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Reseteos de contraseña — Aura Homes Cancún{% endblock %}
+{% block content %}
+<h1>Reseteos de contraseña</h1>
+<p class="muted">
+  Quién restableció la contraseña de quién, cuándo y por qué. Esta pantalla
+  <strong>solo lee</strong>: la bitácora no se edita desde la aplicación, porque
+  una bitácora editable no sirve como evidencia.
+</p>
+
+{% if flash %}
+<div class="alert alert-{{ 'error' if flash.kind == 'error' else 'success' }}">{{ flash.message }}</div>
+{% endif %}
+
+<div class="card">
+  <table>
+    <thead>
+      <tr><th>Cuándo</th><th>Quién lo hizo</th><th>A quién</th><th>Resultado</th><th>Detalle</th></tr>
+    </thead>
+    <tbody>
+      {% for f in filas %}
+      <tr>
+        <td>{{ f.created_at.strftime('%Y-%m-%d %H:%M') if f.created_at else '—' }}</td>
+        <td>{{ nombres.get(f.actor_user_id, '—') }}{% if f.actor_role %} <span class="badge badge-{{ f.actor_role }}">{{ f.actor_role }}</span>{% endif %}</td>
+        <td>{{ nombres.get(f.object_id, '#' ~ f.object_id) }}</td>
+        <td>
+          {% if f.action == 'admin.reset_forzado_fallido' %}
+          <span class="chip chip-emergencia">rechazado</span>
+          {% else %}
+          <span class="chip chip-prov">restablecida</span>
+          {% endif %}
+        </td>
+        <td class="meta">{{ f.meta or '—' }}</td>
+      </tr>
+      {% else %}
+      <tr class="empty-row"><td colspan="5">Todavía no se ha restablecido ninguna contraseña.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <p class="hint">
+    Se muestran los últimos 200 movimientos. Un «rechazado» es un intento en el
+    que los dígitos del teléfono no coincidían: no se cambió nada, pero queda.
+  </p>
+</div>
+{% endblock %}
