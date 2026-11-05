@@ -3,7 +3,7 @@
 {% block content %}
 <div class="section-head">
   <div>
-    <h1 class="page-title">Año fiscal {{ anio }}</h1>
+    <h1 class="page-title">Reportes financieros {{ anio }}</h1>
     <p class="muted">Tus gastos organizados para {{ "el SAT" if jurisdiccion == "MX" else ("el IRS" if jurisdiccion == "US" else "el SAT y el IRS") }}.</p>
   </div>
   <div class="acciones-cabecera">
@@ -17,6 +17,7 @@
 {% endif %}
 
 <form method="get" action="/owner/fiscal" class="filters">
+  <input type="hidden" name="tab" value="{{ tab }}">
   <div>
     <label for="f-anio">Año</label>
     <select id="f-anio" name="anio">
@@ -29,14 +30,14 @@
   </div>
 </form>
 
-{# El hueco va ANTES de los totales. Quien abre esto tiene que ver lo que
-   falta antes que la cifra, no después. #}
+{# El hueco va ANTES de los totales y en TODAS las pestañas. Quien abre esto
+   tiene que ver lo que falta antes que la cifra, no después. #}
 {% if totales.sin_conversion %}
 <div class="alert alert-warning">
   <strong>{{ totales.sin_conversion }} gasto(s) sin tipo de cambio.</strong>
-  Su importe convertido va vacío y <strong>no suma</strong> en los totales de
-  abajo. No se inventa una conversión: un reporte visiblemente incompleto es
-  mejor que uno silenciosamente falso.
+  Su importe convertido va vacío y <strong>no suma</strong> en ninguna de las
+  cifras de esta página. No se inventa una conversión: un reporte visiblemente
+  incompleto es mejor que uno silenciosamente falso.
   <a href="/owner/fiscal/tipos-de-cambio">Cargar la tasa que falta</a>.
 </div>
 {% endif %}
@@ -49,31 +50,72 @@
 </div>
 {% endif %}
 
-<div class="metrics">
+{# Pestañas: enlaces, no JavaScript. Cada una tiene su propia URL, así que se
+   puede compartir y el botón de atrás funciona. #}
+<nav class="tabs" aria-label="Tipo de reporte">
+  {% for clave, titulo in [('resumen','Resumen'), ('categorias','Por categoría'), ('propiedades','Por casa'), ('meses','Por mes')] %}
+  <a class="tab{% if tab == clave %} is-active{% endif %}"
+     href="/owner/fiscal?anio={{ anio }}&tab={{ clave }}"
+     {% if tab == clave %}aria-current="page"{% endif %}>{{ titulo }}</a>
+  {% endfor %}
+</nav>
+
+{% if tab == 'resumen' %}
+<div class="metrics metrics-destacados">
+  <div class="metric metric-acento">
+    <div class="metric-label">Total del año</div>
+    <div class="metric-value">{{ dinero(totales.total) }}</div>
+    <div class="metric-def">Solo lo que tiene conversión.</div>
+  </div>
+  <div class="metric">
+    <div class="metric-label">Gasto corriente</div>
+    <div class="metric-value">{{ dinero(totales.corriente) }}</div>
+    <div class="metric-def">Lo que normalmente se deduce en el año.</div>
+  </div>
+  <div class="metric">
+    <div class="metric-label">Capitalizable</div>
+    <div class="metric-value">{{ dinero(totales.capital) }}</div>
+    <div class="metric-def">Mejoras: se deprecian, no se deducen de golpe.</div>
+  </div>
   <div class="metric">
     <div class="metric-label">Gastos registrados</div>
     <div class="metric-value">{{ totales.n }}</div>
     <div class="metric-def">Confirmados y no anulados.</div>
   </div>
-  <div class="metric">
-    <div class="metric-label">Total del año</div>
-    <div class="metric-value">{{ totales.total }}</div>
-    <div class="metric-def">Solo lo que tiene conversión.</div>
-  </div>
-  <div class="metric">
-    <div class="metric-label">Gasto corriente</div>
-    <div class="metric-value">{{ totales.corriente }}</div>
-    <div class="metric-def">Lo que normalmente se deduce en el año.</div>
-  </div>
-  <div class="metric">
-    <div class="metric-label">Capitalizable</div>
-    <div class="metric-value">{{ totales.capital }}</div>
-    <div class="metric-def">Mejoras: se deprecian, no se deducen de golpe.</div>
-  </div>
 </div>
 
-<div class="card">
+{% if reparto %}
+<section class="card">
+  <h2>En qué se fue el año</h2>
+  <div class="barra-apilada">
+    {% for r in reparto %}
+    <span class="tramo tramo-{{ loop.index }}" title="{{ r.etiqueta }}: {{ r.pct }}%"></span>
+    {% endfor %}
+  </div>
+  <ul class="leyenda">
+    {% for r in reparto %}
+    <li><span class="punto punto-{{ loop.index }}"></span>{{ r.etiqueta }} · <strong>{{ r.pct }}%</strong></li>
+    {% endfor %}
+  </ul>
+  <p class="hint">Las seis categorías con más gasto. El detalle completo está en «Por categoría».</p>
+</section>
+{% endif %}
+
+<section class="card">
+  <h2>Meses con más gasto</h2>
+  {% if g_meses.hay_datos %}
+  {% include "_grafica_meses.html" %}
+  {% else %}
+  <p class="muted">Todavía no hay gastos convertidos en {{ anio }}.</p>
+  {% endif %}
+</section>
+
+{% elif tab == 'categorias' %}
+<section class="card">
   <h2>Por categoría</h2>
+  {% if g_categorias.hay_datos %}
+  {% with g = g_categorias %}{% include "_grafica_barras.html" %}{% endwith %}
+  {% endif %}
   <table>
     <thead>
       <tr><th>Categoría</th><th>{{ columna }}</th><th>Gastos</th><th>Total</th></tr>
@@ -90,7 +132,7 @@
         </td>
         <td>{{ r.mapeo }}</td>
         <td>{{ r.n }}</td>
-        <td>{{ r.total }}</td>
+        <td>{{ dinero(r.total) }}</td>
       </tr>
       {% else %}
       <tr class="empty-row"><td colspan="4">Sin gastos registrados en {{ anio }}.</td></tr>
@@ -98,7 +140,55 @@
     </tbody>
   </table>
   <p class="hint">{{ descargo }} · Catálogo versión {{ version_catalogo }}.</p>
-</div>
+</section>
+
+{% elif tab == 'propiedades' %}
+<section class="card">
+  <h2>Por casa</h2>
+  {% if g_propiedades.hay_datos %}
+  {% with g = g_propiedades %}{% include "_grafica_barras.html" %}{% endwith %}
+  {% endif %}
+  <table>
+    <thead><tr><th>Casa</th><th>Gastos</th><th>Total</th><th>Huecos</th></tr></thead>
+    <tbody>
+      {% for r in por_propiedad %}
+      <tr>
+        <td>{{ r.etiqueta }}</td>
+        <td>{{ r.n }}</td>
+        <td>{{ dinero(r.total) }}</td>
+        <td>{% if r.sin_conversion %}<span class="meta">{{ r.sin_conversion }} sin tipo de cambio</span>{% else %}—{% endif %}</td>
+      </tr>
+      {% else %}
+      <tr class="empty-row"><td colspan="4">Sin gastos registrados en {{ anio }}.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <p class="hint">Una casa sin gastos no aparece en la lista; no es que valga cero.</p>
+</section>
+
+{% else %}
+<section class="card">
+  <h2>Mes a mes</h2>
+  {% if g_meses.hay_datos %}
+  {% include "_grafica_meses.html" %}
+  {% else %}
+  <p class="muted">Todavía no hay gastos convertidos en {{ anio }}.</p>
+  {% endif %}
+  <table>
+    <thead><tr><th>Mes</th><th>Gastos</th><th>Total</th></tr></thead>
+    <tbody>
+      {% for c in g_meses.columnas %}
+      <tr{% if not c.n %} class="fila-vacia"{% endif %}>
+        <td>{{ c.nombre }}</td>
+        <td>{{ c.n }}</td>
+        <td>{{ dinero(c.valor) }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <p class="hint">Los doce meses salen siempre, incluidos los que van en cero: una gráfica a la que le faltan los meses vacíos miente sobre la forma del año.</p>
+</section>
+{% endif %}
 
 <section class="card">
   <h2>Cerrar el año</h2>

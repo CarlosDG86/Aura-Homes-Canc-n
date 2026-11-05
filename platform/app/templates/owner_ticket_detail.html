@@ -8,7 +8,7 @@
   Reportó: {{ reporter.name if reporter else '—' }} ·
   {{ ticket.category.value if ticket.category else '—' }} ·
   Prioridad: <strong>{{ ticket.priority.value if ticket.priority else '—' }}</strong> ·
-  Estado: <strong>{{ ticket.status.value if ticket.status else '—' }}</strong>
+  Estado: <strong>{{ estado_label(ticket.status) }}</strong>
 </p>
 {% if flash %}
 <div class="alert alert-{{ 'error' if flash.kind == 'error' else 'success' }}">{{ flash.message }}</div>
@@ -75,6 +75,9 @@
       {% if estado != 'in_progress' %}
       <button class="btn" name="accion" value="en_proceso" type="submit">Marcar en proceso</button>
       {% endif %}
+      {% if estado != 'esperando_cliente' %}
+      <button class="btn" name="accion" value="esperar" type="submit">Esperando al cliente</button>
+      {% endif %}
       {% if estado != 'resolved' %}
       <button class="btn btn-primary" name="accion" value="resolver" type="submit">Resolver</button>
       {% endif %}
@@ -83,7 +86,7 @@
       {% endif %}
     </div>
     <p class="hint">
-      Estado actual: <strong>{{ estado }}</strong>.
+      Estado actual: <strong>{{ estado_label(estado) }}</strong>.
       {% if estado == 'in_progress' %}Ya está en proceso; cuando termines, resuélvelo con la nota de qué se hizo.{% endif %}
     </p>
   </form>

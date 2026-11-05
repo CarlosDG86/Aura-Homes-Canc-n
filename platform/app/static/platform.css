@@ -958,3 +958,133 @@ input[type="file"] { background: var(--white); padding: .55rem; }
   .acciones-cabecera .btn { flex: 1; }
   .acciones-fila { white-space: normal; }
 }
+
+/* ======================================================================
+   Rediseño del panel — orden del CEO del 2026-10-14
+   El CEO pidió tres cosas: reportes en pestañas con gráficas, tickets en
+   tablero, y una paleta menos plana. Todo aquí, en hoja externa: la CSP de
+   la plataforma prohíbe el `style=` en línea y hay una prueba que lo vigila.
+   ====================================================================== */
+
+/* --- Pestañas ----------------------------------------------------------- */
+.tabs {
+  display: flex; gap: .25rem; flex-wrap: wrap;
+  border-bottom: 2px solid var(--border);
+  margin: 1.4rem 0 1.1rem;
+}
+.tabs .tab {
+  padding: .6rem 1.05rem; border-radius: 10px 10px 0 0;
+  color: var(--text-muted); font-weight: 600; font-size: .92rem;
+  border: 2px solid transparent; border-bottom: none;
+  margin-bottom: -2px; white-space: nowrap;
+}
+.tabs .tab:hover { color: var(--teal); background: var(--surface-soft); }
+.tabs .tab.is-active {
+  color: var(--teal); background: var(--white);
+  border-color: var(--border); border-bottom-color: var(--white);
+}
+
+/* --- Gráficas ----------------------------------------------------------- */
+.grafica { overflow-x: auto; margin: .2rem 0 1.1rem; }
+.grafica-svg { width: 100%; height: auto; display: block; min-width: 460px; }
+.g-etiqueta { font-size: 13px; fill: var(--ink); }
+.g-valor    { font-size: 12px; fill: var(--text-muted); }
+.g-mes      { font-size: 11px; fill: var(--text-muted); text-anchor: middle; }
+.g-eje      { stroke: var(--border); stroke-width: 1; }
+.g-col      { fill: var(--turquoise); }
+/* Seis tonos de la misma familia: la gráfica se lee sin leyenda y no parece
+   un semáforo. Nada de rojo ni verde, que aquí significarían otra cosa. */
+.g-barra-1 { fill: #0E6E71; }
+.g-barra-2 { fill: #2CB1BC; }
+.g-barra-3 { fill: #5FC6CE; }
+.g-barra-4 { fill: #8AD3D8; }
+.g-barra-5 { fill: #B4E2E5; }
+.g-barra-6 { fill: #D7EFF1; }
+
+/* --- Barra apilada y su leyenda ----------------------------------------- */
+.barra-apilada {
+  display: flex; height: 18px; border-radius: 999px; overflow: hidden;
+  background: var(--sand-deep); margin: .6rem 0 .9rem;
+}
+.barra-apilada .tramo { height: 100%; }
+.tramo-1 { background: #0E6E71; flex: 6 1 0; }
+.tramo-2 { background: #2CB1BC; flex: 5 1 0; }
+.tramo-3 { background: #5FC6CE; flex: 4 1 0; }
+.tramo-4 { background: #8AD3D8; flex: 3 1 0; }
+.tramo-5 { background: #B4E2E5; flex: 2 1 0; }
+.tramo-6 { background: #D7EFF1; flex: 1 1 0; }
+.leyenda { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: .5rem 1.1rem; }
+.leyenda li { font-size: .86rem; color: var(--text-muted); display: flex; align-items: center; gap: .4rem; }
+.leyenda strong { color: var(--ink); }
+.punto { width: 11px; height: 11px; border-radius: 3px; display: inline-block; }
+.punto-1 { background: #0E6E71; } .punto-2 { background: #2CB1BC; }
+.punto-3 { background: #5FC6CE; } .punto-4 { background: #8AD3D8; }
+.punto-5 { background: #B4E2E5; } .punto-6 { background: #D7EFF1; }
+
+/* --- Fichas de indicador con más presencia ------------------------------ */
+.metrics-destacados .metric {
+  background: linear-gradient(160deg, var(--white) 0%, var(--surface-soft) 100%);
+  border-left: 4px solid var(--turquoise);
+}
+.metric-acento {
+  background: linear-gradient(150deg, var(--teal) 0%, #11858a 100%) !important;
+  border-left-color: var(--coral, #D9654A) !important;
+}
+.metric-acento .metric-label,
+.metric-acento .metric-def { color: rgba(255,255,255,.82); }
+.metric-acento .metric-value { color: #fff; }
+.fila-vacia td { color: var(--text-muted); }
+
+/* --- Tablero de reportes ------------------------------------------------ */
+.kanban {
+  display: grid; grid-template-columns: repeat(4, minmax(230px, 1fr));
+  gap: .85rem; align-items: start; overflow-x: auto; padding-bottom: .4rem;
+}
+.kanban-col {
+  background: var(--surface-soft); border: 1px solid var(--border);
+  border-radius: 14px; border-top: 4px solid var(--border);
+}
+.kanban-nuevo     { border-top-color: #2CB1BC; }
+.kanban-proceso   { border-top-color: #E9A23B; }
+.kanban-esperando { border-top-color: #8A939B; }
+.kanban-resuelto  { border-top-color: #3F9D6B; }
+.kanban-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: .7rem .9rem .5rem;
+}
+.kanban-head h2 { font-size: .9rem; margin: 0; letter-spacing: .01em; }
+.kanban-count {
+  background: var(--white); border: 1px solid var(--border); color: var(--text-muted);
+  border-radius: 999px; padding: .05rem .5rem; font-size: .78rem; font-weight: 700;
+}
+.kanban-body { padding: 0 .55rem .7rem; display: flex; flex-direction: column; gap: .5rem; }
+.kanban-card {
+  background: var(--white); border: 1px solid var(--border); border-radius: 12px;
+  padding: .7rem .75rem; box-shadow: 0 1px 2px rgba(20,33,43,.04);
+}
+.kanban-card:hover { box-shadow: 0 4px 14px rgba(20,33,43,.09); }
+.kanban-card.is-urgente { border-left: 4px solid #C0492B; }
+.kanban-ref { font-size: .72rem; font-weight: 700; color: var(--text-muted); letter-spacing: .04em; }
+.kanban-title { font-size: .95rem; margin: .15rem 0 .3rem; line-height: 1.3; }
+.kanban-title a { color: var(--ink); }
+.kanban-title a:hover { color: var(--teal); }
+.kanban-meta { font-size: .8rem; color: var(--text-muted); margin: 0 0 .45rem; }
+.kanban-tags { display: flex; flex-wrap: wrap; gap: .3rem; }
+.chip {
+  font-size: .72rem; padding: .12rem .5rem; border-radius: 999px;
+  background: var(--sand-deep); color: var(--ink);
+}
+.chip-emergencia { background: #FBE2DC; color: #C0492B; font-weight: 700; }
+.chip-alta       { background: #FAEEDA; color: #854F0B; }
+.chip-prov       { background: var(--teal-tint); color: var(--teal); }
+.kanban-edad { font-size: .74rem; color: var(--text-muted); margin: .45rem 0 0; }
+.kanban-edad.is-viejo { color: #854F0B; font-weight: 600; }
+.kanban-vacia { font-size: .82rem; color: var(--text-muted); padding: .4rem .25rem .6rem; margin: 0; }
+
+@media (max-width: 1100px) {
+  .kanban { grid-template-columns: repeat(2, minmax(220px, 1fr)); }
+}
+@media (max-width: 680px) {
+  .kanban { grid-template-columns: 1fr; }
+  .tabs { overflow-x: auto; flex-wrap: nowrap; }
+}

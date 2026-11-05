@@ -244,5 +244,47 @@ with TestClient(app) as c:
     r = cb.post(f"/owner/inquilinos/{LA}/terminar", data={"csrf_token": t}, follow_redirects=False)
     check("owner B terminando arrendamiento de A -> 404", r.status_code == 404, f"({r.status_code})")
 
+    print("\n== 13. Tablero de reportes (orden del CEO 2026-10-14) ==")
+    html = ca.get("/owner/tickets").text
+    check("el tablero es la vista por omision", 'class="kanban"' in html)
+    for titulo in ("Nuevo", "En progreso", "Esperando al cliente", "Resuelto"):
+        check(f"columna «{titulo}»", f">{titulo}<" in html)
+    # El desplegable de estados mostraba «in_progress»; ahora muestra la
+    # etiqueta en espanol y el valor crudo solo viaja en el atributo value.
+    bloque = html.split('name="estado"')[1].split("</select>")[0]
+    check("el desplegable se lee en espanol",
+          ">En progreso<" in bloque and ">in_progress<" not in bloque)
+    check("la lista sigue disponible",
+          'class="kanban"' not in ca.get("/owner/tickets?vista=lista").text)
+
+    t = tok(ca, f"/owner/tickets/{TKA}")
+    r = ca.post(f"/owner/tickets/{TKA}/actualizar",
+                data={"accion": "esperar", "body": "Esperamos respuesta del inquilino",
+                      "csrf_token": t}, follow_redirects=False)
+    check("se puede dejar esperando al cliente", r.status_code == 302, f"({r.status_code})")
+    _d = SessionLocal()
+    _t = _d.query(MaintenanceTicket).filter(MaintenanceTicket.id == TKA).first()
+    check("el estado queda guardado", _t.status == TicketStatusEnum.esperando_cliente)
+    _d.close()
+    html = ca.get("/owner/tickets").text
+    check("la tarjeta aparece en su columna", "Esperando al cliente" in html)
+    # Lo que de verdad importa del estado nuevo: sigue contando como trabajo
+    # abierto. Si no, un reporte parado desaparece de los indicadores.
+    # Lo que de verdad importa del estado nuevo: sigue contando como trabajo
+    # abierto. Si no, un reporte parado desaparece de los indicadores.
+    _d = SessionLocal()
+    from app.filtros_owner import tickets_por_casa
+    abiertos = tickets_por_casa(_d, [_t.property_id])
+    _d.close()
+    check("el panel lo sigue contando entre los abiertos",
+          abiertos.get(_t.property_id, {}).get("abiertos", 0) >= 1, f"-> {abiertos}")
+    t = tok(ca, f"/owner/tickets/{TKA}")
+    r = ca.post(f"/owner/tickets/{TKA}/actualizar",
+                data={"accion": "esperar", "body": "", "csrf_token": t}, follow_redirects=False)
+    _d = SessionLocal()
+    check("repetir el mismo estado no escribe otra vez",
+          "ya está esperando al cliente" in ca.get(f"/owner/tickets/{TKA}").text)
+    _d.close()
+
 print(f"\n{'='*46}\nRESULTADO: {ok} pasaron, {fail} fallaron")
 sys.exit(1 if fail else 0)

@@ -172,6 +172,21 @@ def register_template_globals(templates) -> None:
             return False
     templates.env.globals["google_enabled"] = _google_enabled()
 
+    # Estados de ticket en español, en un solo sitio (D-014). Antes cada
+    # plantilla imprimía el valor crudo y el propietario leía «in_progress».
+    # Importes legibles: «$104,730» en vez de «104730.00». Un número sin
+    # separadores en una ficha de indicador se lee mal y se desborda.
+    def _dinero(valor):
+        try:
+            from decimal import Decimal
+            return "$" + f"{Decimal(valor or 0):,.0f}"
+        except Exception:
+            return "$0"
+    templates.env.globals["dinero"] = _dinero
+
+    from .tablero import etiqueta as _etiqueta_estado
+    templates.env.globals["estado_label"] = _etiqueta_estado
+
 
 class CSRFMiddleware(BaseHTTPMiddleware):
     """Valida el token CSRF en todo método que cambia estado.

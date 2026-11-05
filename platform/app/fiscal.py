@@ -266,3 +266,56 @@ def anios_con_datos(db, ids_propiedades: list) -> list:
     if actual not in anios:
         anios.insert(0, actual)
     return anios
+
+
+def totales_por_propiedad(db, ids_propiedades: list, tax_year: int) -> list:
+    """Cuánto costó cada casa en el año. Para la pestaña «Propiedades».
+
+    Solo suma lo convertido, igual que el resto del módulo: lo que no tiene
+    tipo de cambio no entra en ningún total, y se cuenta aparte para que el
+    hueco viaje al lado de la cifra.
+    """
+    if not ids_propiedades:
+        return []
+    filas = (db.query(Expense.property_id, func.count(Expense.id),
+                      func.sum(Expense.amount_base))
+             .filter(Expense.property_id.in_(ids_propiedades),
+                     Expense.tax_year == tax_year,
+                     Expense.voided_at.is_(None),
+                     Expense.status == CONFIRMADO)
+             .group_by(Expense.property_id).all())
+    huecos = dict(
+        db.query(Expense.property_id, func.count(Expense.id))
+        .filter(Expense.property_id.in_(ids_propiedades),
+                Expense.tax_year == tax_year,
+                Expense.voided_at.is_(None),
+                Expense.status == CONFIRMADO,
+                Expense.amount_base.is_(None))
+        .group_by(Expense.property_id).all())
+    out = [{"property_id": pid, "n": n, "total": total or Decimal("0"),
+            "sin_conversion": huecos.get(pid, 0)} for pid, n, total in filas]
+    return sorted(out, key=lambda r: -(r["total"] or 0))
+
+
+def totales_por_mes(db, ids_propiedades: list, tax_year: int) -> list:
+    """Los doce meses del año, siempre los doce.
+
+    Un mes sin gastos se devuelve en cero en vez de desaparecer: una gráfica
+    a la que le faltan los meses vacíos miente sobre la forma del año.
+    """
+    meses = [{"mes": m, "n": 0, "total": Decimal("0")} for m in range(1, 13)]
+    if not ids_propiedades:
+        return meses
+    filas = (db.query(Expense.expense_date, Expense.amount_base)
+             .filter(Expense.property_id.in_(ids_propiedades),
+                     Expense.tax_year == tax_year,
+                     Expense.voided_at.is_(None),
+                     Expense.status == CONFIRMADO).all())
+    for fecha, importe in filas:
+        if not fecha:
+            continue
+        casilla = meses[fecha.month - 1]
+        casilla["n"] += 1
+        if importe is not None:
+            casilla["total"] += Decimal(importe)
+    return meses

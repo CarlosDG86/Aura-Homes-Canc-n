@@ -1,0 +1,13 @@
+{# Columnas mensuales. Los doce meses siempre, incluidos los vacíos. #}
+<div class="grafica">
+  <svg viewBox="0 0 {{ g_meses.ancho }} {{ g_meses.alto + 26 }}" class="grafica-svg" role="img"
+       aria-label="Gasto por mes">
+    <line x1="0" y1="{{ g_meses.base }}" x2="{{ g_meses.ancho }}" y2="{{ g_meses.base }}" class="g-eje"></line>
+    {% for c in g_meses.columnas %}
+    {% if c.alto > 0 %}
+    <rect x="{{ c.x }}" y="{{ c.y }}" width="{{ c.ancho }}" height="{{ c.alto }}" rx="5" class="g-col"></rect>
+    {% endif %}
+    <text x="{{ c.centro }}" y="{{ g_meses.alto + 18 }}" class="g-mes">{{ c.nombre }}</text>
+    {% endfor %}
+  </svg>
+</div>

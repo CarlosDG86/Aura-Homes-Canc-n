@@ -44,6 +44,10 @@ class LeaseStatusEnum(str, enum.Enum):
 class TicketStatusEnum(str, enum.Enum):
     open = "open"
     in_progress = "in_progress"
+    #: Añadido el 2026-11-04 para la columna que pidió el CEO en el tablero.
+    #: Añadir un miembro es seguro —lo viejo se sigue leyendo—; renombrar o
+    #: quitar no lo es. Ver `app/tablero.py` para el riesgo al revertir.
+    esperando_cliente = "esperando_cliente"
     resolved = "resolved"
 
 

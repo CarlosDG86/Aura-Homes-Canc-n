@@ -29,7 +29,7 @@ from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 
 from ..auth import hash_password
-from .. import cuentas
+from .. import cuentas, tablero
 from ..db import get_db
 from ..email_utils import send_temp_password_email
 from ..mockmode import (
@@ -46,6 +46,7 @@ from ..models import (
     MaintenanceTicket,
     Message,
     Property,
+    Provider,
     RoleEnum,
     TicketEvent,
     TicketEventTypeEnum,
@@ -121,7 +122,7 @@ def _my_tenants(db: Session, user: User) -> List[User]:
 
 @router.get("/owner/tickets", response_class=HTMLResponse)
 def tickets_list(request: Request, db: Session = Depends(get_db),
-                 estado: str = "", propiedad: str = ""):
+                 estado: str = "", propiedad: str = "", vista: str = ""):
     user, resp = _require_owner(request, db)
     if resp:
         return resp
@@ -141,11 +142,33 @@ def tickets_list(request: Request, db: Session = Depends(get_db),
     tickets = q.order_by(MaintenanceTicket.id.desc()).all()
     props = owned_properties(db, user).order_by(Property.id).all()
     prop_names = {p.id: p.title for p in props}
+
+    # Tablero por omisión (orden del CEO, 2026-10-14). La tabla sigue viva en
+    # `?vista=lista`: con cien reportes y un filtro puesto, una tabla se lee
+    # mejor que cuatro columnas largas, y ya existía.
+    #
+    # El reparto por columnas se hace en memoria sobre lo que ya se trajo, no
+    # con cuatro consultas: son los tickets del propietario, no un listado
+    # global, y una consulta por columna multiplicaría por cuatro el trabajo
+    # para ordenar lo mismo.
+    ahora = datetime.now(timezone.utc).replace(tzinfo=None)
+
+    def _dias(t):
+        return (ahora - t.created_at).days if t.created_at else None
+
     return templates.TemplateResponse(
         request=request, name="owner_tickets.html",
-        context=_ctx(user, active='tickets', **_nav_badges(db, user), tickets=tickets, properties=props, prop_names=prop_names,
+        context=_ctx(user, active='tickets', **_nav_badges(db, user), tickets=tickets,
+                     properties=props, prop_names=prop_names,
                      estado=estado, propiedad=propiedad,
-                     statuses=list(TicketStatusEnum)),
+                     statuses=list(TicketStatusEnum),
+                     vista="lista" if vista == "lista" else "tablero",
+                     columnas=tablero.COLUMNAS, cajas=tablero.repartir(tickets),
+                     dias={t.id: _dias(t) for t in tickets},
+                     proveedores={p.id: p.name for p in
+                                  db.query(Provider).filter(
+                                      Provider.account_id == getattr(user, "account_id", None)).all()}
+                     if getattr(user, "account_id", None) else {}),
     )
 
 
@@ -281,6 +304,7 @@ def ticket_update(ticket_id: int, request: Request, db: Session = Depends(get_db
     # inútil un historial cuando hay que leerlo en una disputa.
     YA_ESTA = {
         "en_proceso": (TicketStatusEnum.in_progress, "ya está en proceso"),
+        "esperar": (TicketStatusEnum.esperando_cliente, "ya está esperando al cliente"),
         "resolver": (TicketStatusEnum.resolved, "ya está resuelto"),
         "reabrir": (TicketStatusEnum.open, "ya está abierto"),
     }
@@ -301,6 +325,14 @@ def ticket_update(ticket_id: int, request: Request, db: Session = Depends(get_db
                            event_type=TicketEventTypeEnum.status_changed,
                            from_status=prev, to_status=ticket.status.value,
                            body=text or "Trabajo iniciado"))
+    elif accion == "esperar":
+        # La pelota está en el tejado del inquilino o del proveedor. Sigue
+        # contando como reporte abierto en los indicadores: no está resuelto.
+        ticket.status = TicketStatusEnum.esperando_cliente
+        db.add(TicketEvent(ticket_id=ticket.id, actor_user_id=user.id,
+                           event_type=TicketEventTypeEnum.status_changed,
+                           from_status=prev, to_status=ticket.status.value,
+                           body=text or "En espera de respuesta"))
     elif accion == "resolver":
         # Resolver exige nota: sin ella, el inquilino no sabe qué se hizo y el
         # historial no sirve para una disputa posterior.

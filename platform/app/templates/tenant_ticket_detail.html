@@ -6,7 +6,7 @@
   Ref. <strong>{{ ticket.public_ref or ticket.id }}</strong> ·
   {{ ticket.category.value if ticket.category else '—' }} ·
   Prioridad: <strong>{{ ticket.priority.value if ticket.priority else '—' }}</strong> ·
-  Estado: <strong>{{ ticket.status.value if ticket.status else '—' }}</strong>
+  Estado: <strong>{{ estado_label(ticket.status) }}</strong>
 </p>
 {% if ticket.priority and ticket.priority.value == 'emergencia' %}
 <p class="flash flash-urgent">Marcado como emergencia. Se notificó a tu propietario.</p>

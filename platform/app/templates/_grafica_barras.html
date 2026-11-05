@@ -1,0 +1,14 @@
+{# Barras horizontales. Los números salen calculados de `app/graficas.py`:
+   aquí no se hace aritmética. Los atributos x/y/width/height son del SVG, no
+   CSS en línea — la política de seguridad prohíbe lo segundo, no lo primero. #}
+<div class="grafica">
+  <svg viewBox="0 0 {{ g.ancho }} {{ g.alto }}" class="grafica-svg" role="img"
+       aria-label="Gráfica de barras">
+    {% for b in g.barras %}
+    <text x="0" y="{{ b.y + 17 }}" class="g-etiqueta">{{ b.etiqueta[:26] }}</text>
+    <rect x="{{ g.x }}" y="{{ b.y }}" width="{{ b.ancho }}" height="{{ g.alto_barra }}"
+          rx="6" class="g-barra g-barra-{{ loop.index0 % 6 + 1 }}"></rect>
+    <text x="{{ b.texto_x }}" y="{{ b.y + 17 }}" class="g-valor">{{ dinero(b.valor) }}</text>
+    {% endfor %}
+  </svg>
+</div>

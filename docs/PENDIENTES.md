@@ -55,7 +55,7 @@ notifica al proveedor y mueve el ticket).
 |---|---|---|
 | **Tramos de plan 3 / 7 / 20 / sin tope** | D-018 | ✅ Hecho (2026-11-04) |
 | **Agente de IA solo en planes «+»** | D-031 | ✅ Hecho (2026-11-04) |
-| **Panel por pestañas, tablero kanban y paleta** | Orden del 14-oct, §2 | 🔨 En curso |
+| **Panel por pestañas, tablero kanban y paleta** | Orden del 14-oct, §2 | ✅ Hecho (2026-11-04) |
 | **Aprobar cotización notifica al proveedor** | D-017 | ⏳ Bloqueado por el correo (dominio + Brevo) |
 | **Pantalla de reseteo forzado por el admin, con historial** | D-022 | ⏳ Sin construir |
 | **Validar con Finanzas la documentación fiscal del paquete** | D-021 | ⏳ Depende de Finanzas |

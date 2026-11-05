@@ -331,5 +331,55 @@ with TestClient(app) as boot:
     check("un teléfono en la nota se rechaza en pruebas", r.status_code == 400,
           f"-> {r.status_code}")
 
+    print("\n== 20. Reportes por pestañas (orden del CEO 2026-10-14) ==")
+    base = c.get(f"/owner/fiscal?anio={ANIO}")
+    check("el panel abre en Resumen", base.status_code == 200 and 'class="tabs"' in base.text)
+    for clave, titulo in (("categorias", "Por categoría"), ("propiedades", "Por casa"),
+                          ("meses", "Mes a mes")):
+        r = c.get(f"/owner/fiscal?anio={ANIO}&tab={clave}")
+        check(f"la pestaña «{clave}» abre y trae lo suyo",
+              r.status_code == 200 and titulo in r.text, f"-> {r.status_code}")
+    check("una pestaña inventada cae en Resumen, no en un error",
+          c.get(f"/owner/fiscal?anio={ANIO}&tab=loquesea").status_code == 200)
+    check("hay gráfica y no es JavaScript",
+          "<svg" in c.get(f"/owner/fiscal?anio={ANIO}&tab=categorias").text)
+    # La regla de oro del módulo, ahora en cuatro pantallas en vez de una.
+    # Se fabrica el hueco a mano: a estas alturas de la suite ya hay tasas
+    # para todo el par USD/MXN, así que por formulario ya no se puede crear
+    # un gasto sin convertir. La fila simula lo que pasa cuando falta la tasa.
+    d = SessionLocal()
+    d.add(Expense(account_id=d.get(User, did).account_id, property_id=casa_id,
+                  expense_date=date(ANIO, 1, 15), tax_year=ANIO,
+                  category_code="mantenimiento", amount=Decimal("80"),
+                  currency="USD", base_currency="MXN", data_mode="mock"))
+    d.commit(); d.close()
+    d = SessionLocal()
+    hueco = fiscal.totales_del_anio(d, [casa_id], ANIO)["sin_conversion"]
+    d.close()
+    check("hay al menos un gasto sin conversión para la comprobación", hueco >= 1,
+          f"-> {hueco}")
+    for clave in ("resumen", "categorias", "propiedades", "meses"):
+        cuerpo = c.get(f"/owner/fiscal?anio={ANIO}&tab={clave}").text
+        check(f"«{clave}» avisa del hueco", "sin tipo de cambio" in cuerpo)
+        if "Total del año" in cuerpo:
+            check(f"«{clave}» lo avisa ANTES de la cifra",
+                  cuerpo.index("sin tipo de cambio") < cuerpo.index("Total del año"))
+
+    print("\n== 21. Los nuevos cortes suman igual que el total ==")
+    d = SessionLocal()
+    ids = [casa_id]
+    tot = fiscal.totales_del_anio(d, ids, ANIO)
+    por_prop = fiscal.totales_por_propiedad(d, ids, ANIO)
+    por_mes = fiscal.totales_por_mes(d, ids, ANIO)
+    d.close()
+    check("por casa suma lo mismo que el total del año",
+          sum((r["total"] for r in por_prop), Decimal("0")) == tot["total"],
+          f"-> {sum((r['total'] for r in por_prop), Decimal('0'))} vs {tot['total']}")
+    check("por mes suma lo mismo que el total del año",
+          sum((m["total"] for m in por_mes), Decimal("0")) == tot["total"])
+    check("salen los doce meses, también los vacíos", len(por_mes) == 12)
+    check("un mes sin gastos va en cero, no desaparece",
+          any(m["n"] == 0 and m["total"] == 0 for m in por_mes))
+
 print(f"\nRESULTADO: {ok} pasaron, {fail} fallaron")
 sys.exit(1 if fail else 0)

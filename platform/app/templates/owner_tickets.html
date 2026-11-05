@@ -1,35 +1,102 @@
 {% extends "base.html" %}
 {% block title %}Reportes de mantenimiento{% endblock %}
 {% block content %}
-<h1>Reportes de mantenimiento</h1>
+<div class="section-head">
+  <div>
+    <h1 class="page-title">Reportes de mantenimiento</h1>
+    <p class="muted">{{ tickets|length }} reporte(s) con los filtros actuales.</p>
+  </div>
+  <div class="acciones-cabecera">
+    {# Las dos vistas son enlaces, no pestañas con JavaScript: la CSP de la
+       plataforma prohíbe el script en línea, y un enlace funciona igual. #}
+    <a class="btn {{ 'btn-primary' if vista == 'tablero' else 'btn-ghost' }}"
+       href="/owner/tickets?vista=tablero{% if estado %}&estado={{ estado }}{% endif %}{% if propiedad %}&propiedad={{ propiedad }}{% endif %}">Tablero</a>
+    <a class="btn {{ 'btn-primary' if vista == 'lista' else 'btn-ghost' }}"
+       href="/owner/tickets?vista=lista{% if estado %}&estado={{ estado }}{% endif %}{% if propiedad %}&propiedad={{ propiedad }}{% endif %}">Lista</a>
+    <a class="btn btn-ghost" href="/owner/tickets/reporte">Reporte por unidad</a>
+  </div>
+</div>
+
+{% if flash %}
+<div class="alert alert-{{ 'error' if flash.kind == 'error' else 'success' }}">{{ flash.message }}</div>
+{% endif %}
 
 <form method="get" action="/owner/tickets" class="filters">
-  <select name="estado">
-    <option value="">Todos los estados</option>
-    {% for s in statuses %}<option value="{{ s.value }}" {% if estado==s.value %}selected{% endif %}>{{ s.value }}</option>{% endfor %}
-  </select>
-  <select name="propiedad">
-    <option value="">Todas mis propiedades</option>
-    {% for p in properties %}<option value="{{ p.id }}" {% if propiedad==p.id|string %}selected{% endif %}>{{ p.title }}</option>{% endfor %}
-  </select>
-  <button class="btn" type="submit">Filtrar</button>
+  <input type="hidden" name="vista" value="{{ vista }}">
+  <div>
+    <label for="tk-estado">Estado</label>
+    <select id="tk-estado" name="estado">
+      <option value="">Todos</option>
+      {% for s in statuses %}<option value="{{ s.value }}" {% if estado==s.value %}selected{% endif %}>{{ estado_label(s.value) }}</option>{% endfor %}
+    </select>
+  </div>
+  <div>
+    <label for="tk-prop">Casa</label>
+    <select id="tk-prop" name="propiedad">
+      <option value="">Todas mis propiedades</option>
+      {% for p in properties %}<option value="{{ p.id }}" {% if propiedad==p.id|string %}selected{% endif %}>{{ p.title }}</option>{% endfor %}
+    </select>
+  </div>
+  <div class="filtros-botones">
+    <button type="submit" class="btn btn-primary">Filtrar</button>
+    <a class="btn btn-ghost" href="/owner/tickets?vista={{ vista }}">Limpiar</a>
+  </div>
 </form>
 
-<table>
-  <thead><tr><th>Ref.</th><th>Propiedad</th><th>Asunto</th><th>Categoría</th><th>Prioridad</th><th>Estado</th></tr></thead>
-  <tbody>
-  {% for t in tickets %}
-    <tr {% if t.priority and t.priority.value=='emergencia' %}class="row-urgent"{% endif %}>
-      <td><a href="/owner/tickets/{{ t.id }}">{{ t.public_ref or t.id }}</a></td>
-      <td>{{ prop_names.get(t.property_id, '—') }}</td>
-      <td>{{ t.title }}</td>
-      <td>{{ t.category.value if t.category else '—' }}</td>
-      <td><strong>{{ t.priority.value if t.priority else '—' }}</strong></td>
-      <td>{{ t.status.value if t.status else '—' }}</td>
-    </tr>
-  {% else %}
-    <tr class="empty-row"><td colspan="6">No hay reportes con estos filtros.</td></tr>
+{% if vista == 'tablero' %}
+{# Tablero por columnas (orden del CEO, 2026-10-14). Las tarjetas no se
+   arrastran: mover un reporte se hace desde su ficha, donde queda registrado
+   quién lo movió y por qué. Un arrastre silencioso no deja esa huella. #}
+<div class="kanban">
+  {% for clave, titulo, color in columnas %}
+  <section class="kanban-col kanban-{{ color }}">
+    <header class="kanban-head">
+      <h2>{{ titulo }}</h2>
+      <span class="kanban-count">{{ cajas[clave]|length }}</span>
+    </header>
+    <div class="kanban-body">
+      {% for t in cajas[clave] %}
+      <article class="kanban-card{% if t.priority and t.priority.value == 'emergencia' %} is-urgente{% endif %}">
+        <a class="kanban-ref" href="/owner/tickets/{{ t.id }}">{{ t.public_ref or ('#' ~ t.id) }}</a>
+        <h3 class="kanban-title"><a href="/owner/tickets/{{ t.id }}">{{ t.title }}</a></h3>
+        <p class="kanban-meta">{{ prop_names.get(t.property_id, '—') }}</p>
+        <div class="kanban-tags">
+          {% if t.priority %}<span class="chip chip-{{ t.priority.value }}">{{ t.priority.value }}</span>{% endif %}
+          {% if t.category %}<span class="chip">{{ t.category.value }}</span>{% endif %}
+          {% if t.provider_id and proveedores.get(t.provider_id) %}<span class="chip chip-prov">{{ proveedores[t.provider_id] }}</span>{% endif %}
+        </div>
+        {% if dias.get(t.id) is not none and clave != 'resolved' %}
+        <p class="kanban-edad{% if dias[t.id] >= 7 %} is-viejo{% endif %}">
+          {{ dias[t.id] }} día(s) abierto{% if dias[t.id] >= 7 %} — lleva una semana{% endif %}
+        </p>
+        {% endif %}
+      </article>
+      {% else %}
+      <p class="kanban-vacia">Sin reportes aquí.</p>
+      {% endfor %}
+    </div>
+  </section>
   {% endfor %}
-  </tbody>
-</table>
+</div>
+{% else %}
+<div class="card">
+  <table>
+    <thead><tr><th>Ref.</th><th>Propiedad</th><th>Asunto</th><th>Categoría</th><th>Prioridad</th><th>Estado</th></tr></thead>
+    <tbody>
+    {% for t in tickets %}
+      <tr {% if t.priority and t.priority.value=='emergencia' %}class="row-urgent"{% endif %}>
+        <td><a href="/owner/tickets/{{ t.id }}">{{ t.public_ref or t.id }}</a></td>
+        <td>{{ prop_names.get(t.property_id, '—') }}</td>
+        <td>{{ t.title }}</td>
+        <td>{{ t.category.value if t.category else '—' }}</td>
+        <td><strong>{{ t.priority.value if t.priority else '—' }}</strong></td>
+        <td>{{ estado_label(t.status) }}</td>
+      </tr>
+    {% else %}
+      <tr class="empty-row"><td colspan="6">No hay reportes con estos filtros.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
 {% endblock %}

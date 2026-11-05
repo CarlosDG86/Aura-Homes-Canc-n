@@ -37,7 +37,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 
-from .. import cuentas, docstore, fiscal, fiscal_catalog
+from .. import cuentas, docstore, fiscal, fiscal_catalog, graficas
 from ..db import get_db
 from ..filtros_owner import escapar_csv
 from ..mockmode import is_mock, reject_real_contact_in_text, template_context
@@ -436,6 +436,7 @@ def panel_fiscal(request: Request, db: Session = Depends(get_db)):
         return resp
     props = owned_properties(db, user).order_by(Property.id).all()
     ids = [p.id for p in props]
+    nombres = {p.id: p.title for p in props}
     anios = fiscal.anios_con_datos(db, ids)
     crudo = request.query_params.get("anio")
     anio = int(crudo) if crudo and crudo.isdigit() else (anios[0] if anios else date.today().year)
@@ -443,12 +444,31 @@ def panel_fiscal(request: Request, db: Session = Depends(get_db)):
     cuenta = _cuenta_de(db, user)
     juris = fiscal.jurisdiccion_de(db, props[0], cuenta) if props else "MX"
 
+    # Pestañas (orden del CEO, 2026-10-14): el informe dejó de ser una sola
+    # columna de texto. Cada pestaña es un enlace con `?tab=`, no JavaScript:
+    # así se puede compartir la URL de una pestaña concreta, el botón de atrás
+    # funciona, y la CSP sigue prohibiendo el script en línea.
+    tab = request.query_params.get("tab", "resumen")
+    if tab not in ("resumen", "categorias", "propiedades", "meses"):
+        tab = "resumen"
+
+    resumen = fiscal.resumen_por_categoria(db, ids, anio, juris)
+    por_propiedad = fiscal.totales_por_propiedad(db, ids, anio)
+    for fila in por_propiedad:
+        fila["etiqueta"] = nombres.get(fila["property_id"], f'Casa #{fila["property_id"]}')
+    por_mes = fiscal.totales_por_mes(db, ids, anio)
+
     return templates.TemplateResponse(
         request=request, name="owner_fiscal.html",
         context=_ctx(user, request, active="fiscal", **_nav_badges(db, user),
-                     anio=anio, anios=anios,
+                     anio=anio, anios=anios, tab=tab,
                      totales=fiscal.totales_del_anio(db, ids, anio),
-                     resumen=fiscal.resumen_por_categoria(db, ids, anio, juris),
+                     resumen=resumen,
+                     por_propiedad=por_propiedad, por_mes=por_mes,
+                     g_categorias=graficas.barras_horizontales(resumen[:8]),
+                     g_propiedades=graficas.barras_horizontales(por_propiedad[:8]),
+                     g_meses=graficas.columnas_mensuales(por_mes),
+                     reparto=graficas.reparto(resumen[:6]),
                      jurisdiccion=juris,
                      columna=fiscal_catalog.columna_de(juris),
                      cerrado=fiscal.esta_cerrado(db, getattr(user, "account_id", None),
