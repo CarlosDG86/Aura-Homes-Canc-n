@@ -26,8 +26,7 @@ Están en `data/site.json` → `legalPages`, en español e inglés:
 `dist/es/*.html` y `dist/en/*.html`. Mientras `brand.legalReviewed` sea `false`, cada uno lleva
 una franja de «versión preliminar».
 
-**Dato que falta para cerrar el aviso de privacidad:** nombre legal (persona física o empresa) y
-domicilio en México del responsable (`brand.legalEntity`). Pendiente del CEO.
+**Responsable:** persona física; nombre y domicilio en `brand.legalEntity` (2026-11-23). Falta el código postal.
 
 ## 3. México — Cancún, Quintana Roo (aplica hoy)
 
@@ -74,9 +73,11 @@ ficha trae reseñas.
 
 ## 6. Riesgos abiertos
 
-1. **`banner.jpg`** (portada: edificio frente al mar con alberca infinita) no tiene origen
-   documentado. Si es de banco de imágenes o generada, hay que confirmar la licencia; y como no es
-   una casa que se rente, conviene que no sugiera que lo es.
-2. El nombre legal y domicilio del responsable siguen sin publicar.
+1. **`banner.jpg`** fue generada con IA (Google Gemini), según el CEO (2026-11-23). Lleva la
+   leyenda «Imagen ilustrativa generada con IA» y lo dicen el pie y los términos §5. Pregunta:
+   ¿basta con eso, y qué permiten los términos de uso de Gemini para uso comercial?
+2. Responsable: Juan Carlos Davila Garcia, persona física, domicilio en Santiago Tianguistenco,
+   Estado de México (falta el código postal). Pregunta: ¿conviene publicar un domicilio comercial
+   en vez del particular?
 3. `demo.html` (demostración de la plataforma) se publica en el sitio; no tiene datos de personas
    pero no se revisó con este criterio legal.

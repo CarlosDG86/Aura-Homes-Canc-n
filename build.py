@@ -213,7 +213,7 @@ def build_home(lang):
     body = f'''{topbar(lang,"home")}
 <main class="page" id="contenido">
   <section class="hero hero-stacked">
-    <div class="hero-banner-img"><img src="{hero_img}" alt=""></div>
+    <div class="hero-banner-img"><img src="{hero_img}" alt=""><span class="ai-note">{t["ai_note"]}</span></div>
     <div class="wrap hero-content">
       <div class="eyebrow hero-eyebrow">{t["hero_eyebrow"]}</div>
       <h1>{t["hero_title"]}</h1><p class="sub">{t["hero_sub"]}</p>
@@ -355,7 +355,11 @@ def build_legal(key, lang):
     item = LEGAL[key]
     home = "../es/" if lang == "es" else "../en/"
     ent = B.get("legalEntity") or {}
-    entity = ", ".join(x for x in (ent.get("name"), ent.get("address")) if x) or t["entity_pending"]
+    if ent.get("name") and ent.get("address"):
+        entity = (f'{ent["name"]}, persona física, con domicilio en {ent["address"]}' if lang == "es"
+                  else f'{ent["name"]}, an individual, domiciled at {ent["address"]}')
+    else:
+        entity = t["entity_pending"]
     # Formato mínimo del texto: "## " abre un subtítulo, "- " una viñeta.
     parts, bullets = [], []
     for para in item["body"][lang]:

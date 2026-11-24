@@ -36,10 +36,10 @@ consentimiento, accesibilidad y el dominio en `wrangler.jsonc`.
 |---|---|
 | A | ✅ Decidido 2026-11-23: **publicar con textos preliminares**. Sigue pendiente la revisión del abogado |
 | B | **Aprobar el push** — los pasos exactos están en ese mismo archivo |
-| C | **Origen de `banner.jpg`**: ¿foto propia, de banco o generada? (`docs/legal/MARCO_LEGAL.md` §6) |
-| D | Nombre legal y domicilio para el aviso de privacidad (es el punto 4 de abajo) |
+| C | ✅ `banner.jpg` es de IA (Gemini): lleva la leyenda «Imagen ilustrativa generada con IA» y lo dicen el pie y los términos §5 |
+| D | ✅ Persona física, Juan Carlos Davila Garcia, con domicilio en Santiago Tianguistenco. **Falta el código postal** |
 | E | **Saber que el push cambia DNS**: crea los registros de `aurahomes.com.mx` y `www` en Cloudflare. Falla si ya existe un registro A/CNAME para esos nombres |
-| F | **`demo.html`** sigue publicado: dice «Borrador de Marketing · sujeto a aprobación del CEO», solo está en español y lo enlaza el menú. ¿Se queda, se corrige o se retira? (ya se corrigió «60 días» → «90 días», D-018) |
+| F | **`demo.html`** sigue publicado: dice «Borrador de Marketing · sujeto a aprobación del CEO», solo está en español y lo enlaza el menú. ✅ Se queda publicado; se quitó «Borrador de Marketing» (2026-11-23) |
 | G | Infra: confirmar que Bot Fight Mode y la instalación automática de Web Analytics están apagados; si no, la política de cookies dejaría de ser cierta |
 
 El punto 1 de abajo está **casi hecho**: los nameservers ya apuntan a Cloudflare y el correo ya

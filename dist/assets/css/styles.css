@@ -325,3 +325,5 @@ h1,h2,h3{font-family:var(--f-head);font-weight:600;line-height:1.15;margin:0}
   html{scroll-behavior:auto}
   *,*::before,*::after{animation-duration:.01ms !important;animation-iteration-count:1 !important;transition-duration:.01ms !important}
 }
+.hero-banner-img{position:relative}
+.ai-note{position:absolute;right:8px;bottom:8px;background:rgba(20,33,43,.72);color:#fff;font-size:11px;line-height:1.3;padding:3px 8px;border-radius:6px}
