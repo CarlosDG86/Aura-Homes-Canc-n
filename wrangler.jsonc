@@ -10,6 +10,19 @@
   "name": "aura-homes-cancun",
   "compatibility_date": "2026-08-11",
 
+  // Dominio oficial (D-033). La zona aurahomes.com.mx ya está en Cloudflare
+  // (nameservers cullen/alexandra) y su correo ya funciona, pero hasta hoy
+  // ningún registro llevaba el dominio al sitio: no resolvía. Con
+  // "custom_domain", el próximo `wrangler deploy` crea él mismo el registro
+  // DNS y el certificado; no hay que tocar DNS a mano.
+  //
+  // La URL de workers.dev se conserva para no romper ningún enlace viejo.
+  "routes": [
+    { "pattern": "aurahomes.com.mx", "custom_domain": true },
+    { "pattern": "www.aurahomes.com.mx", "custom_domain": true }
+  ],
+  "workers_dev": true,
+
   "assets": {
     // Carpeta que genera `python build.py`.
     "directory": "./dist",

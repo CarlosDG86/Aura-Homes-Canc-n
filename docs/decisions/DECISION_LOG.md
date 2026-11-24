@@ -400,6 +400,43 @@ Dominio para EE. UU.: sin decidir.
 
 ---
 
+### D-034 · El sitio sale sin datos inventados, con correo propio y textos legales preliminares (2026-11-23)
+
+Orden del CEO del 2026-11-23: publicar «sin ningún dato» y reducir el riesgo de demanda. Dos
+respuestas suyas en la sesión:
+
+1. **Las 7 fichas se ocultan** (`placeholder: true`). Todas eran ficticias o de demostración
+   —AUR-001 incluida, D-032— y el sitio decía «fotos reales» y «disponible ahora» sobre ellas.
+   El sitio muestra «Estamos preparando nuestras primeras propiedades» y el contacto. Sus fotos
+   siguen en el repositorio pero `dist/.assetsignore` impide que Cloudflare las sirva.
+2. **El correo pasa a `info@` y `soporte@aurahomes.com.mx`.** Se comprobó por DNS que
+   `aurahomes.com` entrega su correo a `mailx.gridhost.com`, un servidor ajeno: cada consulta
+   enviada a `@aurahomes.com` le llegaba a un tercero. El Email Routing de Cloudflare está en
+   `aurahomes.com.mx`. Esto **corrige** la nota del 2026-11-05 que decía lo contrario.
+
+Además, sin decisión nueva del CEO porque solo aplican reglas ya escritas:
+- Afirmaciones que el sitio no puede probar («verificadas», «sin stock», «menos de 24 horas»,
+  «el mismo día») se reescriben a lo que sí se sostiene. `build.py` se detiene si reaparecen.
+- Una ficha real necesita `photoRights` (de quién son las fotos y con qué permiso) y no puede
+  llevar reseñas. `build.py` se detiene si falta o sobra.
+- Seis páginas legales bilingües con **franja de versión preliminar** mientras
+  `brand.legalReviewed` sea `false`. La regla de arriba sigue en pie: *todo documento legal es
+  borrador hasta que lo revise un abogado mexicano titulado*. Por eso **no se publican sin esa
+  revisión, o sin que el CEO decida expresamente publicarlas como preliminares**.
+- Aviso de cookies con «Rechazar» y «Aceptar» del mismo peso; la medición (Cloudflare Web
+  Analytics, sin cookies) solo se carga con consentimiento y con token en `site.json`.
+- `wrangler.jsonc` declara `aurahomes.com.mx` y `www` como dominios del Worker: la zona ya
+  estaba en Cloudflare pero **ningún registro llevaba el dominio al sitio** (no resolvía).
+
+**Decidido por el CEO el 2026-11-23: publicar con los textos preliminares** (camino B), con la
+franja de «versión preliminar» visible, sin esperar al abogado. La revisión del abogado sigue
+pendiente y, cuando firme, `brand.legalReviewed` pasa a `true`.
+
+Detalle y pasos: [`docs/DESPLIEGUE_DOMINIO.md`](../DESPLIEGUE_DOMINIO.md) y
+[`docs/legal/MARCO_LEGAL.md`](../legal/MARCO_LEGAL.md).
+
+---
+
 ## D-017 · Pospuesta — SUPERADA por la orden del 2026-10-14
 
 **Fecha:** 2026-09-16 · **Estado:** histórica. El CEO cerró D-017 el 2026-10-14 (arriba);

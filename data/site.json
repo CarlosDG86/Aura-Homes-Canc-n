@@ -4,13 +4,21 @@
     "city": "CANCÚN",
     "whatsapp": "+527222454472",
     "whatsappDisplay": "+52 722 245 4472",
-    "email": "info@aurahomes.com",
-    "supportEmail": "soporte@aurahomes.com",
-    "emailNote": "Buzones dados de alta en Cloudflare el 2026-11-05. OJO: el correo va en aurahomes.com y el SITIO en aurahomes.com.mx (D-033); no es una errata.",
+    "email": "info@aurahomes.com.mx",
+    "supportEmail": "soporte@aurahomes.com.mx",
+    "emailNote": "Correo en aurahomes.com.mx (D-034, 2026-11-23). aurahomes.com NO es de Aura: su MX apunta a gridhost.com, así que un correo a @aurahomes.com le llega a un tercero. build.py se niega a compilar si reaparece.",
     "fxRate": 18.15,
     "fxNote": "Tipo de cambio de referencia — Finanzas debe confirmar el valor real",
     "platformUrl": "https://app.aurahomes.com.mx",
-    "platformUrlNote": "Subdominio previsto (D-033). NO está en linea: el menu Ingresar apunta a /acceso, no aqui. Infra lo conecta cuando la plataforma vuelva."
+    "platformUrlNote": "Subdominio previsto (D-033). NO está en linea: el menu Ingresar apunta a /acceso, no aqui. Infra lo conecta cuando la plataforma vuelva.",
+    "siteUrl": "https://aurahomes.com.mx",
+    "legalEntity": {
+      "name": null,
+      "address": null,
+      "note": "Pendiente del CEO (PENDIENTES 0b-4): persona física o empresa y domicilio en México. Mientras sea null, los avisos legales lo dicen en pantalla."
+    },
+    "legalReviewed": false,
+    "legalReviewedNote": "Pasa a true SOLO cuando un abogado firme los textos de legalPages. Mientras sea false, cada página legal lleva la franja de versión preliminar."
   },
   "ui": {
     "es": {
@@ -18,7 +26,7 @@
       "other": "en",
       "nav": {
         "props": "Propiedades",
-        "zones": "Zonas",
+        "zones": "Por qué Aura",
         "how": "Cómo funciona",
         "contact": "Contacto"
       },
@@ -26,16 +34,16 @@
       "admin_login": "Administración",
       "hero_eyebrow": "Renta a largo plazo · Cancún",
       "hero_title": "Tu hogar a largo plazo en Cancún",
-      "hero_sub": "Casas y departamentos verificados, en renta de 6 a 12+ meses.",
+      "hero_sub": "Casas y departamentos en renta a largo plazo, de 6 a 12 meses o más.",
       "hero_cta": "Ver propiedades",
-      "reply_note": "Respondemos en menos de 24 horas",
+      "reply_note": "Procuramos responder en un día hábil",
       "featured": "Propiedades destacadas",
       "see_all": "Ver todas",
       "trust_title": "Por qué Aura",
       "trust": [
         [
-          "Casas verificadas",
-          "Propiedades del dueño, no intermediarios."
+          "Trato directo",
+          "Rentamos casas propias: hablas con quien decide, no con un intermediario."
         ],
         [
           "Atención bilingüe",
@@ -43,30 +51,30 @@
         ],
         [
           "Enfoque a largo plazo",
-          "Contratos de 6 a 12+ meses, no estancias cortas."
+          "Contratos de 6 a 12 meses o más, no estancias cortas."
         ],
         [
-          "Fotos reales",
-          "Lo que ves es lo que rentas. Sin stock."
+          "Condiciones a la vista",
+          "Cada ficha muestra renta, requisitos y condiciones antes de que escribas."
         ]
       ],
       "how_title": "Cómo funciona",
       "how": [
         [
           "Explora las propiedades",
-          "Navega a tu ritmo — fotos y precios reales."
+          "Revisa fotos, renta y requisitos a tu ritmo."
         ],
         [
           "Pregunta por formulario o WhatsApp",
-          "Te respondemos en menos de 24 horas."
+          "Procuramos responderte en un día hábil."
         ],
         [
           "Visita y firma tu contrato",
-          "Conoce la casa y firma un contrato de 6 a 12+ meses."
+          "Conoce la casa y firma un contrato de 6 a 12 meses o más."
         ]
       ],
       "contact_title": "Escríbenos",
-      "contact_sub": "Cuéntanos qué buscas — zona, presupuesto, fechas — y te respondemos con opciones reales.",
+      "contact_sub": "Cuéntanos qué buscas —zona, presupuesto, fechas— y te respondemos con las opciones disponibles.",
       "form_name": "Nombre",
       "form_email": "Correo electrónico",
       "form_phone": "Teléfono",
@@ -79,8 +87,8 @@
       "footer_explore": "Explora",
       "footer_legal": "Legal",
       "footer_contact": "Contacto",
-      "privacy": "Aviso de Privacidad",
-      "terms": "Términos",
+      "privacy": "Aviso de privacidad",
+      "terms": "Términos y condiciones",
       "made": "Hecho en Cancún",
       "index_title": "Propiedades en renta",
       "index_sub": "Casas y departamentos · renta a largo plazo",
@@ -118,14 +126,44 @@
       "login_menu": "Ingresar",
       "login_owner": "Soy Propietario",
       "login_tenant": "Soy Inquilino",
-      "access": "Acceso a la plataforma"
+      "access": "Acceso a la plataforma",
+      "skip": "Saltar al contenido",
+      "new_tab": "(se abre en una pestaña nueva)",
+      "demo_label": "Demo",
+      "optional": "opcional",
+      "required": "obligatorio",
+      "wa_fab": "Escríbenos por WhatsApp",
+      "lang_es": "Ver en español",
+      "lang_en": "View in English",
+      "photo": "foto",
+      "lb_label": "Galería de fotos",
+      "lb_close": "Cerrar",
+      "lb_prev": "Foto anterior",
+      "lb_next": "Foto siguiente",
+      "form_notice": "Al enviar se abre tu aplicación de correo con el mensaje listo; este sitio no guarda lo que escribes. Usamos tus datos solo para atender tu consulta. Consulta el",
+      "empty_title": "Estamos preparando nuestras primeras propiedades",
+      "empty_sub": "Todavía no hay casas publicadas. Escríbenos con lo que buscas y te avisamos en cuanto haya una disponible.",
+      "empty_cta": "Escríbenos",
+      "cookies": "Política de cookies",
+      "third": "Servicios de terceros",
+      "refunds": "Política de pagos y reembolsos",
+      "a11y": "Accesibilidad",
+      "cookie_prefs": "Preferencias de cookies",
+      "cookie_text": "Usamos solo lo necesario para que el sitio funcione. Con tu permiso, medimos visitas de forma agregada y sin cookies (Cloudflare Web Analytics) para mejorar el sitio. Puedes cambiar de opinión cuando quieras.",
+      "cookie_accept": "Aceptar medición",
+      "cookie_reject": "Rechazar",
+      "cookie_more": "Más información",
+      "copyright": "Todos los derechos reservados. Textos, logotipo y fotografías son propiedad de Aura Homes o se usan con autorización de su autor; no se permite reproducirlos sin permiso por escrito.",
+      "draft": "Versión preliminar del {date}, pendiente de revisión por un abogado. Si tienes una duda sobre este texto, escríbenos.",
+      "updated": "Última actualización",
+      "entity_pending": "nombre legal y domicilio pendientes de publicar"
     },
     "en": {
       "lang": "en",
       "other": "es",
       "nav": {
         "props": "Properties",
-        "zones": "Areas",
+        "zones": "Why Aura",
         "how": "How it works",
         "contact": "Contact"
       },
@@ -133,16 +171,16 @@
       "admin_login": "Admin",
       "hero_eyebrow": "Long-term rentals · Cancún",
       "hero_title": "Your long-term home in Cancún",
-      "hero_sub": "Verified houses and apartments, 6 to 12+ month leases.",
+      "hero_sub": "Houses and apartments for long-term rent, 6 to 12+ month leases.",
       "hero_cta": "View properties",
-      "reply_note": "We reply within 24 hours",
+      "reply_note": "We aim to reply within one business day",
       "featured": "Featured properties",
       "see_all": "See all",
       "trust_title": "Why Aura",
       "trust": [
         [
-          "Verified homes",
-          "Owner-listed properties, no middlemen."
+          "Direct dealing",
+          "We rent our own homes: you talk to the person who decides, not a middleman."
         ],
         [
           "Bilingual support",
@@ -153,19 +191,19 @@
           "6 to 12+ month leases, not short stays."
         ],
         [
-          "Real photos",
-          "What you see is what you rent. No stock."
+          "Terms up front",
+          "Each listing shows rent, requirements and conditions before you reach out."
         ]
       ],
       "how_title": "How it works",
       "how": [
         [
           "Browse the homes",
-          "Explore at your own pace — real photos, real prices."
+          "Look at photos, rent and requirements at your own pace."
         ],
         [
           "Ask by form or WhatsApp",
-          "We answer within 24 hours."
+          "We aim to reply within one business day."
         ],
         [
           "Tour and sign your lease",
@@ -173,7 +211,7 @@
         ]
       ],
       "contact_title": "Get in touch",
-      "contact_sub": "Tell us what you're looking for — area, budget, dates — and we'll reply with real options.",
+      "contact_sub": "Tell us what you're looking for — area, budget, dates — and we'll reply with the options available.",
       "form_name": "Name",
       "form_email": "Email",
       "form_phone": "Phone",
@@ -182,12 +220,12 @@
       "or": "or",
       "wa_btn": "Message us on WhatsApp",
       "email_btn": "Email us",
-      "footer_tagline": "Long-term rental homes in Cancún, Mexico.",
+      "footer_tagline": "Long-term rental homes in Cancún, Quintana Roo.",
       "footer_explore": "Explore",
       "footer_legal": "Legal",
       "footer_contact": "Contact",
       "privacy": "Privacy Notice",
-      "terms": "Terms",
+      "terms": "Terms and conditions",
       "made": "Made in Cancún",
       "index_title": "Properties for rent",
       "index_sub": "Houses and apartments · long-term leases",
@@ -225,7 +263,37 @@
       "login_menu": "Log in",
       "login_owner": "I'm an Owner",
       "login_tenant": "I'm a Tenant",
-      "access": "Platform access"
+      "access": "Platform access",
+      "skip": "Skip to content",
+      "new_tab": "(opens in a new tab)",
+      "demo_label": "Demo",
+      "optional": "optional",
+      "required": "required",
+      "wa_fab": "Message us on WhatsApp",
+      "lang_es": "Ver en español",
+      "lang_en": "View in English",
+      "photo": "photo",
+      "lb_label": "Photo gallery",
+      "lb_close": "Close",
+      "lb_prev": "Previous photo",
+      "lb_next": "Next photo",
+      "form_notice": "Sending opens your email app with the message ready; this site does not store what you type. We use your details only to handle your inquiry. See our",
+      "empty_title": "We are preparing our first listings",
+      "empty_sub": "No homes are published yet. Tell us what you are looking for and we will let you know as soon as one is available.",
+      "empty_cta": "Get in touch",
+      "cookies": "Cookie policy",
+      "third": "Third-party services",
+      "refunds": "Payments and refunds policy",
+      "a11y": "Accessibility",
+      "cookie_prefs": "Cookie preferences",
+      "cookie_text": "We only use what the site needs to work. With your permission, we count visits in aggregate and without cookies (Cloudflare Web Analytics) to improve the site. You can change your mind at any time.",
+      "cookie_accept": "Allow measurement",
+      "cookie_reject": "Decline",
+      "cookie_more": "Learn more",
+      "copyright": "All rights reserved. Texts, logo and photographs are owned by Aura Homes or used with their author's permission; they may not be reproduced without written permission.",
+      "draft": "Preliminary version of {date}, pending review by a lawyer. If you have a question about this text, contact us.",
+      "updated": "Last updated",
+      "entity_pending": "legal name and address pending publication"
     }
   },
   "legalPages": {
@@ -240,13 +308,13 @@
           "La plataforma de Aura Homes es el espacio privado donde los propietarios administran sus casas y los inquilinos reportan lo que necesitan arreglar. <strong>El acceso es por invitación</strong>: no hay registro abierto.",
           "Si eres <strong>propietario</strong> y quieres que administremos tus casas, escríbenos y te explicamos cómo funciona.",
           "Si eres <strong>inquilino</strong> de una casa de Aura, tu acceso lo crea tu arrendador. Si todavía no lo tienes, o no puedes entrar, escríbenos y lo resolvemos.",
-          "Escríbenos por WhatsApp o por correo; respondemos el mismo día."
+          "Escríbenos por WhatsApp o por correo; procuramos responder en un día hábil."
         ],
         "en": [
           "The Aura Homes platform is the private space where owners manage their houses and tenants report what needs fixing. <strong>Access is by invitation</strong> — there is no open sign-up.",
           "If you are an <strong>owner</strong> and would like us to manage your properties, get in touch and we will walk you through it.",
           "If you are a <strong>tenant</strong> of an Aura home, your landlord creates your access. If you do not have it yet, or cannot get in, message us and we will sort it out.",
-          "Reach us on WhatsApp or by email; we reply the same day."
+          "Reach us on WhatsApp or by email; we aim to reply within one business day."
         ]
       }
     },
@@ -256,14 +324,51 @@
         "es": "aviso-de-privacidad",
         "en": "privacy-notice"
       },
+      "draft": true,
       "body": {
         "es": [
-          "Este Aviso de Privacidad está en proceso final de redacción y se publicará muy pronto en este mismo espacio.",
-          "Mientras tanto, si tienes alguna duda sobre el manejo de tus datos personales, escríbenos por WhatsApp o correo electrónico — con gusto te ayudamos."
+          "## Quién es responsable de tus datos",
+          "Aura Homes ({entity}), con operación en Cancún, Quintana Roo, México, es responsable del tratamiento de los datos personales que nos compartes, conforme a la Ley Federal de Protección de Datos Personales en Posesión de los Particulares vigente y su normativa.",
+          "## Qué datos tratamos",
+          "Solo los que tú nos envías al escribirnos por correo, WhatsApp o el formulario: nombre, correo, teléfono y lo que cuentes en tu mensaje. Si avanzas a una renta, los documentos que pidan los requisitos de esa casa. <strong>No pedimos datos sensibles</strong> ni datos de tarjetas o cuentas bancarias por este sitio.",
+          "El formulario de este sitio no guarda nada: abre tu aplicación de correo con el mensaje listo y eres tú quien lo envía.",
+          "## Para qué los usamos",
+          "- Responder tu consulta y darte información de las propiedades.",
+          "- Agendar visitas.",
+          "- Evaluar tu solicitud de renta y, si se firma, administrar el contrato.",
+          "No usamos tus datos para publicidad ni los vendemos. Si algún día quisiéramos enviarte promociones, te pediremos permiso antes.",
+          "## Con quién se comparten",
+          "No los compartimos con terceros para sus propios fines. Para operar usamos servicios de otras empresas (correo, mensajería y hospedaje del sitio), cada uno con su propia política; están en <a href=\"servicios-de-terceros.html\">Servicios de terceros</a>. Solo los entregaríamos a una autoridad cuando la ley lo exija.",
+          "## Tus derechos",
+          "Puedes pedir acceso a tus datos, corregirlos, cancelarlos u oponerte a su uso (derechos ARCO), y retirar tu consentimiento, escribiendo a {email} con tu nombre y lo que solicitas. Te responderemos en los plazos que marca la ley.",
+          "## Si vives en Estados Unidos",
+          "Hoy no ofrecemos propiedades en Estados Unidos. Si nos escribes desde Texas, Illinois u otro estado, aplica lo mismo: no vendemos tus datos, no los usamos para publicidad dirigida y no recogemos datos biométricos. Puedes pedir acceso, corrección o eliminación al mismo correo.",
+          "## Menores de edad",
+          "Este sitio está dirigido a personas mayores de 18 años.",
+          "## Cambios a este aviso",
+          "Publicaremos cualquier cambio en esta misma página, con su fecha."
         ],
         "en": [
-          "This Privacy Notice is currently being finalized and will be published here very soon.",
-          "In the meantime, if you have any questions about how we handle your personal data, message us on WhatsApp or send us an email — we're happy to help."
+          "## Who is responsible for your data",
+          "Aura Homes ({entity}), operating in Cancún, Quintana Roo, Mexico, is responsible for the personal data you share with us, under Mexico's Federal Law on the Protection of Personal Data Held by Private Parties and its regulations.",
+          "## What data we handle",
+          "Only what you send us when you write by email, WhatsApp or the form: name, email, phone and whatever you tell us in your message. If you move forward with a rental, the documents that home's requirements ask for. <strong>We do not ask for sensitive data</strong> or card or bank details through this site.",
+          "The form on this site stores nothing: it opens your email app with the message ready and you are the one who sends it.",
+          "## What we use it for",
+          "- Answering your inquiry and giving you information about the homes.",
+          "- Scheduling viewings.",
+          "- Assessing your rental application and, if a lease is signed, managing it.",
+          "We do not use your data for advertising and we do not sell it. If we ever wanted to send you promotions, we would ask for your permission first.",
+          "## Who it is shared with",
+          "We do not share it with third parties for their own purposes. To operate we use services run by other companies (email, messaging and site hosting), each with its own policy; they are listed under <a href=\"third-party-services.html\">Third-party services</a>. We would only hand it to an authority when the law requires it.",
+          "## Your rights",
+          "You can ask to access, correct or delete your data, object to its use (ARCO rights), and withdraw your consent, by writing to {email} with your name and your request. We will reply within the time limits set by law.",
+          "## If you live in the United States",
+          "We do not currently offer homes in the United States. If you contact us from Texas, Illinois or any other state, the same applies: we do not sell your data, we do not use it for targeted advertising and we do not collect biometric data. You can ask for access, correction or deletion at the same address.",
+          "## Minors",
+          "This site is intended for people aged 18 and over.",
+          "## Changes to this notice",
+          "Any change will be published on this page, with its date."
         ]
       }
     },
@@ -273,16 +378,191 @@
         "es": "terminos",
         "en": "terms"
       },
+      "draft": true,
       "body": {
         "es": [
-          "Nuestros Términos y Condiciones están en preparación y se publicarán próximamente en esta página.",
-          "Si tienes preguntas sobre el proceso de renta mientras tanto, contáctanos por WhatsApp o correo electrónico."
+          "## 1. Qué es este sitio",
+          "Es un escaparate informativo de casas en renta a largo plazo que ofrece Aura Homes ({entity}). No es un mercado de terceros, no tiene cuentas de usuario y <strong>no cobra nada</strong>.",
+          "## 2. La información de las fichas",
+          "Las fichas describen cada casa de buena fe, con fotos de la propia casa. La renta, la disponibilidad y los requisitos pueden cambiar sin aviso y no constituyen una oferta obligatoria: lo que vale es lo que se firme en el contrato de arrendamiento. Las equivalencias en dólares son aproximadas y solo de referencia; la renta se pacta en pesos mexicanos.",
+          "## 3. Igualdad de trato",
+          "Los requisitos de renta son los mismos para todas las personas. No discriminamos por origen étnico o nacional, color de piel, sexo o género, edad, discapacidad, condición social, religión, estado civil o situación familiar, orientación sexual, embarazo, ni por ninguna otra razón que prohíba la ley.",
+          "## 4. Reseñas y testimonios",
+          "Este sitio no publica reseñas ni testimonios. Si algún día lo hace, serán de personas reales que rentaron con nosotros, sin pago a cambio, sin editar su sentido y con su permiso.",
+          "## 5. Propiedad intelectual",
+          "Textos, logotipo, diseño y fotografías son propiedad de Aura Homes o se usan con autorización de su autor. No se permite copiarlos, republicarlos ni extraerlos de forma automatizada sin permiso por escrito. Las marcas de terceros (por ejemplo, WhatsApp) pertenecen a sus dueños.",
+          "## 6. Enlaces y servicios de terceros",
+          "Algunos botones llevan a servicios de otras empresas, como WhatsApp o el mapa de OpenStreetMap, que se rigen por sus propias condiciones. Ver <a href=\"servicios-de-terceros.html\">Servicios de terceros</a>.",
+          "## 7. Responsabilidad",
+          "Cuidamos que la información sea correcta, pero puede contener errores que corregiremos en cuanto los conozcamos. Nada en estos términos limita los derechos que te dan las leyes de protección al consumidor.",
+          "## 8. Ley aplicable — Cancún, México",
+          "Para las casas en Cancún, este sitio se rige por las leyes de México, y cada contrato de arrendamiento por lo que en él se pacte y por las leyes de México y del estado de Quintana Roo, en particular el Código Civil para el Estado de Quintana Roo (arrendamiento) y la Ley Federal de Protección al Consumidor. Las controversias se resolverán ante los tribunales competentes de Cancún, Quintana Roo, sin perjuicio de los derechos que te correspondan ante la Procuraduría Federal del Consumidor (Profeco) u otras autoridades.",
+          "## 9. Estados Unidos — Dallas (Texas) y Chicago (Illinois)",
+          "<strong>Hoy no ofrecemos propiedades en Estados Unidos.</strong> Cuando lo hagamos, cada contrato se regirá por la ley del lugar donde esté la casa: en Dallas, el Código de Propiedad de Texas (capítulo 92, arrendamiento residencial) y la Ley de Vivienda Justa de Texas; en Chicago, la Ordenanza de Propietarios e Inquilinos Residenciales de Chicago (RLTO), la Ordenanza de Derechos Humanos de Chicago y la Ley de Derechos Humanos de Illinois, además de la Ley federal de Vivienda Justa (Fair Housing Act) en ambos casos. Esta sección se actualizará antes de publicar la primera casa allí.",
+          "## 10. Cambios",
+          "Podemos actualizar estos términos; la versión vigente es la publicada en esta página, con su fecha."
         ],
         "en": [
-          "Our Terms and Conditions are being prepared and will be published on this page soon.",
-          "If you have questions about the rental process in the meantime, reach out via WhatsApp or email."
+          "## 1. What this site is",
+          "It is an informational showcase of long-term rental homes offered by Aura Homes ({entity}). It is not a third-party marketplace, it has no user accounts and <strong>it charges nothing</strong>.",
+          "## 2. Listing information",
+          "Listings describe each home in good faith, with photos of the home itself. Rent, availability and requirements may change without notice and are not a binding offer: what counts is what is signed in the lease. US dollar amounts are approximate and for reference only; rent is agreed in Mexican pesos.",
+          "## 3. Equal treatment",
+          "Rental requirements are the same for everyone. We do not discriminate on the basis of ethnic or national origin, color, sex or gender, age, disability, social condition, religion, marital or familial status, sexual orientation, pregnancy, or any other ground the law prohibits.",
+          "## 4. Reviews and testimonials",
+          "This site does not publish reviews or testimonials. If it ever does, they will come from real people who rented with us, with no payment in exchange, without altering their meaning, and with their permission.",
+          "## 5. Intellectual property",
+          "Texts, logo, design and photographs are owned by Aura Homes or used with their author's permission. They may not be copied, republished or scraped without written permission. Third-party marks (for example, WhatsApp) belong to their owners.",
+          "## 6. Third-party links and services",
+          "Some buttons lead to services run by other companies, such as WhatsApp or the OpenStreetMap map, which have their own terms. See <a href=\"third-party-services.html\">Third-party services</a>.",
+          "## 7. Liability",
+          "We take care that the information is correct, but it may contain errors, which we will fix as soon as we learn of them. Nothing in these terms limits the rights consumer protection laws give you.",
+          "## 8. Governing law — Cancún, Mexico",
+          "For homes in Cancún, this site is governed by the laws of Mexico, and each lease by its own terms and the laws of Mexico and the State of Quintana Roo, in particular the Civil Code of the State of Quintana Roo (leases) and Mexico's Federal Consumer Protection Law. Disputes will be settled before the competent courts of Cancún, Quintana Roo, without prejudice to any rights you may have before Mexico's Federal Consumer Protection Agency (Profeco) or other authorities.",
+          "## 9. United States — Dallas (Texas) and Chicago (Illinois)",
+          "<strong>We do not currently offer homes in the United States.</strong> When we do, each lease will be governed by the law of the place where the home is: in Dallas, the Texas Property Code (Chapter 92, residential tenancies) and the Texas Fair Housing Act; in Chicago, the Chicago Residential Landlord and Tenant Ordinance (RLTO), the Chicago Human Rights Ordinance and the Illinois Human Rights Act; and in both, the federal Fair Housing Act. This section will be updated before the first home there is published.",
+          "## 10. Changes",
+          "We may update these terms; the version in force is the one published on this page, with its date."
+        ]
+      }
+    },
+    "cookies": {
+      "navKey": "cookies",
+      "slug": {
+        "es": "politica-de-cookies",
+        "en": "cookie-policy"
+      },
+      "draft": true,
+      "body": {
+        "es": [
+          "## En corto",
+          "Este sitio <strong>no instala cookies propias</strong> ni de publicidad. Solo guarda en tu navegador tu respuesta al aviso de cookies, para no volver a preguntarte.",
+          "## Lo que usamos",
+          "- <strong>Necesario:</strong> tu elección sobre la medición, guardada en el almacenamiento local del navegador (no es una cookie y no sale de tu equipo).",
+          "- <strong>Medición, solo si aceptas:</strong> Cloudflare Web Analytics, que cuenta visitas de forma agregada, sin cookies y sin seguirte entre sitios. Si rechazas, no se carga.",
+          "- <strong>Tipografías:</strong> las letras del sitio se descargan de Google Fonts, que recibe tu dirección IP para entregarlas. No instala cookies.",
+          "- <strong>Mapa:</strong> la ficha de cada casa muestra un mapa de OpenStreetMap, que recibe tu dirección IP al cargarlo.",
+          "## Cómo cambiar tu elección",
+          "Pulsa «Preferencias de cookies» al pie de cualquier página. También puedes borrar los datos del sitio desde la configuración de tu navegador.",
+          "Detalle de cada proveedor en <a href=\"servicios-de-terceros.html\">Servicios de terceros</a>."
+        ],
+        "en": [
+          "## In short",
+          "This site <strong>sets no cookies of its own</strong> and no advertising cookies. It only stores your answer to the cookie notice in your browser, so it does not ask again.",
+          "## What we use",
+          "- <strong>Necessary:</strong> your choice about measurement, kept in the browser's local storage (it is not a cookie and it does not leave your device).",
+          "- <strong>Measurement, only if you allow it:</strong> Cloudflare Web Analytics, which counts visits in aggregate, without cookies and without tracking you across sites. If you decline, it does not load.",
+          "- <strong>Fonts:</strong> the site's typefaces are downloaded from Google Fonts, which receives your IP address to deliver them. It sets no cookies.",
+          "- <strong>Map:</strong> each listing shows an OpenStreetMap map, which receives your IP address when it loads.",
+          "## How to change your choice",
+          "Press “Cookie preferences” at the bottom of any page. You can also clear the site's data from your browser settings.",
+          "Details for each provider under <a href=\"third-party-services.html\">Third-party services</a>."
+        ]
+      }
+    },
+    "third": {
+      "navKey": "third",
+      "slug": {
+        "es": "servicios-de-terceros",
+        "en": "third-party-services"
+      },
+      "draft": true,
+      "body": {
+        "es": [
+          "Estos son todos los servicios de otras empresas que intervienen en este sitio, qué reciben y para qué. Ninguno recibe tus datos para venderlos ni para publicidad.",
+          "## Cloudflare (hospedaje, correo y medición)",
+          "Sirve las páginas del sitio y reenvía los correos que mandas a {email}. Si aceptas la medición, cuenta visitas sin cookies. Recibe tu dirección IP y, en el correo, tu mensaje. <a href=\"https://www.cloudflare.com/privacypolicy/\" rel=\"noopener\">Política de Cloudflare</a>.",
+          "## Google (correo y tipografías)",
+          "El buzón que recibe tus correos es de Google (Gmail), y las tipografías del sitio se descargan de Google Fonts, que recibe tu dirección IP. <a href=\"https://policies.google.com/privacy\" rel=\"noopener\">Política de Google</a>.",
+          "## WhatsApp (Meta)",
+          "Los botones de WhatsApp abren una conversación en esa aplicación; lo que escribas ahí lo trata WhatsApp según su política. <a href=\"https://www.whatsapp.com/legal/privacy-policy\" rel=\"noopener\">Política de WhatsApp</a>.",
+          "## OpenStreetMap",
+          "El mapa de cada ficha lo sirve la Fundación OpenStreetMap, que recibe tu dirección IP al cargarlo. Mostramos solo la colonia, nunca la dirección exacta. <a href=\"https://osmfoundation.org/wiki/Privacy_Policy\" rel=\"noopener\">Política de OpenStreetMap</a>.",
+          "## Lo que no usamos",
+          "No hay redes de publicidad, píxeles de seguimiento, botones de «me gusta» ni pasarelas de pago en este sitio. Si añadimos un servicio nuevo, aparecerá aquí antes de activarse."
+        ],
+        "en": [
+          "These are all the services run by other companies that take part in this site, what they receive and why. None of them receives your data to sell it or for advertising.",
+          "## Cloudflare (hosting, email and measurement)",
+          "Serves the site's pages and forwards the emails you send to {email}. If you allow measurement, it counts visits without cookies. It receives your IP address and, for email, your message. <a href=\"https://www.cloudflare.com/privacypolicy/\" rel=\"noopener\">Cloudflare's policy</a>.",
+          "## Google (email and fonts)",
+          "The mailbox that receives your emails is run by Google (Gmail), and the site's typefaces are downloaded from Google Fonts, which receives your IP address. <a href=\"https://policies.google.com/privacy\" rel=\"noopener\">Google's policy</a>.",
+          "## WhatsApp (Meta)",
+          "The WhatsApp buttons open a chat in that app; what you write there is handled by WhatsApp under its policy. <a href=\"https://www.whatsapp.com/legal/privacy-policy\" rel=\"noopener\">WhatsApp's policy</a>.",
+          "## OpenStreetMap",
+          "The map on each listing is served by the OpenStreetMap Foundation, which receives your IP address when it loads. We only show the neighborhood, never the exact address. <a href=\"https://osmfoundation.org/wiki/Privacy_Policy\" rel=\"noopener\">OpenStreetMap's policy</a>.",
+          "## What we do not use",
+          "There are no ad networks, tracking pixels, “like” buttons or payment gateways on this site. If we add a new service, it will be listed here before it is switched on."
+        ]
+      }
+    },
+    "refunds": {
+      "navKey": "refunds",
+      "slug": {
+        "es": "pagos-y-reembolsos",
+        "en": "payments-and-refunds"
+      },
+      "draft": true,
+      "body": {
+        "es": [
+          "## Este sitio no cobra",
+          "No se paga nada a través de este sitio: ni la consulta, ni la visita, ni el apartado. <strong>Si alguien te pide un depósito a nombre de Aura Homes antes de que hayas visto la casa y firmado un contrato, no pagues y escríbenos a {email}.</strong>",
+          "## Depósito en garantía y rentas",
+          "Los pagos de una renta —renta mensual y depósito en garantía— se pactan por escrito en el contrato de arrendamiento, que indica el monto, la forma de pago y cómo y cuándo se devuelve el depósito. Al terminar el contrato y entregar la casa, el depósito se devuelve descontando solo lo que el contrato permita y esté documentado (rentas o servicios pendientes, daños más allá del desgaste normal), con el detalle por escrito.",
+          "## Cancún, México",
+          "Aplican el contrato firmado, el Código Civil para el Estado de Quintana Roo y la Ley Federal de Protección al Consumidor. Si consideras que no se respetaron tus derechos, puedes acudir a las autoridades competentes.",
+          "## Dallas (Texas) y Chicago (Illinois) — en preparación",
+          "Hoy no ofrecemos casas en Estados Unidos. Cuando lo hagamos, la devolución del depósito seguirá la ley local, que fija plazos y obligaciones propias: en Texas, el capítulo 92 del Código de Propiedad (devolución y relación escrita de descuentos); en Chicago, la RLTO (plazos de devolución, relación de daños con comprobantes e intereses sobre el depósito). Esta sección se completará con los plazos exactos antes de publicar la primera casa allí."
+        ],
+        "en": [
+          "## This site does not charge",
+          "Nothing is paid through this site: not the inquiry, not the viewing, not a holding fee. <strong>If anyone asks you for a deposit on behalf of Aura Homes before you have seen the home and signed a lease, do not pay and email us at {email}.</strong>",
+          "## Security deposit and rent",
+          "Rental payments — monthly rent and security deposit — are agreed in writing in the lease, which states the amount, how to pay, and how and when the deposit is returned. When the lease ends and the home is handed back, the deposit is returned minus only what the lease allows and is documented (unpaid rent or utilities, damage beyond normal wear and tear), with the breakdown in writing.",
+          "## Cancún, Mexico",
+          "The signed lease, the Civil Code of the State of Quintana Roo and Mexico's Federal Consumer Protection Law apply. If you believe your rights were not respected, you can go to the competent authorities.",
+          "## Dallas (Texas) and Chicago (Illinois) — in preparation",
+          "We do not currently offer homes in the United States. When we do, deposit refunds will follow local law, which sets its own deadlines and duties: in Texas, Chapter 92 of the Property Code (refund and written itemization of deductions); in Chicago, the RLTO (refund deadlines, itemized damages with receipts, and interest on the deposit). This section will be completed with the exact deadlines before the first home there is published."
+        ]
+      }
+    },
+    "a11y": {
+      "navKey": "a11y",
+      "slug": {
+        "es": "accesibilidad",
+        "en": "accessibility"
+      },
+      "draft": true,
+      "body": {
+        "es": [
+          "Queremos que cualquier persona pueda usar este sitio, también con lector de pantalla, solo con teclado o con el texto ampliado. Nuestro objetivo es cumplir las Pautas de Accesibilidad para el Contenido Web (WCAG) 2.1, nivel AA.",
+          "## Lo que hemos hecho",
+          "- Todas las imágenes con contenido tienen texto alternativo; las decorativas se ocultan a los lectores de pantalla.",
+          "- Cada campo del formulario tiene su etiqueta, y se indica cuáles son opcionales.",
+          "- Se puede recorrer todo el sitio con el teclado, con un enlace para saltar al contenido y el foco siempre visible.",
+          "- Los textos cumplen el contraste mínimo y el sitio respeta la preferencia de reducir animaciones.",
+          "## Lo que falta",
+          "Todavía no hemos hecho una auditoría externa. El mapa de cada ficha lo sirve un tercero y puede no ser del todo accesible; la zona aparece también como texto.",
+          "## Si encuentras una barrera",
+          "Escríbenos a {email} o por WhatsApp, cuéntanos qué página y qué pasó, y te damos la información por otro medio mientras lo corregimos."
+        ],
+        "en": [
+          "We want anyone to be able to use this site, including with a screen reader, a keyboard only or enlarged text. Our goal is to meet the Web Content Accessibility Guidelines (WCAG) 2.1, level AA.",
+          "## What we have done",
+          "- Every meaningful image has alternative text; decorative ones are hidden from screen readers.",
+          "- Every form field has its label, and optional fields are marked.",
+          "- The whole site can be used with the keyboard, with a skip-to-content link and focus always visible.",
+          "- Text meets minimum contrast, and the site respects the reduced-motion preference.",
+          "## What is still pending",
+          "We have not yet had an external audit. The map on each listing is served by a third party and may not be fully accessible; the area is also given as text.",
+          "## If you find a barrier",
+          "Email us at {email} or message us on WhatsApp, tell us which page and what happened, and we will give you the information another way while we fix it."
         ]
       }
     }
+  },
+  "analytics": {
+    "cloudflareBeaconToken": "",
+    "note": "Cloudflare Web Analytics, sin cookies. Vacío = apagado. Se carga SOLO si la persona acepta en el aviso de cookies. En el panel de Cloudflare usar la instalación MANUAL (token), nunca la automática: la automática inyecta el script sin pedir consentimiento."
   }
 }

@@ -7,9 +7,22 @@ DIST = os.path.join(ROOT, "dist")
 site = json.load(open(os.path.join(ROOT, "data/site.json"), encoding="utf-8"))
 props = json.load(open(os.path.join(ROOT, "data/properties.json"), encoding="utf-8"))
 B = site["brand"]
-ASSET_VER = "20261014"  # bump when dist/assets/css or js changes, to bust browser cache
+ASSET_VER = "20261123"  # bump when dist/assets/css or js changes, to bust browser cache
 LIVE = [p for p in props if not p.get("placeholder")]  # only real inventory renders on the live site
-LEGAL = site["legalPages"]  # placeholder privacy/terms pages — real copy swaps in here once Legal delivers it
+LEGAL = site["legalPages"]  # páginas legales; mientras brand.legalReviewed sea false llevan franja de borrador
+LEGAL_DATE = {"es": "23 de noviembre de 2026", "en": "November 23, 2026"}  # cambiar al editar un texto legal
+ANALYTICS_TOKEN = site.get("analytics", {}).get("cloudflareBeaconToken", "")
+
+# Una ficha real necesita constancia de que sus fotos se pueden publicar: una
+# foto ajena publicada sin permiso es la demanda más fácil de recibir. Y el
+# sitio no publica reseñas (términos §4): una reseña que no se puede probar es
+# publicidad engañosa en México (Profeco) y en EE. UU. (FTC).
+for _p in LIVE:
+    if not _p.get("photoRights"):
+        raise SystemExit(f'{_p["id"]}: falta "photoRights" (de quién son las fotos y con qué permiso). '
+                         f'Sin eso la ficha no se publica.')
+    if any(k in _p for k in ("reviews", "testimonials", "rating")):
+        raise SystemExit(f'{_p["id"]}: el sitio no publica reseñas (términos §4). Quitar el campo.')
 
 HOUSE = ('<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" '
          'stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/>'
@@ -66,9 +79,13 @@ def topbar(lang, page, prop=None, legal=None):
              f'<a data-nav="props" href="{plist}">{nav["props"]}</a>'
              f'<a data-nav="como" href="{frag}#como">{nav["how"]}</a>'
              f'<a data-nav="contacto" href="{frag}#contacto">{nav["contact"]}</a>'
-             f'<a data-nav="demo" href="{droot}demo.html" target="_blank" rel="noopener">DEMO</a></nav>')
-    lang_tog = (f'<span class="lang"><a href="{es_url}" class="{"on" if lang=="es" else ""}">ES</a>'
-                f'<a href="{en_url}" class="{"on" if lang=="en" else ""}">EN</a></span>')
+             f'<a data-nav="demo" href="{droot}demo.html" target="_blank" rel="noopener">{t["demo_label"]}'
+             f'<span class="sr-only"> {t["new_tab"]}</span></a></nav>')
+    cur = ' aria-current="true"'
+    lang_tog = (f'<span class="lang"><a href="{es_url}" hreflang="es" lang="es" aria-label="{t["lang_es"]}" '
+                f'class="{"on" if lang=="es" else ""}"{cur if lang=="es" else ""}>ES</a>'
+                f'<a href="{en_url}" hreflang="en" lang="en" aria-label="{t["lang_en"]}" '
+                f'class="{"on" if lang=="en" else ""}"{cur if lang=="en" else ""}>EN</a></span>')
     # "Ingresar" apunta a una página del propio sitio, no a la plataforma.
     #
     # Antes era un desplegable con dos enlaces —propietario e inquilino— que
@@ -87,7 +104,7 @@ def topbar(lang, page, prop=None, legal=None):
     # sticky mobile bar — only the header button (next to the admin login) is
     # gone.
     apx = "../assets/" if page in ("home", "legal") else "../../assets/"
-    return (f'<header class="topbar"><div class="wrap">'
+    return (f'<a class="skip-link" href="#contenido">{t["skip"]}</a><header class="topbar"><div class="wrap">'
             f'<a class="brand" href="{home}"><img class="brand-logo" src="{apx}img/logo.png" alt="{B["name"]} {B["city"].title()}"></a>'
             f'{links}<div class="topbar-right">{admin_link}{lang_tog}</div></div></header>')
 
@@ -95,17 +112,18 @@ def footer(lang, page):
     t = site["ui"][lang]
     home = ("../es/" if lang=="es" else "../en/") if page in ("home","legal") else ("../../es/" if lang=="es" else "../../en/")
     plist = ("propiedades/" if lang=="es" else "properties/") if page in ("home","legal") else ("../propiedades/" if lang=="es" else "../properties/")
-    privacy_href = home + LEGAL["privacy"]["slug"][lang] + ".html"
-    terms_href = home + LEGAL["terms"]["slug"][lang] + ".html"
+    legal_links = "".join(f'<li><a href="{home}{LEGAL[k]["slug"][lang]}.html">{t[LEGAL[k]["navKey"]]}</a></li>'
+                          for k in ("privacy", "terms", "cookies", "third", "refunds", "a11y"))
     return f'''<footer class="footer"><div class="wrap"><div class="cols">
       <div class="brandcol">{mark()}<p>{t["footer_tagline"]}</p></div>
-      <div><h4>{t["footer_explore"]}</h4><ul><li><a href="{plist}">{t["nav"]["props"]}</a></li>
+      <div><h2 class="fh">{t["footer_explore"]}</h2><ul><li><a href="{plist}">{t["nav"]["props"]}</a></li>
         <li><a href="{home}#zonas">{t["nav"]["zones"]}</a></li><li><a href="{home}#como">{t["nav"]["how"]}</a></li></ul></div>
-      <div><h4>{t["footer_legal"]}</h4><ul><li><a href="{privacy_href}">{t["privacy"]}</a></li><li><a href="{terms_href}">{t["terms"]}</a></li></ul></div>
-      <div><h4>{t["footer_contact"]}</h4><ul><li><a href="{wa_link()}">WhatsApp</a></li>
+      <div><h2 class="fh">{t["footer_legal"]}</h2><ul>{legal_links}
+        <li><button type="button" class="linkish" data-cookie-prefs>{t["cookie_prefs"]}</button></li></ul></div>
+      <div><h2 class="fh">{t["footer_contact"]}</h2><ul><li><a href="{wa_link()}">WhatsApp</a></li>
         <li><a href="mailto:{B["email"]}">{B["email"]}</a></li>
         <li><a href="mailto:{B.get("supportEmail", B["email"])}">{B.get("supportEmail", B["email"])}</a></li></ul></div></div>
-      <div class="footer-bottom"><span>© 2026 {B["name"]} {B["city"].title()}</span><span>{t["made"]}</span></div>
+      <div class="footer-bottom"><span>© 2026 {B["name"]}. {t["copyright"]}</span><span>{t["made"]}</span></div>
     </div></footer>'''
 
 def price_band(n):
@@ -136,8 +154,39 @@ def card(p, lang, base):
         return f'<div class="{cls}" {attrs}>{inner}</div>'
     return f'<div class="{cls}" {attrs}><a href="{detail}">{inner}</a></div>'
 
-def page_shell(lang, title, body, page):
+def contact_form(lang, subject, msg, legal_prefix):
     t = site["ui"][lang]
+    opt = f' <span class="opt">({t["optional"]})</span>'
+    privacy_href = legal_prefix + LEGAL["privacy"]["slug"][lang] + ".html"
+    return f'''<form data-contact data-email="{B["email"]}" data-subject="{subject}">
+        <div class="field"><label for="f-name">{t["form_name"]}</label><input id="f-name" name="name" autocomplete="name" required aria-required="true"></div>
+        <div class="field"><label for="f-email">{t["form_email"]}</label><input id="f-email" type="email" name="email" autocomplete="email" required aria-required="true"></div>
+        <div class="field"><label for="f-phone">{t["form_phone"]}{opt}</label><input id="f-phone" type="tel" name="phone" autocomplete="tel"></div>
+        <div class="field"><label for="f-msg">{t["form_msg"]}{opt}</label><textarea id="f-msg" name="message">{msg}</textarea></div>
+        <button class="btn btn-cta btn-block" type="submit">{t["form_send"]}</button>
+        <p class="form-notice">{t["form_notice"]} <a href="{privacy_href}">{t["privacy"]}</a>.</p>
+      </form>'''
+
+def empty_state(lang, contact_href):
+    t = site["ui"][lang]
+    return (f'<div class="empty-state"><h2>{t["empty_title"]}</h2><p>{t["empty_sub"]}</p>'
+            f'<a class="btn btn-cta" href="{contact_href}">{t["empty_cta"]}</a></div>')
+
+def page_shell(lang, title, body, page, path=""):
+    t = site["ui"][lang]
+    canon = f'<link rel="canonical" href="{B["siteUrl"]}/{path}">' if path else ""
+    root = "../" if page in ("home", "legal") else "../../"
+    cookies_href = f'{root}{lang}/{LEGAL["cookies"]["slug"][lang]}.html'
+    # Aviso de cookies: nace oculto y app.js lo muestra solo si no hay elección
+    # guardada. Los dos botones pesan lo mismo: rechazar no puede costar más
+    # que aceptar.
+    banner = (f'<div class="cookie-banner" role="region" aria-label="{t["cookies"]}" data-cookie-banner hidden '
+              f'data-token="{ANALYTICS_TOKEN}"><p>{t["cookie_text"]} <a href="{cookies_href}">{t["cookie_more"]}</a></p>'
+              f'<div class="cookie-actions"><button type="button" class="btn btn-outline" data-consent="denied">{t["cookie_reject"]}</button>'
+              f'<button type="button" class="btn btn-outline" data-consent="granted">{t["cookie_accept"]}</button></div></div>')
+    lightbox = (f'<div class="lightbox" role="dialog" aria-modal="true" aria-label="{t["lb_label"]}" '
+                f'data-prev="{t["lb_prev"]}" data-next="{t["lb_next"]}">'
+                f'<button type="button" class="x" aria-label="{t["lb_close"]}">&times;</button><img alt=""></div>')
     css = "../assets/css/styles.css" if page in ("home","legal") else "../../assets/css/styles.css"
     js = css.replace("css/styles.css", "js/app.js")
     # Cache-busting version so browsers fetch fresh CSS/JS after an edit instead
@@ -146,11 +195,11 @@ def page_shell(lang, title, body, page):
     js += f"?v={ASSET_VER}"
     return f'''<!doctype html><html lang="{lang}"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>{title}</title><meta name="description" content="{t["hero_sub"]}">
+<title>{title}</title><meta name="description" content="{t["hero_sub"]}">{canon}
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="{css}"></head><body>{body}
-<div class="lightbox"><span class="x">&times;</span><img alt=""></div>
+{lightbox}{banner}
 <script src="{js}"></script></body></html>'''
 
 # ---------- HOME ----------
@@ -162,9 +211,9 @@ def build_home(lang):
     trust = "".join(f'<div class="trust-item"><div class="ic">{HOUSE}</div><h3>{a}</h3><p>{b}</p></div>' for a,b in t["trust"])
     steps = "".join(f'<div class="step"><div class="n">{i+1}</div><div><h3>{a}</h3><p>{b}</p></div></div>' for i,(a,b) in enumerate(t["how"]))
     body = f'''{topbar(lang,"home")}
-<main class="page">
+<main class="page" id="contenido">
   <section class="hero hero-stacked">
-    <div class="hero-banner-img"><img src="{hero_img}" alt="{t["hero_title"]}"></div>
+    <div class="hero-banner-img"><img src="{hero_img}" alt=""></div>
     <div class="wrap hero-content">
       <div class="eyebrow hero-eyebrow">{t["hero_eyebrow"]}</div>
       <h1>{t["hero_title"]}</h1><p class="sub">{t["hero_sub"]}</p>
@@ -173,7 +222,7 @@ def build_home(lang):
 
   <section class="section"><div class="wrap">
     <div class="section-head"><h2>{t["featured"]}</h2><a href="{("propiedades/" if lang=="es" else "properties/")}">{t["see_all"]} →</a></div>
-    <div class="grid">{cards}</div></div></section>
+    {f'<div class="grid">{cards}</div>' if cards else empty_state(lang, "#contacto")}</div></section>
 
   <section class="section" id="zonas"><div class="wrap">
     <div class="section-head"><h2>{t["trust_title"]}</h2></div>
@@ -187,21 +236,15 @@ def build_home(lang):
       <p style="color:var(--text-2);max-width:44ch">{t["contact_sub"]}</p>
       <div class="hero-note"><span class="dot"></span>{t["reply_note"]}</div></div>
     <div class="contact-card">
-      <form data-contact data-email="{B["email"]}" data-subject="Consulta — Aura Homes Cancún">
-        <div class="field"><label>{t["form_name"]}</label><input name="name" required></div>
-        <div class="field"><label>{t["form_email"]}</label><input type="email" name="email" required></div>
-        <div class="field"><label>{t["form_phone"]}</label><input name="phone"></div>
-        <div class="field"><label>{t["form_msg"]}</label><textarea name="message"></textarea></div>
-        <button class="btn btn-cta btn-block" type="submit">{t["form_send"]}</button>
-      </form>
+      {contact_form(lang, "Consulta — Aura Homes Cancún", "", "")}
       <div class="or">{t["or"]}</div>
       <div class="contact-alt"><a class="btn btn-wa btn-block" href="{wa_link()}">{WA}{t["wa_btn"]}</a>
         <a class="btn btn-outline btn-block" href="mailto:{B["email"]}">{t["email_btn"]}</a></div>
     </div></div></section>
 </main>
 {footer(lang,"home")}
-<a class="fab-wa" href="{wa_link()}" aria-label="WhatsApp">{WA}</a>'''
-    return page_shell(lang, f'{B["name"]} {B["city"].title()} — {t["hero_title"]}', body, "home")
+<a class="fab-wa" href="{wa_link()}" aria-label="{t["wa_fab"]}">{WA}</a>'''
+    return page_shell(lang, f'{B["name"]} {B["city"].title()} — {t["hero_title"]}', body, "home", f"{lang}/")
 
 # ---------- INDEX ----------
 def build_index(lang):
@@ -219,22 +262,28 @@ def build_index(lang):
                f'<select class="chip" data-filter="beds" aria-label="{t["filter_beds"]}"><option value="">{t["filter_beds"]}</option>{bed_opts}</select>'
                f'<select class="chip" data-filter="price" aria-label="{t["filter_price"]}"><option value="">{t["filter_price"]}</option>{price_opts}</select>'
                f'</div>')
+    # Sin fichas reales no se pintan filtros ni «0 propiedades»: se dice qué pasa
+    # y se ofrece el contacto, que es lo único útil que la página puede dar.
+    listing = (f'{filters}<div class="results" aria-live="polite"><span data-results-count>{len(LIVE)}</span> '
+               f'<span data-results-label>{t["results"]}</span></div>'
+               f'<div class="grid" data-results-none-label="{t["results_none"]}" style="padding-bottom:48px">{cards}</div>'
+               ) if LIVE else f'<div style="padding-bottom:48px">{empty_state(lang, "../#contacto")}</div>'
     body = f'''{topbar(lang,"index")}
-<main class="page"><div class="wrap">
+<main class="page" id="contenido"><div class="wrap">
   <div class="pagehead"><h1>{t["index_title"]}</h1><div class="sub">{t["index_sub"]}</div></div>
-  {filters}
-  <div class="results"><span data-results-count>{len(LIVE)}</span> <span data-results-label>{t["results"]}</span></div>
-  <div class="grid" data-results-none-label="{t["results_none"]}" style="padding-bottom:48px">{cards}</div>
+  {listing}
 </div></main>{footer(lang,"index")}
-<a class="fab-wa" href="{wa_link()}" aria-label="WhatsApp">{WA}</a>'''
-    return page_shell(lang, f'{t["index_title"]} — {B["name"]} {B["city"].title()}', body, "index")
+<a class="fab-wa" href="{wa_link()}" aria-label="{t["wa_fab"]}">{WA}</a>'''
+    return page_shell(lang, f'{t["index_title"]} — {B["name"]} {B["city"].title()}', body, "index",
+                      f'{lang}/{"propiedades" if lang=="es" else "properties"}/')
 
 # ---------- DETAIL ----------
 def build_detail(p, lang):
     t = site["ui"][lang]
     imgbase = f'../../assets/img/{p["id"].lower()}/'
     lead = imgbase + p["gallery"][0]
-    thumbs = "".join(f'<img src="{imgbase}{g}" alt="{p["title"][lang]}" loading="lazy">' for g in p["gallery"][1:13])
+    thumbs = "".join(f'<img src="{imgbase}{g}" alt="{p["title"][lang]} — {t["photo"]} {i+2}" loading="lazy" tabindex="0" role="button">'
+                     for i, g in enumerate(p["gallery"][1:13]))
     specs = [
         (str(p["beds"]), t["specs_beds"]), (str(p["baths"]), t["specs_baths"]), (str(p["area"]), t["specs_area"]),
         ("—" if not p["furnished"] else "✓", t["specs_furnished"]),
@@ -259,23 +308,17 @@ def build_detail(p, lang):
     map_label = f'{t["map_label_prefix"]} · {p["zone"]}, Cancún'
     map_iframe = (f'<iframe src="https://www.openstreetmap.org/export/embed.html?bbox={bbox}&layer=mapnik" '
                   f'loading="lazy" style="border:0;width:100%;height:100%" title="{map_label}"></iframe>')
-    contact = f'''<div class="contact-card detail-contact">
-      <form data-contact data-email="{B["email"]}" data-subject="{p["title"][lang]} — {p["id"]}">
-        <div class="field"><label>{t["form_name"]}</label><input name="name" required></div>
-        <div class="field"><label>{t["form_email"]}</label><input type="email" name="email" required></div>
-        <div class="field"><label>{t["form_phone"]}</label><input name="phone"></div>
-        <div class="field"><label>{t["form_msg"]}</label><textarea name="message">{p["title"][lang]} ({p["id"]}) — </textarea></div>
-        <button class="btn btn-cta btn-block" type="submit">{t["form_send"]}</button>
-      </form><div class="or">{t["or"]}</div>
+    contact = f'''<div class="contact-card detail-contact" id="contacto">
+      {contact_form(lang, f'{p["title"][lang]} — {p["id"]}', f'{p["title"][lang]} ({p["id"]}) — ', "../")}<div class="or">{t["or"]}</div>
       <div class="contact-alt"><a class="btn btn-wa btn-block" href="{wa_link()}">{WA}{t["wa_btn"]}</a>
         <a class="btn btn-outline btn-block" href="mailto:{B["email"]}">{t["email_btn"]}</a></div>
       <div class="note">{t["reply_note"]}</div></div>'''
     body = f'''{topbar(lang,"detail",p)}
-<main class="page"><div class="wrap">
+<main class="page" id="contenido"><div class="wrap">
   <a class="back-link" href="{plist}">← {t["back"]}</a>
   <div class="detail-grid">
     <div>
-      <div class="gallery-lead"><img src="{lead}" alt="{p["title"][lang]}"></div>
+      <div class="gallery-lead"><img src="{lead}" alt="{p["title"][lang]} — {t["photo"]} 1" tabindex="0" role="button"></div>
       <div class="thumbs">{thumbs}</div>
       <div class="block detail-desc"><h2>{t["h_desc"]}</h2><p>{p["desc"][lang]}</p></div>
     </div>
@@ -303,25 +346,44 @@ def build_detail(p, lang):
 {footer(lang,"detail")}
 <div class="sticky-bar"><div class="p">{money_mxn(p["priceMXN"]) if lang=="es" else money_usd(p["priceMXN"])} <span class="per">{t["per"]}</span></div>
   <a class="btn btn-outline" href="#contacto">{t["sticky_write"]}</a><a class="btn btn-wa" href="{wa_link()}">{WA}{t["wa"]}</a></div>'''
-    return page_shell(lang, f'{p["title"][lang]} — {B["name"]} {B["city"].title()}', body, "detail")
+    return page_shell(lang, f'{p["title"][lang]} — {B["name"]} {B["city"].title()}', body, "detail",
+                      f'{lang}/{"propiedades" if lang=="es" else "properties"}/{p["slug"][lang]}.html')
 
 # ---------- LEGAL (placeholder Aviso de Privacidad / Términos — real copy pending from Legal) ----------
 def build_legal(key, lang):
     t = site["ui"][lang]
     item = LEGAL[key]
     home = "../es/" if lang == "es" else "../en/"
-    body_html = "".join(f'<p>{para}</p>' for para in item["body"][lang])
+    ent = B.get("legalEntity") or {}
+    entity = ", ".join(x for x in (ent.get("name"), ent.get("address")) if x) or t["entity_pending"]
+    # Formato mínimo del texto: "## " abre un subtítulo, "- " una viñeta.
+    parts, bullets = [], []
+    for para in item["body"][lang]:
+        para = para.replace("{email}", f'<a href="mailto:{B["email"]}">{B["email"]}</a>').replace("{entity}", entity)
+        if para.startswith("- "):
+            bullets.append(f"<li>{para[2:]}</li>"); continue
+        if bullets:
+            parts.append("<ul>" + "".join(bullets) + "</ul>"); bullets = []
+        parts.append(f"<h2>{para[3:]}</h2>" if para.startswith("## ") else f"<p>{para}</p>")
+    if bullets:
+        parts.append("<ul>" + "".join(bullets) + "</ul>")
+    body_html = "".join(parts)
+    draft = ""
+    if item.get("draft"):
+        draft = (f'<p class="legal-date">{t["updated"]}: {LEGAL_DATE[lang]}</p>' if B.get("legalReviewed") else
+                 f'<div class="draft-banner" role="note">{t["draft"].replace("{date}", LEGAL_DATE[lang])}</div>')
     body = f'''{topbar(lang,"legal",legal=item)}
-<main class="page"><div class="wrap" style="max-width:720px">
+<main class="page" id="contenido"><div class="wrap" style="max-width:720px">
   <a class="back-link" href="{home}">← {t["back_home"]}</a>
-  <div class="pagehead"><h1>{t[item["navKey"]]}</h1></div>
-  <div class="block">{body_html}
+  <div class="pagehead"><h1>{t[item["navKey"]]}</h1></div>{draft}
+  <div class="block legal">{body_html}
     <p><a href="{wa_link()}">WhatsApp</a> · <a href="mailto:{B["email"]}">{B["email"]}</a></p>
   </div>
 </div></main>
 {footer(lang,"legal")}
-<a class="fab-wa" href="{wa_link()}" aria-label="WhatsApp">{WA}</a>'''
-    return page_shell(lang, f'{t[item["navKey"]]} — {B["name"]} {B["city"].title()}', body, "legal")
+<a class="fab-wa" href="{wa_link()}" aria-label="{t["wa_fab"]}">{WA}</a>'''
+    return page_shell(lang, f'{t[item["navKey"]]} — {B["name"]} {B["city"].title()}', body, "legal",
+                      f'{lang}/{item["slug"][lang]}.html')
 
 # ---------- WRITE ----------
 def w(path, html):
@@ -362,6 +424,32 @@ for raiz, _, archivos in os.walk(DIST):
         with open(ruta, encoding="utf-8", errors="ignore") as fh:
             if DOMINIO_RETIRADO in fh.read():
                 rastros.append(os.path.relpath(ruta, DIST))
+# Lo mismo para el correo (D-034): aurahomes.com es de otra persona —su MX va a
+# gridhost.com—, así que un @aurahomes.com en el sitio manda las consultas de
+# los clientes a un tercero. Y las afirmaciones que el sitio no puede probar:
+# «verificadas», «sin stock», «garantizado», plazos de respuesta prometidos
+# como hecho. Si alguien las vuelve a escribir, la compilación se detiene.
+import re as _re
+CORREO_AJENO = _re.compile(r"@aurahomes\.com(?!\.mx)")
+SIN_RESPALDO = _re.compile(r"verificad|verified|sin stock|no stock|garantiz|guarante|menos de 24 horas|"
+                           r"within 24 hours|mismo d[ií]a|same day|el mejor|the best|n[uú]mero 1", _re.I)
+problemas = []
+for raiz, _, archivos in os.walk(DIST):
+    if "_preview" in raiz:
+        continue
+    for nombre in archivos:
+        if not nombre.endswith(".html") or nombre == "demo.html":
+            continue
+        ruta = os.path.join(raiz, nombre)
+        txt = open(ruta, encoding="utf-8", errors="ignore").read()
+        visible = _re.sub(r"<[^>]+>", " ", txt)
+        if CORREO_AJENO.search(txt):
+            problemas.append(f"correo @aurahomes.com en {os.path.relpath(ruta, DIST)}")
+        m = SIN_RESPALDO.search(visible)
+        if m:
+            problemas.append(f"afirmación sin respaldo «{m.group(0)}» en {os.path.relpath(ruta, DIST)}")
+if problemas:
+    raise SystemExit("La compilación se detiene:\n  " + "\n  ".join(problemas[:10]))
 if rastros:
     raise SystemExit(
         f"El dominio retirado {DOMINIO_RETIRADO} sigue en {len(rastros)} archivo(s) "
@@ -369,7 +457,7 @@ if rastros:
 
 # root redirect to Spanish (default)
 w(os.path.join(DIST, "index.html"),
-  '<!doctype html><meta charset="utf-8"><title>Aura Homes Cancún</title>'
+  '<!doctype html><html lang="es"><meta charset="utf-8"><title>Aura Homes Cancún</title>'
   '<meta http-equiv="refresh" content="0; url=./es/">'
   '<link rel="alternate" hreflang="es" href="./es/"><link rel="alternate" hreflang="en" href="./en/">'
   '<a href="./es/">Aura Homes Cancún</a>')

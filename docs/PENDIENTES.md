@@ -1,6 +1,6 @@
 # Pendientes — prioridades para la próxima sesión
 
-**Actualizado:** 2026-11-04
+**Actualizado:** 2026-11-23
 **Estado general:** desarrollo local. La Fase 2.1 está **construida (E8–E14)** en la rama `work/feedback-usuarios`, sin publicar.
 
 ---
@@ -23,6 +23,27 @@
 > pruebas**. No trabajar ahí.
 
 ---
+
+## 0a. Sitio público: listo en la rama, falta tu decisión (2026-11-23, D-034)
+
+Hecho en `work/feedback-usuarios`, **sin publicar**: las 7 fichas ficticias ocultas, correo
+corregido a `@aurahomes.com.mx` (el de `aurahomes.com` le llegaba a un tercero), afirmaciones sin
+respaldo reescritas, seis páginas legales preliminares (privacidad, términos Cancún + Dallas y
+Chicago preparados, cookies, terceros, reembolsos, accesibilidad), aviso de cookies, analítica con
+consentimiento, accesibilidad y el dominio en `wrangler.jsonc`.
+
+| # | Qué necesito de ti |
+|---|---|
+| A | ✅ Decidido 2026-11-23: **publicar con textos preliminares**. Sigue pendiente la revisión del abogado |
+| B | **Aprobar el push** — los pasos exactos están en ese mismo archivo |
+| C | **Origen de `banner.jpg`**: ¿foto propia, de banco o generada? (`docs/legal/MARCO_LEGAL.md` §6) |
+| D | Nombre legal y domicilio para el aviso de privacidad (es el punto 4 de abajo) |
+| E | **Saber que el push cambia DNS**: crea los registros de `aurahomes.com.mx` y `www` en Cloudflare. Falla si ya existe un registro A/CNAME para esos nombres |
+| F | **`demo.html`** sigue publicado: dice «Borrador de Marketing · sujeto a aprobación del CEO», solo está en español y lo enlaza el menú. ¿Se queda, se corrige o se retira? (ya se corrigió «60 días» → «90 días», D-018) |
+| G | Infra: confirmar que Bot Fight Mode y la instalación automática de Web Analytics están apagados; si no, la política de cookies dejaría de ser cierta |
+
+El punto 1 de abajo está **casi hecho**: los nameservers ya apuntan a Cloudflare y el correo ya
+llega; faltaba que el dominio abriera el sitio, y eso lo hace el próximo despliegue.
 
 ## 0b. Pendientes de tu parte (CEO)
 
@@ -266,10 +287,11 @@ Total hoy: **753 comprobaciones en 17 suites.** A mano: `cd platform && python t
 
 Sin cambios. `build.py` ya respeta un campo `placeholder` para ocultarlas sin borrarlas.
 
-### 2.4 Aviso de privacidad y términos
+### 2.4 Aviso de privacidad y términos — 🟡 BORRADOR (2026-11-23)
 
-Ambas páginas dicen que el texto «se publicará muy pronto» mientras el formulario ya pide nombre,
-correo y teléfono. Depende del texto de Legal.
+Hay texto preliminar bilingüe en la rama (D-034), con franja de «pendiente de revisión por un
+abogado». Falta la revisión y el nombre legal y domicilio del responsable. Paquete para el
+abogado: `docs/legal/MARCO_LEGAL.md`.
 
 ### 2.5 Lighthouse nunca se ha medido
 

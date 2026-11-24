@@ -163,7 +163,9 @@
           "Connected to the rest of Cancún"
         ]
       ]
-    }
+    },
+    "placeholder": true,
+    "placeholderNote": "Ficha ficticia o de demostración (D-034, 2026-11-23): no se publica. Para publicar una casa real: quitar 'placeholder' y llenar 'photoRights'."
   },
   {
     "id": "AUR-DEMO-2",
@@ -314,7 +316,9 @@
           "Quick connection to the rest of the city"
         ]
       ]
-    }
+    },
+    "placeholder": true,
+    "placeholderNote": "Ficha ficticia o de demostración (D-034, 2026-11-23): no se publica. Para publicar una casa real: quitar 'placeholder' y llenar 'photoRights'."
   },
   {
     "id": "AUR-DEMO-3",
@@ -461,7 +465,9 @@
           "Half a block away"
         ]
       ]
-    }
+    },
+    "placeholder": true,
+    "placeholderNote": "Ficha ficticia o de demostración (D-034, 2026-11-23): no se publica. Para publicar una casa real: quitar 'placeholder' y llenar 'photoRights'."
   },
   {
     "id": "AUR-002",
@@ -613,7 +619,9 @@
         ]
       ]
     },
-    "mock": true
+    "mock": true,
+    "placeholder": true,
+    "placeholderNote": "Ficha ficticia o de demostración (D-034, 2026-11-23): no se publica. Para publicar una casa real: quitar 'placeholder' y llenar 'photoRights'."
   },
   {
     "id": "AUR-003",
@@ -765,7 +773,9 @@
         ]
       ]
     },
-    "mock": true
+    "mock": true,
+    "placeholder": true,
+    "placeholderNote": "Ficha ficticia o de demostración (D-034, 2026-11-23): no se publica. Para publicar una casa real: quitar 'placeholder' y llenar 'photoRights'."
   },
   {
     "id": "AUR-004",
@@ -917,7 +927,9 @@
         ]
       ]
     },
-    "mock": true
+    "mock": true,
+    "placeholder": true,
+    "placeholderNote": "Ficha ficticia o de demostración (D-034, 2026-11-23): no se publica. Para publicar una casa real: quitar 'placeholder' y llenar 'photoRights'."
   },
   {
     "id": "AUR-005",
@@ -1069,6 +1081,8 @@
         ]
       ]
     },
-    "mock": true
+    "mock": true,
+    "placeholder": true,
+    "placeholderNote": "Ficha ficticia o de demostración (D-034, 2026-11-23): no se publica. Para publicar una casa real: quitar 'placeholder' y llenar 'photoRights'."
   }
 ]
