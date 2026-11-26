@@ -7,7 +7,7 @@ DIST = os.path.join(ROOT, "dist")
 site = json.load(open(os.path.join(ROOT, "data/site.json"), encoding="utf-8"))
 props = json.load(open(os.path.join(ROOT, "data/properties.json"), encoding="utf-8"))
 B = site["brand"]
-ASSET_VER = "20261123"  # bump when dist/assets/css or js changes, to bust browser cache
+ASSET_VER = "20261125"  # bump when dist/assets/css or js changes, to bust browser cache
 LIVE = [p for p in props if not p.get("placeholder")]  # only real inventory renders on the live site
 LEGAL = site["legalPages"]  # páginas legales; mientras brand.legalReviewed sea false llevan franja de borrador
 LEGAL_DATE = {"es": "23 de noviembre de 2026", "en": "November 23, 2026"}  # cambiar al editar un texto legal
