@@ -7,7 +7,7 @@ DIST = os.path.join(ROOT, "dist")
 site = json.load(open(os.path.join(ROOT, "data/site.json"), encoding="utf-8"))
 props = json.load(open(os.path.join(ROOT, "data/properties.json"), encoding="utf-8"))
 B = site["brand"]
-ASSET_VER = "20261125"  # bump when dist/assets/css or js changes, to bust browser cache
+ASSET_VER = "20261125s"  # bump when dist/assets/css or js changes, to bust browser cache
 LIVE = [p for p in props if not p.get("placeholder")]  # only real inventory renders on the live site
 LEGAL = site["legalPages"]  # páginas legales; mientras brand.legalReviewed sea false llevan franja de borrador
 LEGAL_DATE = {"es": "23 de noviembre de 2026", "en": "November 23, 2026"}  # cambiar al editar un texto legal
@@ -458,6 +458,78 @@ if rastros:
     raise SystemExit(
         f"El dominio retirado {DOMINIO_RETIRADO} sigue en {len(rastros)} archivo(s) "
         f"de dist/: {rastros[:5]}. El dominio oficial es aurahomes.com.mx (D-033).")
+
+# ---------- PRÓXIMAMENTE (2026-11-25) ----------
+# Con comingSoon.enabled el dominio muestra SOLO una página «Próximamente».
+# El sitio completo se compila igual (y pasa los mismos guardias), y después
+# se retiran sus páginas de dist/: lo que no está en dist/ no se puede servir.
+# demo.html no lo genera este script, así que se excluye en .assetsignore.
+# Cualquier otra ruta cae en 404.html, que en este modo es la misma página.
+SOON = site.get("comingSoon", {})
+
+def soon_page(lang, depth, not_found=False):
+    c = SOON[lang]
+    t = site["ui"][lang]
+    ent = B.get("legalEntity") or {}
+    entity = (f'{ent["name"]}, {"persona física, con domicilio en" if lang == "es" else "an individual, domiciled at"} {ent["address"]}'
+              if ent.get("name") and ent.get("address") else t["entity_pending"])
+    up = "../" * depth
+    msg = "Hola, me interesa Aura Homes" if lang == "es" else "Hi, I am interested in Aura Homes"
+    title = c["nf_title"] if not_found else c["title"]
+    # Fuera de las llaves del f-string: Cloudflare puede compilar con un Python
+    # anterior a 3.12, que no admite barras invertidas dentro de ellas.
+    head_meta = ('<meta name="robots" content="noindex">' if not_found
+                 else '<link rel="canonical" href="' + B["siteUrl"] + '/' + lang + '/">')
+    from urllib.parse import quote
+    wa_href = "https://wa.me/" + B["whatsapp"].lstrip("+") + "?text=" + quote(msg)
+    return f'''<!doctype html><html lang="{lang}"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{B["name"]} — {c["title"]}</title><meta name="description" content="{c["lead"]}">
+{head_meta}
+<link rel="alternate" hreflang="es" href="{B["siteUrl"]}/es/"><link rel="alternate" hreflang="en" href="{B["siteUrl"]}/en/">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/css/styles.css?v={ASSET_VER}"></head><body class="soon-body">
+<main class="soon" id="contenido">
+  <div class="soon-top"><img class="soon-logo" src="/assets/img/logo.png" alt="{B["name"]}">
+    <span class="lang"><a href="/es/" hreflang="es" lang="es" aria-label="{t["lang_es"]}" class="{"on" if lang=="es" else ""}">ES</a><a href="/en/" hreflang="en" lang="en" aria-label="{t["lang_en"]}" class="{"on" if lang=="en" else ""}">EN</a></span></div>
+  <div class="soon-card">
+    <div class="eyebrow">{c["eyebrow"]}</div>
+    <h1>{title}</h1>
+    <p class="soon-lead">{c["lead"]}</p>
+    <p class="soon-sub">{c["sub"]}</p>
+    <div class="soon-actions">
+      <a class="btn btn-wa" href="{wa_href}">{WA}{c["wa"]}</a>
+      <a class="btn btn-outline" href="mailto:{B["email"]}">{c["email"]}</a>
+    </div>
+    <p class="soon-mail"><a href="mailto:{B["email"]}">{B["email"]}</a></p>
+  </div>
+  <p class="soon-legal">{c["privacy"].replace("{entity}", entity)}</p>
+  <p class="soon-legal">© 2026 {B["name"]}. {"Todos los derechos reservados." if lang == "es" else "All rights reserved."}</p>
+</main></body></html>'''
+
+IGNORE_BASE = """# Archivos de dist/ que Cloudflare NO publica. Lo escribe build.py: no editar a mano.
+# Las fotos de las fichas ficticias y de demostración siguen en el repositorio,
+# pero no deben poder descargarse desde el dominio (D-034).
+# Al publicar una casa real, añadir en build.py una línea "!assets/img/<id>/".
+assets/img/aur-*
+_preview_screenshots
+.assetsignore
+"""
+if SOON.get("enabled"):
+    for lang in ("es", "en"):
+        d = os.path.join(DIST, lang)
+        for raiz, _, archivos in os.walk(d):
+            for nombre in archivos:
+                if nombre.endswith(".html"):
+                    os.remove(os.path.join(raiz, nombre))
+        w(os.path.join(d, "index.html"), soon_page(lang, 1))
+    w(os.path.join(DIST, "404.html"), soon_page("es", 0, not_found=True))
+    w(os.path.join(DIST, ".assetsignore"), IGNORE_BASE + "# Modo «Próximamente»: el demo tampoco se publica.\ndemo.html\n")
+else:
+    w(os.path.join(DIST, ".assetsignore"), IGNORE_BASE)
+    if os.path.exists(os.path.join(DIST, "404.html")):
+        os.remove(os.path.join(DIST, "404.html"))
 
 # root redirect to Spanish (default)
 w(os.path.join(DIST, "index.html"),

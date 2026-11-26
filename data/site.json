@@ -567,5 +567,29 @@
   "analytics": {
     "cloudflareBeaconToken": "",
     "note": "Cloudflare Web Analytics, sin cookies. Vacío = apagado. Se carga SOLO si la persona acepta en el aviso de cookies. En el panel de Cloudflare usar la instalación MANUAL (token), nunca la automática: la automática inyecta el script sin pedir consentimiento."
+  },
+  "comingSoon": {
+    "enabled": true,
+    "note": "2026-11-25, orden del CEO: mientras falten los precios de los planes y la revisión legal, el dominio muestra SOLO esta página. Con enabled=false vuelve el sitio completo sin tocar nada más.",
+    "es": {
+      "title": "Muy pronto",
+      "eyebrow": "Aura Homes · Cancún",
+      "lead": "Estamos preparando Aura Homes: casas en renta a largo plazo en Cancún y una plataforma para quienes administran propiedades.",
+      "sub": "Mientras terminamos, escríbenos y con gusto te atendemos.",
+      "wa": "Escríbenos por WhatsApp",
+      "email": "Escríbenos por correo",
+      "privacy": "Esta página no guarda datos ni usa cookies. Si nos escribes, usamos tus datos solo para atender tu mensaje. Responsable: {entity}.",
+      "nf_title": "Esta página todavía no está disponible"
+    },
+    "en": {
+      "title": "Coming soon",
+      "eyebrow": "Aura Homes · Cancún",
+      "lead": "We are getting Aura Homes ready: long-term rental homes in Cancún and a platform for people who manage properties.",
+      "sub": "While we finish, get in touch and we will be glad to help.",
+      "wa": "Message us on WhatsApp",
+      "email": "Email us",
+      "privacy": "This page stores no data and uses no cookies. If you contact us, we use your details only to handle your message. Responsible party: {entity}.",
+      "nf_title": "This page is not available yet"
+    }
   }
 }

@@ -31,9 +31,8 @@
     // las URL limpias del sitio.
     "html_handling": "auto-trailing-slash",
 
-    // Sin página de error propia todavía: una ruta inexistente devuelve un 404
-    // simple. Cuando Legal entregue los textos definitivos se puede añadir una
-    // página 404 bilingüe y cambiar esto a "404-page".
-    "not_found_handling": "none"
+    // Una ruta inexistente sirve dist/404.html con estado 404. En modo
+    // «Próximamente» esa página es la misma de «Próximamente» (build.py).
+    "not_found_handling": "404-page"
   }
 }

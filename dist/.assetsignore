@@ -1,7 +1,9 @@
-# Archivos de dist/ que Cloudflare NO publica (D-034).
+# Archivos de dist/ que Cloudflare NO publica. Lo escribe build.py: no editar a mano.
 # Las fotos de las fichas ficticias y de demostración siguen en el repositorio,
-# pero ninguna página las enlaza y no deben poder descargarse desde el dominio.
-# Al publicar una casa real, añadir aquí una línea "!assets/img/<id>/".
+# pero no deben poder descargarse desde el dominio (D-034).
+# Al publicar una casa real, añadir en build.py una línea "!assets/img/<id>/".
 assets/img/aur-*
 _preview_screenshots
 .assetsignore
+# Modo «Próximamente»: el demo tampoco se publica.
+demo.html
